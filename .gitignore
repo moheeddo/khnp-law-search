@@ -1,0 +1,13 @@
+legalize-kr/
+__pycache__/
+*.pyc
+.env
+lawsearch.db
+*.png
+*.jpg
+*.md
+.playwright-mcp/
+snap-*.md
+screenshot-*.png
+node_modules/
+.vercel/

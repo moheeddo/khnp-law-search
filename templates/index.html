@@ -1,0 +1,2428 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한수원 계약 법령 검색</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚖</text></svg>">
+<style>
+/* ===== Design Tokens ===== */
+:root {
+  --bg-root: #0b0f1a;
+  --bg-surface: #111827;
+  --bg-elevated: #1a2236;
+  --bg-hover: #1e293b;
+  --bg-active: #243044;
+  --bg-input: #0f172a;
+  --border: #1e293b;
+  --border-light: #2a3650;
+  --border-focus: #3b82f6;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+  --accent: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-muted: rgba(59,130,246,0.15);
+  --accent-glow: rgba(59,130,246,0.25);
+  --success: #10b981;
+  --success-muted: rgba(16,185,129,0.15);
+  --warn: #f59e0b;
+  --warn-muted: rgba(245,158,11,0.15);
+  --danger: #ef4444;
+  --danger-muted: rgba(239,68,68,0.15);
+  --cyan: #06b6d4;
+  --cyan-muted: rgba(6,182,212,0.12);
+  --purple: #8b5cf6;
+  --purple-muted: rgba(139,92,246,0.12);
+  --bookmark: #f59e0b;
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+  --shadow: 0 4px 12px rgba(0,0,0,0.25);
+  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
+  --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
+  --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-root);
+  color: var(--text-primary);
+  line-height: 1.6;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ===== Header ===== */
+.header {
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+}
+
+.brand-text h1 {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  background: linear-gradient(135deg, #f1f5f9, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-text .sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-stats {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-right: 12px;
+}
+
+.header-stats strong { color: var(--text-secondary); }
+
+/* Auth UI in header */
+.auth-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.user-badge .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--purple));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+}
+
+.user-badge .name { font-weight: 600; color: var(--text-primary); }
+
+.btn {
+  padding: 7px 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--text-muted); }
+
+.btn-accent {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { background: var(--danger-muted); border-color: var(--danger); }
+
+.btn-sm { padding: 4px 10px; font-size: 12px; }
+
+.btn-bookmark {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.btn-bookmark:hover { color: var(--bookmark); background: var(--warn-muted); }
+.btn-bookmark.active { color: var(--bookmark); }
+.bm-icon { font-size: 16px; line-height: 1; }
+.bm-icon.filled { color: var(--bookmark); }
+
+/* ===== Search Bar ===== */
+.search-section {
+  padding: 0 28px 16px;
+  max-width: 1480px;
+  margin: 0 auto;
+}
+
+.search-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.search-input-wrap {
+  flex: 1;
+  position: relative;
+}
+
+.search-input-wrap svg {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.search-input {
+  width: 100%;
+  padding: 11px 16px 11px 42px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.search-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+}
+
+.search-input::placeholder { color: var(--text-muted); }
+
+.search-filter {
+  padding: 11px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 150px;
+  outline: none;
+}
+
+.search-filter option { background: var(--bg-surface); }
+
+.search-btn {
+  padding: 11px 24px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.search-btn:hover { background: var(--accent-hover); box-shadow: var(--shadow-glow); }
+
+/* Quick Tags */
+.quick-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.quick-tag {
+  padding: 4px 12px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.quick-tag:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ===== Main Layout ===== */
+.main-wrap {
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 20px 28px;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  min-height: calc(100vh - 160px);
+}
+
+/* ===== Sidebar ===== */
+.sidebar { display: flex; flex-direction: column; gap: 8px; }
+
+.nav-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  padding: 8px 12px 4px;
+  font-weight: 600;
+}
+
+.cat-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all var(--transition);
+}
+
+.cat-card:hover { border-color: var(--border-light); }
+.cat-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-muted); }
+
+.cat-head {
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.cat-head:hover { background: var(--bg-hover); }
+
+.cat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+.cat-icon.contract { background: var(--accent-muted); color: var(--accent); }
+.cat-icon.public { background: var(--purple-muted); color: var(--purple); }
+.cat-icon.nuclear { background: var(--cyan-muted); color: var(--cyan); }
+.cat-icon.construct { background: var(--warn-muted); color: var(--warn); }
+.cat-icon.trade { background: var(--success-muted); color: var(--success); }
+.cat-icon.safety { background: var(--danger-muted); color: var(--danger); }
+
+.cat-info h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.cat-info p { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+
+.cat-laws { padding: 4px 8px 10px; display: none; }
+.cat-card.active .cat-laws { display: block; }
+
+.cat-law {
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cat-law:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.cat-law::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Bookmark nav in sidebar */
+.bookmark-nav {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.bm-nav-btn {
+  width: 100%;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.bm-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-light); }
+.bm-nav-btn.active { background: var(--warn-muted); border-color: var(--bookmark); color: var(--bookmark); }
+
+.bm-nav-btn svg { flex-shrink: 0; }
+
+.bm-count {
+  margin-left: auto;
+  background: var(--bg-elevated);
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ===== Content Area ===== */
+.content { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+/* Card base */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+/* Welcome */
+.welcome { padding: 32px; }
+
+.welcome h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.welcome .subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.workflow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.wf-step {
+  padding: 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.wf-step::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--accent);
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.wf-step:hover { border-color: var(--accent); background: var(--bg-active); }
+.wf-step:hover::before { opacity: 1; }
+
+.wf-step .num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.wf-step h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; color: var(--text-primary); }
+.wf-step p { font-size: 12px; color: var(--text-muted); margin: 0; line-height: 1.4; }
+
+/* ===== Auth Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.visible { display: flex; }
+
+.modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  width: 420px;
+  max-width: 90vw;
+  box-shadow: var(--shadow-lg);
+}
+
+.modal h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+}
+
+.modal .modal-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+
+.form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-muted); }
+
+.form-error {
+  font-size: 12px;
+  color: var(--danger);
+  margin-top: 4px;
+  min-height: 18px;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.modal-actions .btn { flex: 1; padding: 10px; font-size: 14px; text-align: center; }
+
+.modal-switch {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.modal-switch a {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.modal-switch a:hover { text-decoration: underline; }
+
+/* ===== Search Results ===== */
+.results { display: none; }
+.results.visible { display: block; }
+
+.results-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.results-head h3 { font-size: 15px; font-weight: 600; }
+.results-head .count { font-size: 12px; color: var(--text-muted); }
+
+.results-list { padding: 6px; }
+
+.res-item {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background var(--transition);
+  border-bottom: 1px solid var(--border);
+}
+
+.res-item:last-child { border-bottom: none; }
+.res-item:hover { background: var(--bg-hover); }
+
+.res-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.res-type {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.res-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  display: flex;
+  gap: 12px;
+}
+
+.res-art {
+  padding: 8px 12px;
+  margin-top: 5px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border-left: 2px solid var(--accent);
+}
+
+.res-art .art-num { font-weight: 600; color: var(--accent); font-size: 12px; }
+.res-art .art-title { color: var(--text-secondary); font-size: 12px; }
+.res-art .art-snip { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+
+mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 2px; border-radius: 2px; }
+
+/* ===== Law Viewer ===== */
+.viewer { display: none; }
+.viewer.visible { display: block; }
+
+.viewer-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.viewer-title-area { flex: 1; min-width: 0; }
+
+.viewer-title-area h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  margin-top: 8px;
+}
+
+.viewer-meta {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+}
+
+.viewer-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  align-items: flex-start;
+}
+
+.type-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  flex-wrap: wrap;
+}
+
+.type-tab {
+  padding: 5px 14px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+
+.type-tab:hover { background: var(--bg-hover); }
+
+.type-tab.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.viewer-filter {
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.viewer-filter input {
+  width: 100%;
+  padding: 8px 14px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+.viewer-filter input:focus { border-color: var(--accent); }
+
+.viewer-toc {
+  padding: 14px 22px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.viewer-toc h4 {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.toc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 2px;
+}
+
+.toc-item {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toc-item:hover { background: var(--bg-hover); color: var(--accent); }
+.toc-item.active { background: var(--accent-muted); color: var(--accent); font-weight: 600; }
+
+.law-body {
+  padding: 22px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+/* AI Summary Card */
+.ai-summary {
+  margin: 16px 22px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(59,130,246,0.08));
+  border: 1px solid rgba(6,182,212,0.2);
+  border-radius: var(--radius-lg);
+}
+
+.ai-summary-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ai-summary-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ai-summary-text {
+  font-size: 14px;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.ai-keypoints { display: flex; flex-direction: column; gap: 8px; }
+
+.ai-kp {
+  padding: 10px 14px;
+  background: var(--bg-surface);
+  border-radius: var(--radius);
+  border-left: 3px solid var(--cyan);
+}
+
+.ai-kp-head {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 3px;
+}
+
+.ai-kp-point { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+
+.ai-kp-warn {
+  font-size: 12px;
+  color: var(--warn);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-tips {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(6,182,212,0.15);
+}
+
+.ai-tips-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--success);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.ai-tip {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 3px 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.5;
+}
+
+.ai-tip::before { content: '&#x2714;'; color: var(--success); flex-shrink: 0; }
+
+/* Focus mode toggle */
+.focus-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+}
+
+.focus-toggle label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.focus-switch {
+  width: 36px;
+  height: 20px;
+  background: var(--border-light);
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.focus-switch.on { background: var(--cyan); }
+
+.focus-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform var(--transition);
+}
+
+.focus-switch.on::after { transform: translateX(16px); }
+
+.focus-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* Article blocks - enhanced */
+.art-block {
+  margin-bottom: 4px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  position: relative;
+  transition: all var(--transition);
+}
+
+.art-block.highlighted {
+  background: rgba(6,182,212,0.06);
+  border-color: rgba(6,182,212,0.2);
+  box-shadow: inset 3px 0 0 var(--cyan);
+}
+
+.art-block.highlighted .art-num { color: var(--cyan); }
+
+.art-block.dimmed {
+  opacity: 0.4;
+  transform: scale(0.99);
+}
+
+.art-block.dimmed:hover { opacity: 0.8; }
+
+.art-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.art-num { font-weight: 700; color: var(--accent); font-size: 14px; }
+.art-title-text { color: var(--cyan); font-size: 14px; font-weight: 600; }
+
+.art-highlight-badge {
+  font-size: 10px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--cyan-muted);
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+.art-bookmark-btn {
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.art-block:hover .art-bookmark-btn { opacity: 1; }
+.art-bookmark-btn.active { opacity: 1; }
+
+/* Structured body - visual hierarchy for 항/호/목 */
+.art-body {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  word-break: keep-all;
+}
+
+.art-body .para { margin-bottom: 8px; }
+
+.art-body .para-num {
+  display: inline-block;
+  font-weight: 700;
+  color: var(--accent);
+  min-width: 28px;
+}
+
+.art-body .sub-item {
+  padding-left: 28px;
+  position: relative;
+  margin: 3px 0;
+  color: var(--text-muted);
+}
+
+.art-body .sub-item .item-num {
+  position: absolute;
+  left: 6px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.art-body .sub-sub-item {
+  padding-left: 52px;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 2px 0;
+}
+
+.art-body .amendment {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* ===== Bookmarks View ===== */
+.bookmarks-view { display: none; }
+.bookmarks-view.visible { display: block; }
+
+.bm-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bm-head h3 {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bm-folders {
+  display: flex;
+  gap: 4px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.bm-folder-tab {
+  padding: 5px 14px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  transition: all var(--transition);
+}
+
+.bm-folder-tab:hover { background: var(--bg-hover); }
+.bm-folder-tab.active { background: var(--warn-muted); border-color: var(--bookmark); color: var(--bookmark); }
+
+.bm-list { padding: 8px; }
+
+.bm-item {
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  transition: background var(--transition);
+  border-bottom: 1px solid var(--border);
+}
+
+.bm-item:last-child { border-bottom: none; }
+.bm-item:hover { background: var(--bg-hover); }
+
+.bm-item-icon {
+  color: var(--bookmark);
+  flex-shrink: 0;
+}
+
+.bm-item-info {
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.bm-item-law { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.bm-item-detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.bm-item-memo { font-size: 11px; color: var(--text-muted); font-style: italic; margin-top: 4px; }
+
+.bm-item-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+/* ===== Empty State ===== */
+.empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+
+.empty h3 { font-size: 15px; margin-bottom: 6px; color: var(--text-secondary); }
+.empty p { font-size: 13px; }
+
+/* ===== Loading ===== */
+.loading { text-align: center; padding: 40px; color: var(--text-muted); }
+
+.spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ===== Toast ===== */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 12px 20px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 13px;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.toast.success { border-left: 3px solid var(--success); }
+.toast.error { border-left: 3px solid var(--danger); }
+.toast.info { border-left: 3px solid var(--accent); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ===== Landing Layout ===== */
+body.landing .search-section,
+body.landing .header-stats { display: none; }
+
+body.landing .landing-wrap { display: flex; }
+
+.landing-wrap {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 60px);
+  padding: 0 20px;
+}
+
+/* ===== Advisor Hero ===== */
+.advisor-hero {
+  text-align: center;
+  padding: 0 32px 36px;
+  position: relative;
+  overflow: hidden;
+  max-width: 740px;
+  width: 100%;
+}
+
+.hero-glow {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 500px;
+  height: 300px;
+  background: radial-gradient(ellipse, rgba(59,130,246,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.advisor-hero h2 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #f1f5f9 30%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+}
+
+.hero-sub {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 28px;
+  position: relative;
+}
+
+.advisor-search {
+  display: flex;
+  gap: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border-light), var(--shadow-lg);
+}
+
+.advisor-input {
+  flex: 1;
+  padding: 16px 20px;
+  background: var(--bg-elevated);
+  border: none;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+}
+
+.advisor-input::placeholder { color: var(--text-muted); }
+.advisor-input:focus { background: var(--bg-active); }
+
+.advisor-btn {
+  padding: 16px 28px;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  border: none;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+
+.advisor-btn:hover { filter: brightness(1.15); }
+
+.advisor-examples {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 16px;
+  position: relative;
+}
+
+.adv-example {
+  padding: 5px 14px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.adv-example:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Scenario Section */
+.scenario-section {
+  padding: 0 32px 28px;
+}
+
+.section-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.scenario-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.sc-chip {
+  padding: 8px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sc-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); }
+
+.sc-chip .chip-icon { font-size: 15px; }
+
+/* Advisor Results */
+.advisor-results { display: none; }
+.advisor-results.visible { display: block; }
+
+.adv-head {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.adv-head-text { flex: 1; }
+.adv-head-text h3 { font-size: 16px; font-weight: 700; }
+.adv-head-text p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+.adv-list { padding: 8px; }
+
+.adv-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--radius);
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+  cursor: pointer;
+}
+
+.adv-item:last-child { border-bottom: none; }
+.adv-item:hover { background: var(--bg-hover); }
+
+.adv-priority {
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.adv-priority.p-필수 { background: var(--danger-muted); color: var(--danger); }
+.adv-priority.p-권장 { background: var(--warn-muted); color: var(--warn); }
+.adv-priority.p-해당시 { background: var(--accent-muted); color: var(--accent); }
+.adv-priority.p-참고 { background: var(--bg-elevated); color: var(--text-muted); }
+
+.adv-item-body { flex: 1; min-width: 0; }
+
+.adv-law-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.adv-law-type {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.adv-reason {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.adv-category-tag {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.adv-item-action { flex-shrink: 0; }
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .main-wrap { grid-template-columns: 1fr; padding: 12px; }
+  .header-top { padding: 10px 14px; }
+  .search-section { padding: 0 14px 12px; }
+  .header-stats { display: none; }
+  .search-bar { flex-direction: column; }
+  .scenario-grid { grid-template-columns: 1fr 1fr; }
+  .advisor-search { flex-direction: column; border-radius: var(--radius); }
+  .advisor-btn { border-radius: 0 0 var(--radius) var(--radius); }
+}
+
+@media (max-width: 600px) {
+  .scenario-grid { grid-template-columns: 1fr; }
+  .viewer-head { flex-direction: column; }
+  .toc-grid { grid-template-columns: 1fr; }
+  .flow-steps { flex-wrap: wrap; }
+  .flow-arrow { display: none; }
+}
+</style>
+</head>
+<body class="landing">
+
+<!-- No external SVGs - using text icons for compatibility -->
+
+<!-- Header -->
+<header class="header">
+  <div class="header-top">
+    <div class="header-brand">
+      <div class="brand-icon">⚖</div>
+      <div class="brand-text">
+        <h1>한수원 계약 법령 검색</h1>
+        <div class="sub">KHNP Contract Legal Search</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-stats" id="headerStats">
+        <span>법령 <strong id="statLaws">-</strong></span>
+        <span>조문 <strong id="statArticles">-</strong></span>
+      </div>
+      <div class="auth-area" id="authArea"></div>
+    </div>
+  </div>
+  <div class="search-section">
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span style="font-size:16px">&#x1F50D;</span>
+        <input type="text" class="search-input" id="searchInput"
+               placeholder="법령명, 조문 내용, 키워드 검색 (예: 입찰, 하자보수, 계약보증금)">
+      </div>
+      <select class="search-filter" id="categoryFilter">
+        <option value="">전체 법령</option>
+      </select>
+      <button class="search-btn" id="searchBtn">검색</button>
+    </div>
+    <div class="quick-tags" id="quickTags">
+      <span class="quick-tag" data-q="입찰">입찰</span>
+      <span class="quick-tag" data-q="계약보증금">계약보증금</span>
+      <span class="quick-tag" data-q="하자보수">하자보수</span>
+      <span class="quick-tag" data-q="수의계약">수의계약</span>
+      <span class="quick-tag" data-q="하도급">하도급</span>
+      <span class="quick-tag" data-q="청렴계약">청렴계약</span>
+      <span class="quick-tag" data-q="지체상금">지체상금</span>
+      <span class="quick-tag" data-q="물가변동">물가변동</span>
+      <span class="quick-tag" data-q="설계변경">설계변경</span>
+      <span class="quick-tag" data-q="원자력 안전">원자력 안전</span>
+      <span class="quick-tag" data-q="방사성폐기물">방사성폐기물</span>
+      <span class="quick-tag" data-q="환경영향평가">환경영향평가</span>
+    </div>
+  </div>
+</header>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <div id="loginForm">
+      <h2>로그인</h2>
+      <p class="modal-sub">계정에 로그인하여 북마크를 관리하세요</p>
+      <div class="form-group">
+        <label>아이디</label>
+        <input type="text" id="loginId" placeholder="아이디 입력" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="loginPw" placeholder="비밀번호 입력" autocomplete="current-password">
+      </div>
+      <div class="form-error" id="loginError"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">취소</button>
+        <button class="btn btn-accent" onclick="doLogin()">로그인</button>
+      </div>
+      <div class="modal-switch">계정이 없으신가요? <a onclick="showRegister()">회원가입</a></div>
+    </div>
+    <div id="registerForm" style="display:none">
+      <h2>회원가입</h2>
+      <p class="modal-sub">한수원 직원 계정을 생성합니다</p>
+      <div class="form-group">
+        <label>아이디</label>
+        <input type="text" id="regId" placeholder="3자 이상" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="regPw" placeholder="4자 이상" autocomplete="new-password">
+      </div>
+      <div class="form-group">
+        <label>이름</label>
+        <input type="text" id="regName" placeholder="실명 입력">
+      </div>
+      <div class="form-group">
+        <label>부서 (선택)</label>
+        <input type="text" id="regDept" placeholder="예: 계약팀, 원자력본부">
+      </div>
+      <div class="form-error" id="regError"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">취소</button>
+        <button class="btn btn-accent" onclick="doRegister()">가입하기</button>
+      </div>
+      <div class="modal-switch">이미 계정이 있으신가요? <a onclick="showLogin()">로그인</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bookmark Memo Modal -->
+<div class="modal-overlay" id="memoModal">
+  <div class="modal" style="width:380px">
+    <h2>북마크 메모</h2>
+    <p class="modal-sub" id="memoTarget"></p>
+    <div class="form-group">
+      <label>폴더</label>
+      <input type="text" id="memoFolder" placeholder="기본" list="folderList">
+      <datalist id="folderList"></datalist>
+    </div>
+    <div class="form-group">
+      <label>메모 (선택)</label>
+      <input type="text" id="memoText" placeholder="나중에 참조할 내용을 적으세요">
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeMemoModal()">취소</button>
+      <button class="btn btn-accent" onclick="saveMemo()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toasts"></div>
+
+<!-- Main -->
+<!-- Landing (full-width, no sidebar) -->
+<div class="landing-wrap" id="landingWrap">
+  <div class="advisor-hero">
+    <div class="hero-glow"></div>
+    <h2>어떤 법령을 확인해야 할까요?</h2>
+    <p class="hero-sub">상황을 입력하면 확인해야 할 법령을 안내합니다</p>
+    <div class="advisor-search">
+      <input type="text" id="advisorInput" class="advisor-input"
+             placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경...">
+      <button class="advisor-btn" id="advisorBtn">검색</button>
+    </div>
+    <div class="advisor-examples">
+      <span class="adv-example" data-q="원전 기자재 구매">원전 기자재 구매</span>
+      <span class="adv-example" data-q="공사 하도급 관리">공사 하도급</span>
+      <span class="adv-example" data-q="용역 설계변경">용역 설계변경</span>
+      <span class="adv-example" data-q="수의계약 긴급 조달">수의계약</span>
+      <span class="adv-example" data-q="계약보증금 하자보수">보증금·하자</span>
+      <span class="adv-example" data-q="원자력 안전">원자력 안전</span>
+    </div>
+    <div class="scenario-chips">
+      <div class="sc-chip" onclick="doAdvisor('공사계약 건설 시공')"><span class="chip-icon">&#x1F3D7;</span>공사</div>
+      <div class="sc-chip" onclick="doAdvisor('용역계약 기술용역 설계')"><span class="chip-icon">&#x1F4DD;</span>용역</div>
+      <div class="sc-chip" onclick="doAdvisor('물품 구매 자재 조달')"><span class="chip-icon">&#x1F4E6;</span>구매</div>
+      <div class="sc-chip" onclick="doAdvisor('원전 원자력 핵연료')"><span class="chip-icon">&#9883;</span>원자력</div>
+      <div class="sc-chip" onclick="doAdvisor('발전 전력거래 송전')"><span class="chip-icon">&#9889;</span>전력</div>
+      <div class="sc-chip" onclick="doAdvisor('안전 산업재해')"><span class="chip-icon">&#x1F6E1;</span>안전</div>
+    </div>
+  </div>
+</div>
+
+<div class="main-wrap" id="mainWrap" style="display:none">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="content" id="contentArea">
+    <!-- Welcome / Advisor Landing -->
+    <div id="welcomeView"></div>
+
+    <!-- Advisor Results -->
+    <div class="card advisor-results" id="advisorView">
+      <div class="adv-head">
+        <button class="btn btn-sm" onclick="showView('welcome')">&#8592; 다시 검색</button>
+        <div class="adv-head-text">
+          <h3 id="advTitle"></h3>
+          <p id="advCategories"></p>
+        </div>
+        <span class="count" id="advCount"></span>
+      </div>
+      <div class="adv-list" id="advList"></div>
+    </div>
+
+    <!-- Search Results -->
+    <div class="card results" id="resultsView">
+      <div class="results-head">
+        <h3 id="resultsTitle">검색 결과</h3>
+        <span class="count" id="resultsCount"></span>
+      </div>
+      <div class="results-list" id="resultsList"></div>
+    </div>
+
+    <!-- Law Viewer -->
+    <div class="card viewer" id="viewerView">
+      <div class="viewer-head">
+        <div class="viewer-title-area">
+          <button class="btn btn-sm" onclick="goBack()">
+            &#8592; 돌아가기
+          </button>
+          <h2 id="viewerTitle"></h2>
+          <div class="viewer-meta" id="viewerMeta"></div>
+        </div>
+        <div class="viewer-actions">
+          <button class="btn-bookmark" id="lawBookmarkBtn" onclick="toggleLawBookmark()">
+            <span class="bm-icon">&#9734;</span>
+            <span>북마크</span>
+          </button>
+          <a class="btn btn-sm" id="lawGoKr" href="#" target="_blank" rel="noopener">
+            &#x1F517; 법령정보센터
+          </a>
+        </div>
+      </div>
+      <div class="type-tabs" id="typeTabs"></div>
+      <div id="aiSummaryArea"></div>
+      <div class="focus-toggle" id="focusToggle" style="display:none">
+        <label>
+          <div class="focus-switch" id="focusSwitch" onclick="toggleFocusMode()"></div>
+          핵심 조문만 보기
+        </label>
+        <span class="focus-count" id="focusCount"></span>
+      </div>
+      <div class="viewer-filter">
+        <input type="text" id="viewerFilter" placeholder="조문 내 검색 (예: 보증금, 입찰)">
+      </div>
+      <div class="viewer-toc" id="viewerToc">
+        <h4>목차</h4>
+        <div class="toc-grid" id="tocGrid"></div>
+      </div>
+      <div class="law-body" id="lawBody"></div>
+    </div>
+
+    <!-- Bookmarks View -->
+    <div class="card bookmarks-view" id="bookmarksView">
+      <div class="bm-head">
+        <h3>
+          <span style="color:var(--bookmark)">&#9733;</span>
+          내 북마크
+        </h3>
+        <span class="count" id="bmCount"></span>
+      </div>
+      <div class="bm-folders" id="bmFolders"></div>
+      <div class="bm-list" id="bmList"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+// ===== State =====
+let currentView = 'welcome';
+let currentUser = null;
+let bookmarks = [];
+let currentLaw = null;
+let currentFileType = null;
+let bmPending = null; // pending bookmark data for memo modal
+let bmActiveFolder = '전체';
+
+// ===== Helpers =====
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const api = async (path, opts) => {
+  const res = await fetch(path, opts);
+  return res.json();
+};
+const post = (path, data) => api(path, {
+  method: 'POST',
+  headers: {'Content-Type':'application/json'},
+  body: JSON.stringify(data),
+});
+
+function toast(msg, type='info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  $('#toasts').appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function escHtml(t) {
+  const d = document.createElement('div');
+  d.textContent = t;
+  return d.innerHTML;
+}
+
+function highlight(text, keywords) {
+  if (!text || !keywords.length) return text || '';
+  let r = text;
+  keywords.forEach(kw => {
+    if (kw.length < 1) return;
+    r = r.replace(new RegExp(`(${kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>');
+  });
+  return r;
+}
+
+// ===== Init =====
+document.addEventListener('DOMContentLoaded', async () => {
+  await checkAuth();
+  await Promise.all([loadCategories(), loadStats()]);
+  setupEvents();
+});
+
+function setupEvents() {
+  // Advisor
+  $('#advisorInput').addEventListener('keydown', e => { if (e.key === 'Enter') doAdvisor(); });
+  $('#advisorBtn').addEventListener('click', () => doAdvisor());
+  $$('.adv-example').forEach(t => t.addEventListener('click', () => {
+    $('#advisorInput').value = t.dataset.q;
+    doAdvisor();
+  }));
+  // Law search
+  $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  $('#searchBtn').addEventListener('click', () => doSearch());
+  $$('.quick-tag').forEach(t => t.addEventListener('click', () => {
+    $('#searchInput').value = t.dataset.q;
+    doSearch();
+  }));
+  $('#viewerFilter').addEventListener('input', e => filterArticles(e.target.value));
+  // Auth
+  $('#loginPw').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  $('#regDept').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+  $('#memoText').addEventListener('keydown', e => { if (e.key === 'Enter') saveMemo(); });
+}
+
+// ===== Auth =====
+async function checkAuth() {
+  const data = await api('/api/auth/me');
+  if (data.logged_in) {
+    currentUser = data.user;
+    renderAuthUI();
+    await loadBookmarks();
+  } else {
+    currentUser = null;
+    renderAuthUI();
+  }
+}
+
+function renderAuthUI() {
+  const area = $('#authArea');
+  if (currentUser) {
+    const initials = currentUser.display_name.slice(0, 1);
+    area.innerHTML = `
+      <div class="user-badge">
+        <div class="avatar">${escHtml(initials)}</div>
+        <span class="name">${escHtml(currentUser.display_name)}</span>
+        ${currentUser.department ? `<span style="color:var(--text-muted);font-size:11px">${escHtml(currentUser.department)}</span>` : ''}
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="doLogout()">로그아웃</button>
+    `;
+  } else {
+    area.innerHTML = `
+      <button class="btn btn-sm" onclick="showLogin()">
+        &#x1F464; 로그인
+      </button>
+      <button class="btn btn-sm btn-accent" onclick="showRegister()">회원가입</button>
+    `;
+  }
+  renderBookmarkNav();
+}
+
+function showLogin() {
+  $('#loginForm').style.display = '';
+  $('#registerForm').style.display = 'none';
+  $('#loginError').textContent = '';
+  $('#authModal').classList.add('visible');
+  setTimeout(() => $('#loginId').focus(), 100);
+}
+
+function showRegister() {
+  $('#loginForm').style.display = 'none';
+  $('#registerForm').style.display = '';
+  $('#regError').textContent = '';
+  $('#authModal').classList.add('visible');
+  setTimeout(() => $('#regId').focus(), 100);
+}
+
+function closeModal() { $('#authModal').classList.remove('visible'); }
+
+async function doLogin() {
+  const username = $('#loginId').value.trim();
+  const password = $('#loginPw').value;
+  if (!username || !password) { $('#loginError').textContent = '아이디와 비밀번호를 입력해주세요'; return; }
+  const res = await post('/api/auth/login', { username, password });
+  if (res.error) { $('#loginError').textContent = res.error; return; }
+  currentUser = res.user;
+  closeModal();
+  renderAuthUI();
+  await loadBookmarks();
+  toast(`${currentUser.display_name}님 환영합니다`, 'success');
+}
+
+async function doRegister() {
+  const data = {
+    username: $('#regId').value.trim(),
+    password: $('#regPw').value,
+    display_name: $('#regName').value.trim(),
+    department: $('#regDept').value.trim(),
+  };
+  if (!data.username || !data.password || !data.display_name) {
+    $('#regError').textContent = '필수 항목을 모두 입력해주세요';
+    return;
+  }
+  const res = await post('/api/auth/register', data);
+  if (res.error) { $('#regError').textContent = res.error; return; }
+  currentUser = res.user;
+  closeModal();
+  renderAuthUI();
+  toast('회원가입이 완료되었습니다', 'success');
+}
+
+async function doLogout() {
+  await post('/api/auth/logout', {});
+  currentUser = null;
+  bookmarks = [];
+  renderAuthUI();
+  toast('로그아웃되었습니다', 'info');
+}
+
+// ===== Bookmarks =====
+async function loadBookmarks() {
+  if (!currentUser) return;
+  bookmarks = await api('/api/bookmarks');
+  renderBookmarkNav();
+}
+
+function renderBookmarkNav() {
+  const existing = $('#bookmarkNavArea');
+  if (existing) existing.remove();
+
+  if (!currentUser) return;
+
+  const nav = document.createElement('div');
+  nav.id = 'bookmarkNavArea';
+  nav.className = 'bookmark-nav';
+  nav.innerHTML = `
+    <button class="bm-nav-btn ${currentView === 'bookmarks' ? 'active' : ''}" onclick="showBookmarks()">
+      <span class="bm-icon filled">&#9733;</span>
+      내 북마크
+      <span class="bm-count">${bookmarks.length}</span>
+    </button>
+  `;
+  $('#sidebar').appendChild(nav);
+}
+
+async function showBookmarks() {
+  if (!currentUser) { showLogin(); return; }
+  await loadBookmarks();
+  showView('bookmarks');
+
+  const folders = ['전체', ...new Set(bookmarks.map(b => b.folder))];
+  const folderHtml = folders.map(f =>
+    `<button class="bm-folder-tab ${f === bmActiveFolder ? 'active' : ''}" onclick="filterBmFolder('${escHtml(f)}')">${escHtml(f)}</button>`
+  ).join('');
+  $('#bmFolders').innerHTML = folderHtml;
+
+  renderBookmarkList();
+}
+
+function filterBmFolder(folder) {
+  bmActiveFolder = folder;
+  $$('.bm-folder-tab').forEach(t => t.classList.toggle('active', t.textContent === folder));
+  renderBookmarkList();
+}
+
+function renderBookmarkList() {
+  const filtered = bmActiveFolder === '전체' ? bookmarks : bookmarks.filter(b => b.folder === bmActiveFolder);
+  $('#bmCount').textContent = `${filtered.length}건`;
+
+  if (filtered.length === 0) {
+    $('#bmList').innerHTML = `
+      <div class="empty">
+        <div style="font-size:40px;opacity:0.4">&#9734;</div>
+        <h3>저장된 북마크가 없습니다</h3>
+        <p>법령이나 조문을 열람하면서 북마크를 추가해보세요.</p>
+      </div>
+    `;
+    return;
+  }
+
+  $('#bmList').innerHTML = filtered.map(b => `
+    <div class="bm-item">
+      <div class="bm-item-icon">
+        <span class="bm-icon filled">&#9733;</span>
+      </div>
+      <div class="bm-item-info" onclick="openLaw('${escHtml(b.law_name)}','${escHtml(b.file_type)}')">
+        <div class="bm-item-law">${escHtml(b.law_name)}</div>
+        <div class="bm-item-detail">
+          ${b.article_num ? `${escHtml(b.article_num)} ${b.article_title ? '(' + escHtml(b.article_title) + ')' : ''}` : escHtml(b.file_type)}
+          ${b.folder !== '기본' ? ` · <span style="color:var(--bookmark)">${escHtml(b.folder)}</span>` : ''}
+        </div>
+        ${b.memo ? `<div class="bm-item-memo">"${escHtml(b.memo)}"</div>` : ''}
+      </div>
+      <div class="bm-item-actions">
+        <button class="btn btn-sm btn-danger" onclick="removeBookmark(${b.id})" title="삭제">
+          &#x1F5D1;
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function isBookmarked(lawName, fileType, articleNum='') {
+  return bookmarks.find(b => b.law_name === lawName && b.file_type === fileType && b.article_num === articleNum);
+}
+
+function openMemoModal(lawName, fileType, articleNum='', articleTitle='') {
+  if (!currentUser) { showLogin(); return; }
+  const existing = isBookmarked(lawName, fileType, articleNum);
+  if (existing) {
+    removeBookmark(existing.id);
+    return;
+  }
+  bmPending = { law_name: lawName, file_type: fileType, article_num: articleNum, article_title: articleTitle };
+  $('#memoTarget').textContent = articleNum ? `${lawName} - ${articleNum} ${articleTitle}` : lawName;
+  $('#memoFolder').value = '기본';
+  $('#memoText').value = '';
+  // load folder list
+  const folders = [...new Set(bookmarks.map(b => b.folder))];
+  $('#folderList').innerHTML = folders.map(f => `<option value="${escHtml(f)}">`).join('');
+  $('#memoModal').classList.add('visible');
+  setTimeout(() => $('#memoFolder').focus(), 100);
+}
+
+function closeMemoModal() { $('#memoModal').classList.remove('visible'); bmPending = null; }
+
+async function saveMemo() {
+  if (!bmPending) return;
+  const data = {
+    ...bmPending,
+    folder: $('#memoFolder').value.trim() || '기본',
+    memo: $('#memoText').value.trim(),
+  };
+  const res = await post('/api/bookmarks', data);
+  if (res.error) { toast(res.error, 'error'); return; }
+  closeMemoModal();
+  await loadBookmarks();
+  updateBookmarkButtons();
+  toast('북마크에 추가되었습니다', 'success');
+}
+
+async function removeBookmark(id) {
+  await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
+  await loadBookmarks();
+  updateBookmarkButtons();
+  toast('북마크에서 제거되었습니다', 'info');
+}
+
+function toggleLawBookmark() {
+  if (!currentLaw) return;
+  openMemoModal(currentLaw, currentFileType);
+}
+
+function updateBookmarkButtons() {
+  // Update law-level bookmark button
+  if (currentLaw) {
+    const bm = isBookmarked(currentLaw, currentFileType);
+    const btn = $('#lawBookmarkBtn');
+    if (btn) {
+      btn.classList.toggle('active', !!bm);
+      const ico = btn.querySelector('.bm-icon');
+      if (ico) { ico.textContent = bm ? '\u2605' : '\u2606'; ico.classList.toggle('filled', !!bm); }
+    }
+  }
+  // Update article-level buttons
+  $$('.art-bookmark-btn').forEach(btn => {
+    const num = btn.dataset.num;
+    const bm = isBookmarked(currentLaw, currentFileType, num);
+    btn.classList.toggle('active', !!bm);
+    const ico = btn.querySelector('.bm-icon');
+    if (ico) { ico.textContent = bm ? '\u2605' : '\u2606'; ico.classList.toggle('filled', !!bm); }
+  });
+  renderBookmarkNav();
+}
+
+// ===== Categories =====
+const catIconClass = {contract_core:'contract', public_org:'public', nuclear_energy:'nuclear',
+  construction_subcontract:'construct', fair_trade:'trade', safety_environment:'safety'};
+const catIcons = {contract_core:'📋', public_org:'🏛', nuclear_energy:'⚛', construction_subcontract:'🏗', fair_trade:'⚖', safety_environment:'🛡'};
+
+async function loadCategories() {
+  const cats = await api('/api/categories');
+  const sb = $('#sidebar');
+  sb.innerHTML = '<div class="nav-label">법령 카테고리</div>';
+  const filter = $('#categoryFilter');
+
+  for (const [id, cat] of Object.entries(cats)) {
+    const card = document.createElement('div');
+    card.className = 'cat-card';
+    card.innerHTML = `
+      <div class="cat-head">
+        <div class="cat-icon ${catIconClass[id] || ''}">${catIcons[id] || '📁'}</div>
+        <div class="cat-info">
+          <h3>${cat.name}</h3>
+          <p>${cat.description}</p>
+        </div>
+      </div>
+      <div class="cat-laws">
+        ${cat.laws.map(l => `<div class="cat-law" data-law="${l}">${l}</div>`).join('')}
+      </div>
+    `;
+    card.querySelector('.cat-head').addEventListener('click', () => {
+      $$('.cat-card').forEach(c => { if (c !== card) c.classList.remove('active'); });
+      card.classList.toggle('active');
+    });
+    card.querySelectorAll('.cat-law').forEach(item => {
+      item.addEventListener('click', e => { e.stopPropagation(); openLaw(item.dataset.law); });
+    });
+    sb.appendChild(card);
+
+    const opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = cat.name;
+    filter.appendChild(opt);
+  }
+  renderBookmarkNav();
+}
+
+async function loadStats() {
+  const s = await api('/api/stats');
+  $('#statLaws').textContent = s.total_laws.toLocaleString();
+  $('#statArticles').textContent = s.total_articles.toLocaleString();
+}
+
+// ===== Search =====
+async function doSearch(q) {
+  const input = $('#searchInput');
+  if (q) input.value = q;
+  const query = input.value.trim();
+  if (!query) return;
+  showView('results');
+  $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  const cat = $('#categoryFilter').value;
+  const params = new URLSearchParams({ q: query });
+  if (cat) params.set('category', cat);
+  const results = await api(`/api/search?${params}`);
+  renderResults(results, query);
+}
+
+function renderResults(results, query) {
+  $('#resultsTitle').textContent = `"${query}" 검색 결과`;
+  $('#resultsCount').textContent = `${results.length}건`;
+  if (!results.length) {
+    $('#resultsList').innerHTML = `<div class="empty"><div style="font-size:40px;opacity:0.4">&#x1F50D;</div><h3>검색 결과가 없습니다</h3><p>다른 키워드로 검색하거나 카테고리에서 직접 찾아보세요.</p></div>`;
+    return;
+  }
+  const kw = query.toLowerCase().split(/\s+/);
+  $('#resultsList').innerHTML = results.map(r => {
+    const meta = r.meta || {};
+    const arts = (r.matching_articles || []).slice(0, 3).map(a => `
+      <div class="res-art" onclick="event.stopPropagation();openLawArticle('${r.law_name}','${r.file_type}','${a.number}')">
+        <span class="art-num">${a.number}</span>
+        <span class="art-title">${a.title ? '(' + a.title + ')' : ''}</span>
+        <div class="art-snip">${highlight(escHtml(a.snippet), kw)}</div>
+      </div>
+    `).join('');
+    return `
+      <div class="res-item" onclick="openLaw('${r.law_name}','${r.file_type}')">
+        <div class="res-name">${highlight(escHtml(r.title || r.law_name), kw)} <span class="res-type">${r.file_type}</span></div>
+        <div class="res-meta">
+          ${(meta['소관부처']||[]).length ? `<span>소관: ${(meta['소관부처']).join(', ')}</span>` : ''}
+          ${meta['공포일자'] ? `<span>공포: ${meta['공포일자']}</span>` : ''}
+        </div>
+        ${arts}
+      </div>
+    `;
+  }).join('');
+}
+
+// ===== Law Viewer (Enhanced) =====
+let highlightedArticles = [];  // 어드바이저에서 추천된 핵심 조문 번호 목록
+let advisorContext = '';        // 검색 맥락
+let focusMode = false;
+
+// 조문 본문을 구조화된 HTML로 변환
+function structureBody(raw) {
+  let html = '';
+  const lines = raw.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) { html += '<div class="para" style="height:6px"></div>'; continue; }
+    // 항 번호 (①②③...)
+    const paraMatch = trimmed.match(/^\*\*([①-⑳㉑-㉟])\*\*\s*(.*)/);
+    if (paraMatch) {
+      html += `<div class="para"><span class="para-num">${paraMatch[1]}</span> ${escHtml(paraMatch[2])}</div>`;
+      continue;
+    }
+    // 호 번호 (1. 2. 3. 또는 1\. 2\.)
+    const hoMatch = trimmed.match(/^(\d+)\\?\.\s+(.*)/);
+    if (hoMatch) {
+      html += `<div class="sub-item"><span class="item-num">${hoMatch[1]}.</span>${escHtml(hoMatch[2])}</div>`;
+      continue;
+    }
+    // 목 (가. 나. 다.)
+    const mokMatch = trimmed.match(/^([가-힣])\\?\.\s+(.*)/);
+    if (mokMatch && mokMatch[1].length === 1) {
+      html += `<div class="sub-sub-item">${mokMatch[1]}. ${escHtml(mokMatch[2])}</div>`;
+      continue;
+    }
+    // 개정 이력
+    const amendMatch = trimmed.match(/^<(개정|신설|삭제)\s+[\d.]+>/);
+    if (amendMatch) {
+      html += `<div class="amendment">${escHtml(trimmed)}</div>`;
+      continue;
+    }
+    html += `<div class="para">${escHtml(trimmed)}</div>`;
+  }
+  return html;
+}
+
+async function openLaw(lawName, fileType, advInfo) {
+  showView('viewer');
+  $('#lawBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  $('#aiSummaryArea').innerHTML = '';
+  focusMode = false;
+
+  // advInfo: {key_articles: "제7조 ..., 제10조 ...", reason: "...", context: "원전 기자재 구매"}
+  if (advInfo) {
+    advisorContext = advInfo.context || '';
+    // key_articles 문자열에서 조문 번호 추출
+    const kaStr = advInfo.key_articles || '';
+    highlightedArticles = [...kaStr.matchAll(/제\d+조(?:의\d+)?/g)].map(m => m[0]);
+  } else {
+    highlightedArticles = [];
+    advisorContext = '';
+  }
+
+  const params = fileType ? `?type=${encodeURIComponent(fileType)}` : '';
+  const data = await api(`/api/law/${encodeURIComponent(lawName)}${params}`);
+  if (data.error) { $('#lawBody').innerHTML = `<div class="empty"><h3>${data.error}</h3></div>`; return; }
+
+  currentLaw = lawName;
+  currentFileType = data.file_type;
+
+  $('#viewerTitle').textContent = data.title || lawName;
+  const meta = data.meta || {};
+  $('#viewerMeta').innerHTML = [
+    meta['소관부처']?.length ? `소관: ${meta['소관부처'].join(', ')}` : '',
+    meta['공포일자'] ? `공포: ${meta['공포일자']}` : '',
+    meta['시행일자'] ? `시행: ${meta['시행일자']}` : '',
+    meta['상태'] || '',
+  ].filter(Boolean).map(s => `<span>${s}</span>`).join('');
+
+  const link = $('#lawGoKr');
+  if (meta['출처']) { link.href = meta['출처']; link.style.display = ''; } else { link.style.display = 'none'; }
+
+  $('#typeTabs').innerHTML = (data.available_types || []).map(t =>
+    `<button class="type-tab ${t === data.file_type ? 'active' : ''}" onclick="openLaw('${lawName}','${t}')">${t}</button>`
+  ).join('');
+
+  const arts = data.articles || [];
+
+  // TOC에 핵심 조문 표시
+  $('#tocGrid').innerHTML = arts.map((a, i) => {
+    const isHL = highlightedArticles.includes(a.number);
+    return `<div class="toc-item ${isHL ? 'active' : ''}" data-idx="${i}" onclick="scrollToArt(${i})">${isHL ? '&#x1F4CC; ' : ''}${a.number}${a.title ? ' (' + a.title + ')' : ''}</div>`;
+  }).join('');
+
+  // Focus toggle
+  if (highlightedArticles.length > 0) {
+    $('#focusToggle').style.display = '';
+    $('#focusCount').textContent = `핵심 ${highlightedArticles.length}개 / 전체 ${arts.length}개 조문`;
+    $('#focusSwitch').classList.remove('on');
+  } else {
+    $('#focusToggle').style.display = 'none';
+  }
+
+  renderArticles(arts);
+  updateBookmarkButtons();
+
+  // AI 요약 (핵심 조문이 있으면 비동기 로드)
+  if (highlightedArticles.length > 0 && advisorContext) {
+    loadAiSummary(lawName, arts);
+  }
+}
+
+function renderArticles(articles) {
+  $('#lawBody').innerHTML = articles.map((a, i) => {
+    const bmActive = isBookmarked(currentLaw, currentFileType, a.number) ? 'active' : '';
+    const isHL = highlightedArticles.includes(a.number);
+    const hlClass = highlightedArticles.length > 0 ? (isHL ? 'highlighted' : (focusMode ? 'dimmed' : '')) : '';
+    const bodyHtml = structureBody(a.content);
+    return `
+      <div class="art-block ${hlClass}" id="art-${i}" ${focusMode && !isHL ? 'style="display:none"' : ''}>
+        <div class="art-head">
+          <span class="art-num">${a.number}</span>
+          ${a.title ? `<span class="art-title-text">(${a.title})</span>` : ''}
+          ${isHL ? '<span class="art-highlight-badge">&#x1F4CC; 핵심</span>' : ''}
+          <button class="btn-bookmark art-bookmark-btn ${bmActive}" data-num="${a.number}"
+                  onclick="event.stopPropagation();openMemoModal('${escHtml(currentLaw)}','${escHtml(currentFileType)}','${a.number}','${escHtml(a.title)}')">
+            <span class="bm-icon ${bmActive ? 'filled' : ''}">${bmActive ? '\u2605' : '\u2606'}</span>
+          </button>
+        </div>
+        <div class="art-body">${bodyHtml}</div>
+      </div>
+    `;
+  }).join('');
+
+  // 핵심 조문으로 자동 스크롤
+  if (highlightedArticles.length > 0) {
+    setTimeout(() => {
+      const first = document.querySelector('.art-block.highlighted');
+      if (first) first.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+  }
+}
+
+function toggleFocusMode() {
+  focusMode = !focusMode;
+  $('#focusSwitch').classList.toggle('on', focusMode);
+  $$('.art-block').forEach(block => {
+    const isHL = block.classList.contains('highlighted');
+    if (focusMode && !isHL) {
+      block.style.display = 'none';
+    } else {
+      block.style.display = '';
+      block.classList.toggle('dimmed', highlightedArticles.length > 0 && !isHL && !focusMode);
+    }
+  });
+}
+
+async function loadAiSummary(lawName, articles) {
+  const hlArts = articles.filter(a => highlightedArticles.includes(a.number));
+  if (!hlArts.length) return;
+
+  $('#aiSummaryArea').innerHTML = `
+    <div class="ai-summary" style="opacity:0.6">
+      <div class="ai-summary-badge">&#9889; AI 실무 가이드 로딩 중...</div>
+    </div>
+  `;
+
+  const articlesText = hlArts.map(a => `${a.number} (${a.title})\n${a.content.substring(0, 500)}`).join('\n\n');
+
+  try {
+    const result = await post('/api/summarize', {
+      context: advisorContext,
+      law_name: lawName,
+      articles_text: articlesText,
+    });
+
+    if (result.error) {
+      $('#aiSummaryArea').innerHTML = '';
+      return;
+    }
+
+    let html = '<div class="ai-summary">';
+    html += '<div class="ai-summary-head"><span class="ai-summary-badge">&#9889; AI 실무 가이드</span></div>';
+    if (result.summary) html += `<div class="ai-summary-text">${escHtml(result.summary)}</div>`;
+
+    if (result.key_points?.length) {
+      html += '<div class="ai-keypoints">';
+      for (const kp of result.key_points) {
+        html += `<div class="ai-kp">
+          <div class="ai-kp-head">${escHtml(kp.article || '')} ${escHtml(kp.title || '')}</div>
+          <div class="ai-kp-point">${escHtml(kp.point || '')}</div>
+          ${kp.warning ? `<div class="ai-kp-warn">&#9888; ${escHtml(kp.warning)}</div>` : ''}
+        </div>`;
+      }
+      html += '</div>';
+    }
+
+    if (result.practical_tips?.length) {
+      html += '<div class="ai-tips"><div class="ai-tips-title">&#x1F4A1; 실무 팁</div>';
+      for (const tip of result.practical_tips) {
+        html += `<div class="ai-tip">${escHtml(tip)}</div>`;
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+    $('#aiSummaryArea').innerHTML = html;
+  } catch (e) {
+    $('#aiSummaryArea').innerHTML = '';
+  }
+}
+
+function scrollToArt(idx) {
+  const el = document.getElementById(`art-${idx}`);
+  if (el) {
+    if (el.style.display === 'none') { focusMode = false; toggleFocusMode(); }
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    $$('.toc-item').forEach(t => t.classList.remove('active'));
+    $(`.toc-item[data-idx="${idx}"]`)?.classList.add('active');
+  }
+}
+
+async function openLawArticle(lawName, fileType, articleNum) {
+  await openLaw(lawName, fileType);
+  setTimeout(() => {
+    $$('.art-block').forEach((block, i) => {
+      if (block.querySelector('.art-num')?.textContent === articleNum) {
+        scrollToArt(i);
+      }
+    });
+  }, 100);
+}
+
+function filterArticles(q) {
+  const query = q.toLowerCase().trim();
+  $$('.art-block').forEach(b => {
+    b.style.display = !query || b.textContent.toLowerCase().includes(query) ? '' : 'none';
+  });
+}
+
+// ===== Advisor =====
+async function doAdvisor(q) {
+  const input = $('#advisorInput');
+  if (q) input.value = q;
+  const query = (input ? input.value : q || '').trim();
+  if (!query) return;
+  showView('advisor');
+  $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);
+  renderAdvisor(data);
+}
+
+let lastAdvisorData = null;
+
+function renderAdvisor(data) {
+  lastAdvisorData = data;
+  const isSolar = data.source === 'solar';
+  $('#advTitle').textContent = `"${data.query}" 관련 확인 법령`;
+  $('#advCategories').innerHTML = (data.categories?.join(' · ') || '') +
+    (isSolar ? ' <span style="color:var(--cyan);font-size:10px;margin-left:6px">&#9889; Solar AI 분석</span>' : '');
+  $('#advCount').textContent = `${data.total}건`;
+
+  if (!data.recommendations?.length) {
+    $('#advList').innerHTML = '<div class="empty"><h3>관련 법령을 찾지 못했습니다</h3><p>다른 키워드로 검색해보세요.</p></div>';
+    return;
+  }
+
+  const analysisHtml = data.analysis ? `
+    <div style="padding:16px 16px 12px;border-bottom:1px solid var(--border);background:var(--cyan-muted);border-radius:var(--radius) var(--radius) 0 0;margin:-1px -1px 0">
+      <div style="font-size:11px;color:var(--cyan);font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:1px">&#9889; AI 분석</div>
+      <div style="font-size:13px;color:var(--text-secondary);line-height:1.6">${escHtml(data.analysis)}</div>
+    </div>
+  ` : '';
+
+  $('#advList').innerHTML = analysisHtml + data.recommendations.map((r, idx) => `
+    <div class="adv-item" onclick="openFromAdvisor(${idx})">
+      <div class="adv-priority p-${r.priority}">${r.priority}</div>
+      <div class="adv-item-body">
+        <div class="adv-law-name">${escHtml(r.law)}<span class="adv-law-type">${escHtml(r.type)}</span></div>
+        <div class="adv-reason">${escHtml(r.reason)}</div>
+        ${r.key_articles ? `<div style="font-size:11px;color:var(--accent);margin-top:3px">&#x1F4CC; ${escHtml(r.key_articles)}</div>` : ''}
+        ${r.from_category ? `<div class="adv-category-tag">${escHtml(r.from_category)}</div>` : ''}
+      </div>
+      <div class="adv-item-action">
+        <button class="btn btn-sm" onclick="event.stopPropagation();openFromAdvisor(${idx})">열기 &#8594;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openFromAdvisor(idx) {
+  if (!lastAdvisorData) return;
+  const r = lastAdvisorData.recommendations[idx];
+  openLaw(r.law, r.type, {
+    key_articles: r.key_articles || '',
+    reason: r.reason || '',
+    context: lastAdvisorData.query || '',
+  });
+}
+
+// ===== View Management =====
+function showView(view) {
+  currentView = view;
+  const isLanding = view === 'welcome';
+  // Landing: full-screen hero, hide sidebar+main
+  document.body.classList.toggle('landing', isLanding);
+  $('#landingWrap').style.display = isLanding ? 'flex' : 'none';
+  $('#mainWrap').style.display = isLanding ? 'none' : '';
+  // Inner views
+  $('#advisorView').className = `card advisor-results ${view === 'advisor' ? 'visible' : ''}`;
+  $('#resultsView').className = `card results ${view === 'results' ? 'visible' : ''}`;
+  $('#viewerView').className = `card viewer ${view === 'viewer' ? 'visible' : ''}`;
+  $('#bookmarksView').className = `card bookmarks-view ${view === 'bookmarks' ? 'visible' : ''}`;
+  const bmBtn = document.querySelector('.bm-nav-btn');
+  if (bmBtn) bmBtn.classList.toggle('active', view === 'bookmarks');
+}
+
+function goBack() {
+  if (currentView === 'viewer') showView('advisor');
+  else showView('welcome');
+}
+</script>
+</body>
+</html>
