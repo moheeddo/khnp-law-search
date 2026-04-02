@@ -2165,8 +2165,9 @@ async function openLaw(lawName, fileType, advInfo) {
     advisorContext = '';
   }
 
-  const params = fileType ? `?type=${encodeURIComponent(fileType)}` : '';
-  const data = await api(`/api/law/${encodeURIComponent(lawName)}${params}`);
+  const lawParams = new URLSearchParams({name: lawName});
+  if (fileType) lawParams.set('type', fileType);
+  const data = await api(`/api/law?${lawParams}`);
   if (data.error) { $('#lawBody').innerHTML = `<div class="empty"><h3>${data.error}</h3></div>`; return; }
 
   currentLaw = lawName;

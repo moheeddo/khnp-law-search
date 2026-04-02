@@ -1,0 +1,9 @@
+legalize-kr
+*.db
+*.png
+*.jpg
+.playwright-mcp
+snap-*.md
+screenshot-*
+app.py
+build_index.py

@@ -192,12 +192,13 @@ def api_advisor():
     if not q: return jsonify({"error":"검색어를 입력해주세요"}),400
     return jsonify(advise(q))
 
-@app.route("/api/law/<path:law_name>")
-def api_law(law_name):
+@app.route("/api/law")
+def api_law():
     idx = get_index()
+    law_name = request.args.get("name","")
     ft = request.args.get("type","법률")
     law = idx.get(law_name)
-    if not law: return jsonify({"error":"법령을 찾을 수 없습니다"}),404
+    if not law: return jsonify({"error":"법령을 찾을 수 없습니다","searched":law_name}),404
     fd = law["files"].get(ft)
     if not fd:
         avail = list(law["files"].keys())
