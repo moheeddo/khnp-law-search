@@ -345,9 +345,8 @@ body {
   max-width: 1480px;
   margin: 0 auto;
   padding: 8px 28px;
-  overflow-x: auto;
-  flex-wrap: nowrap;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
+  flex-wrap: wrap;
 }
 
 /* hide the scrollbar for the horizontal sidebar */
@@ -2123,7 +2122,7 @@ body.landing .landing-wrap { display: flex; }
 <!-- Header -->
 <header class="header">
   <div class="header-top">
-    <div class="header-brand">
+    <div class="header-brand" onclick="showView('welcome')" style="cursor:pointer">
       <div class="brand-icon">⚖</div>
       <div class="brand-text">
         <h1>한수원 계약 법령 검색</h1>
@@ -2131,6 +2130,7 @@ body.landing .landing-wrap { display: flex; }
       </div>
     </div>
     <div class="header-right">
+      <button class="btn btn-sm" onclick="showView('bookmarks')" id="headerBmBtn" style="display:none">&#9733; 즐겨찾기</button>
       <div class="header-stats" id="headerStats">
         <span>법령 <strong id="statLaws">-</strong></span>
         <span>조문 <strong id="statArticles">-</strong></span>
@@ -2611,6 +2611,17 @@ async function loadBookmarks() {
 function renderBookmarkNav() {
   const existing = $('#bookmarkNavArea');
   if (existing) existing.remove();
+
+  // 헤더 즐겨찾기 버튼
+  const hbBtn = $('#headerBmBtn');
+  if (hbBtn) {
+    if (currentUser) {
+      hbBtn.style.display = '';
+      hbBtn.innerHTML = `&#9733; 즐겨찾기 (${bookmarks.length})`;
+    } else {
+      hbBtn.style.display = 'none';
+    }
+  }
 
   if (!currentUser) return;
 
