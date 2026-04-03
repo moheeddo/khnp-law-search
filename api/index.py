@@ -1179,13 +1179,41 @@ def api_autocomplete():
             if term not in seen:
                 seen.add(term)
                 results.append({"text": term, "type": "용어", "icon": "dict", "hint": GLOSSARY[term][:50]})
-    # 4. 동의어 확장 힌트
+    # 4. 실무 Q&A 매칭
+    for qa in PRACTICAL_QA:
+        if any(ql in kw for kw in qa["keywords"]):
+            key = "qa:" + qa["q"]
+            if key not in seen:
+                seen.add(key)
+                results.append({"text": qa["q"], "type": "Q&A", "icon": "qa", "hint": qa["a"][:60]})
+
+    # 5. 계약 사례 매칭
+    AUTOCOMPLETE_CASES = [
+        {"keywords":["입찰","공고","참가자격"],"text":"입찰 참가자격 사전심사","hint":"실적·자격등록·재무상태 요건 확인"},
+        {"keywords":["단가","수산물","식품","납품"],"text":"단가계약 체결 및 이행","hint":"단가만 정하여 수시 발주하는 계약"},
+        {"keywords":["수의계약","수의","긴급"],"text":"수의계약 체결 시 유의사항","hint":"시행령 제26조 사유 해당 시만 가능"},
+        {"keywords":["공사","건설","준공"],"text":"공사계약 준공검사 절차","hint":"하자보수보증금 납부, 하자담보기간 설정"},
+        {"keywords":["보증금","이행보증","하자보증"],"text":"계약보증금 관리","hint":"계약금액의 10~15%, 면제 사유 확인"},
+        {"keywords":["지체","납기","지연"],"text":"지체상금 부과 기준","hint":"공사1/1000, 물품0.75/1000 (1일당)"},
+        {"keywords":["설계변경","물가변동"],"text":"계약금액 조정 절차","hint":"90일+3% 등락 시 물가변동 조정 가능"},
+        {"keywords":["하도급","하청"],"text":"하도급 관리 의무","hint":"대금 60일 이내 지급, 직접지급 검토"},
+        {"keywords":["해지","해제","종료"],"text":"계약 해지·해제 절차","hint":"시정요구→통보→정산→보증금 귀속"},
+        {"keywords":["부정당","비리","담합"],"text":"부정당업자 제재","hint":"6월~2년 입찰제한, 원전비리 가중"},
+    ]
+    for case in AUTOCOMPLETE_CASES:
+        if any(ql in kw for kw in case["keywords"]):
+            key = "case:" + case["text"]
+            if key not in seen:
+                seen.add(key)
+                results.append({"text": case["text"], "type": "사례", "icon": "case", "hint": case["hint"]})
+
+    # 6. 동의어 확장 힌트
     expanded = expand_query(q)
     if expanded != q:
         extra_words = [w for w in expanded.split() if w not in q.split()]
         if extra_words:
             results.append({"text": expanded, "type": "확장검색", "icon": "expand", "hint": "→ " + ", ".join(extra_words[:5])})
-    return jsonify(results[:10])
+    return jsonify(results[:12])
 
 @app.route("/api/bids")
 def api_bids():

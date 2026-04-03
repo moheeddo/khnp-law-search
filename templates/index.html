@@ -373,6 +373,8 @@ body {
 .ac-icon.search { background: var(--cyan-muted); color: var(--cyan); }
 .ac-icon.dict { background: var(--purple-muted); color: var(--purple); }
 .ac-icon.expand { background: var(--success-muted); color: var(--success); }
+.ac-icon.qa { background: var(--warn-muted); color: var(--warn); }
+.ac-icon.case { background: var(--success-muted); color: var(--success); }
 .ac-text {
   font-size: 13px;
   font-weight: 600;
@@ -8634,7 +8636,7 @@ function onAutocomplete(inputId, listId) {
       const results = await api('/api/autocomplete?q=' + encodeURIComponent(q));
       if (!results?.length) { list.style.display = 'none'; return; }
       _acActiveIdx = -1;
-      const iconMap = {book:'&#x1F4D6;', search:'&#x1F50D;', dict:'&#x1F4DA;', expand:'&#x1F504;'};
+      const iconMap = {book:'&#x1F4D6;', search:'&#x1F50D;', dict:'&#x1F4DA;', expand:'&#x1F504;', qa:'&#x2753;', case:'&#x1F4BC;'};
       list.innerHTML = results.map((r, i) => `
         <div class="ac-item" data-idx="${i}" onmousedown="selectAutocomplete('${inputId}','${listId}',${i})">
           <div class="ac-icon ${r.icon || ''}">${iconMap[r.icon] || '&#x1F50D;'}</div>
@@ -8655,12 +8657,18 @@ function selectAutocomplete(inputId, listId, idx) {
   if (!list?._data || !input) return;
   const item = list._data[idx];
   if (!item) return;
-  input.value = item.text;
+
   list.style.display = 'none';
-  // 법령이면 바로 열기, 그 외는 검색
+
   if (item.type === '법령') {
     openLaw(item.text);
+  } else if (item.type === 'Q&A') {
+    input.value = item.text;
+    toast(item.hint, 'info');
+    if (inputId === 'advisorInput') doAdvisor();
+    else doSearch();
   } else {
+    input.value = item.text;
     if (inputId === 'advisorInput') doAdvisor();
     else doSearch();
   }
