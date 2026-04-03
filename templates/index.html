@@ -2557,6 +2557,121 @@ kbd {
 }
 .law-warn-icon { font-size: 16px; flex-shrink: 0; }
 
+/* ===== Glossary Term Tooltip ===== */
+.glossary-term {
+  border-bottom: 1px dotted var(--cyan);
+  cursor: help;
+  position: relative;
+  color: var(--cyan);
+}
+.glossary-term:hover::after {
+  content: attr(data-def);
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.5;
+  width: 300px;
+  z-index: 100;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+  white-space: normal;
+  word-break: keep-all;
+}
+
+/* ===== Recent Law Tabs ===== */
+.recent-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 6px 22px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  background: var(--bg-elevated);
+}
+.recent-tab {
+  padding: 4px 10px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all var(--transition);
+}
+.recent-tab.active {
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 600;
+  border-color: var(--accent);
+}
+.recent-tab:hover { background: var(--bg-hover); }
+.recent-tab-close {
+  font-size: 9px;
+  opacity: 0.4;
+  cursor: pointer;
+}
+.recent-tab-close:hover { opacity: 1; color: var(--danger); }
+
+/* ===== Article Inline Memo ===== */
+.art-memo-area {
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.art-memo-saved {
+  font-size: 12px;
+  color: var(--warn);
+  background: var(--warn-muted);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+.btn-memo {
+  background: none;
+  border: none;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  opacity: 0;
+}
+.art-block:hover .btn-memo { opacity: 1; }
+.btn-memo:hover { color: var(--accent); background: var(--accent-muted); }
+.art-memo-input {
+  margin-top: 4px;
+}
+.art-memo-input textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  resize: vertical;
+  min-height: 50px;
+  outline: none;
+  font-family: inherit;
+}
+.art-memo-input textarea:focus { border-color: var(--accent); }
+.art-memo-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
 /* User stats */
 .user-stats {
   display: flex;
@@ -2797,6 +2912,7 @@ kbd {
 
     <!-- Law Viewer -->
     <div class="card viewer" id="viewerView">
+      <div id="recentTabs" class="recent-tabs"></div>
       <div class="viewer-head">
         <div class="viewer-title-area">
           <button class="btn btn-sm" onclick="goBack()">
@@ -2930,6 +3046,8 @@ let currentLaw = null;
 let currentFileType = null;
 let bmPending = null; // pending bookmark data for memo modal
 let bmActiveFolder = '전체';
+let glossaryData = null; // 용어사전 데이터
+let recentLaws = []; // 최근 열어본 법령 [{law, type, title}]
 
 // ===== Helpers =====
 const $ = s => document.querySelector(s);
@@ -2968,10 +3086,84 @@ function highlight(text, keywords) {
   return r;
 }
 
+// ===== Glossary =====
+async function loadGlossary() {
+  const data = await api('/api/glossary');
+  glossaryData = data?.terms || {};
+}
+
+// ===== Recent Law Tabs =====
+function addRecentLaw(lawName, fileType, title) {
+  recentLaws = recentLaws.filter(r => !(r.law === lawName && r.type === fileType));
+  recentLaws.unshift({law: lawName, type: fileType, title: title || lawName});
+  if (recentLaws.length > 5) recentLaws.pop();
+  renderRecentTabs();
+}
+
+function renderRecentTabs() {
+  const el = document.getElementById('recentTabs');
+  if (!el || !recentLaws.length) { if(el) el.innerHTML=''; return; }
+  el.innerHTML = recentLaws.map((r, i) => `
+    <span class="recent-tab ${r.law === currentLaw && r.type === currentFileType ? 'active' : ''}"
+          onclick="openLaw('${escHtml(r.law)}','${escHtml(r.type)}')"
+          title="${escHtml(r.law)} (${escHtml(r.type)})">
+      ${escHtml(r.title.length > 10 ? r.title.substring(0,10)+'...' : r.title)}
+      <span class="recent-tab-close" onclick="event.stopPropagation();closeRecentTab(${i})">&#x2715;</span>
+    </span>
+  `).join('');
+}
+
+function closeRecentTab(idx) {
+  recentLaws.splice(idx, 1);
+  renderRecentTabs();
+}
+
+// ===== Article Inline Memo =====
+function toggleMemoInput(idx, law, type, num) {
+  const el = document.getElementById('memoInput_' + idx);
+  el.style.display = el.style.display === 'none' ? '' : 'none';
+  if (el.style.display !== 'none') {
+    el.querySelector('textarea').focus();
+  }
+}
+
+function saveMemoInline(idx, law, type, num) {
+  const text = document.getElementById('memoText_' + idx).value.trim();
+  const key = `memo_${law}_${type}_${num}`;
+  if (text) {
+    localStorage.setItem(key, text);
+    toast('메모가 저장되었습니다', 'success');
+  } else {
+    localStorage.removeItem(key);
+  }
+  document.getElementById('memoInput_' + idx).style.display = 'none';
+  const saved = document.getElementById('memo_' + idx);
+  if (saved) {
+    saved.textContent = text;
+    saved.style.display = text ? '' : 'none';
+  } else if (text) {
+    const area = document.getElementById('memoInput_' + idx).parentElement;
+    const div = document.createElement('div');
+    div.className = 'art-memo-saved';
+    div.id = 'memo_' + idx;
+    div.textContent = text;
+    area.insertBefore(div, area.firstChild);
+  }
+}
+
+function deleteMemoInline(idx, law, type, num) {
+  const key = `memo_${law}_${type}_${num}`;
+  localStorage.removeItem(key);
+  document.getElementById('memoInput_' + idx).style.display = 'none';
+  const saved = document.getElementById('memo_' + idx);
+  if (saved) saved.remove();
+  toast('메모가 삭제되었습니다', 'info');
+}
+
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
-  await Promise.all([loadCategories(), loadStats()]);
+  await Promise.all([loadCategories(), loadStats(), loadGlossary()]);
   setupEvents();
   renderSearchHistory();
   renderStats();
@@ -3951,6 +4143,17 @@ function structureBody(raw) {
   html = html.replace(/제(\d+)조(?:의(\d+))?/g, (match) => {
     return `<a class="art-ref-link" onclick="event.stopPropagation();scrollToArticleByNum('${match}')" title="${match}으로 이동">${match}</a>`;
   });
+  // 용어사전 하이라이트 (glossaryData가 로드된 후에만)
+  if (glossaryData) {
+    for (const term of Object.keys(glossaryData)) {
+      if (html.includes(term)) {
+        const def = escHtml(glossaryData[term]);
+        // 이미 태그 내부가 아닌 곳에서만 치환
+        const safePattern = new RegExp(`(?<![<\\/a-zA-Z])${term.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}(?![a-zA-Z>])`, 'g');
+        html = html.replace(safePattern, `<span class="glossary-term" data-def="${def}">${term}</span>`);
+      }
+    }
+  }
   return html;
 }
 
@@ -3978,6 +4181,9 @@ async function openLaw(lawName, fileType, advInfo) {
 
   currentLaw = lawName;
   currentFileType = data.file_type;
+
+  // 최근 열어본 법령 탭에 추가
+  addRecentLaw(lawName, data.file_type, data.title || lawName);
 
   $('#viewerTitle').textContent = data.title || lawName;
   const meta = data.meta || {};
@@ -4133,6 +4339,8 @@ function renderArticles(articles) {
     const isHL = highlightedArticles.includes(a.number);
     const hlClass = highlightedArticles.length > 0 ? (isHL ? 'highlighted' : (focusMode ? 'dimmed' : '')) : '';
     const bodyHtml = structureBody(a.content);
+    const memoKey = `memo_${currentLaw}_${currentFileType}_${a.number}`;
+    const existingMemo = localStorage.getItem(memoKey) || '';
     return `
       <div class="art-block ${hlClass}" id="art-${i}" ${focusMode && !isHL ? 'style="display:none"' : ''}>
         <div class="art-head">
@@ -4148,6 +4356,20 @@ function renderArticles(articles) {
                   title="조문 복사">&#x1F4CB;</button>
         </div>
         <div class="art-body">${bodyHtml}</div>
+        <div class="art-memo-area">
+          ${existingMemo ? `<div class="art-memo-saved" id="memo_${i}">${escHtml(existingMemo)}</div>` : ''}
+          <button class="btn-memo" onclick="event.stopPropagation();toggleMemoInput(${i},'${escHtml(currentLaw)}','${escHtml(currentFileType)}','${a.number}')" title="메모 추가">
+            ${existingMemo ? '&#x1F4DD; 메모 수정' : '&#x1F4DD; 메모'}
+          </button>
+          <div class="art-memo-input" id="memoInput_${i}" style="display:none">
+            <textarea id="memoText_${i}" placeholder="이 조문에 대한 메모를 남겨보세요">${escHtml(existingMemo)}</textarea>
+            <div class="art-memo-actions">
+              <button class="btn btn-sm btn-accent" onclick="saveMemoInline(${i},'${escHtml(currentLaw)}','${escHtml(currentFileType)}','${a.number}')">저장</button>
+              <button class="btn btn-sm" onclick="document.getElementById('memoInput_${i}').style.display='none'">취소</button>
+              ${existingMemo ? `<button class="btn btn-sm btn-danger" onclick="deleteMemoInline(${i},'${escHtml(currentLaw)}','${escHtml(currentFileType)}','${a.number}')">삭제</button>` : ''}
+            </div>
+          </div>
+        </div>
       </div>
     `;
   }).join('');
