@@ -2890,6 +2890,62 @@ kbd {
   color: var(--accent);
 }
 
+/* 계약 리스크 체커 */
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.risk-card {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+}
+.risk-card.risk-high { border-left-color: var(--danger); }
+.risk-card.risk-medium { border-left-color: var(--warn); }
+.risk-card.risk-low { border-left-color: var(--success); }
+.risk-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.risk-level { font-size: 12px; }
+.risk-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.risk-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 4px;
+}
+.risk-law {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 법령 간 상호참조 링크 */
+.ext-law-ref {
+  color: var(--purple);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  font-weight: 500;
+}
+.ext-law-ref:hover {
+  text-decoration-style: solid;
+  background: var(--purple-muted);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
 </style>
 </head>
 <body class="landing">
@@ -4153,6 +4209,25 @@ function renderSmartResults(searchResults, advisorData, query) {
       }
     }
 
+    // 5-pre3. 계약 리스크 체커
+    if (refData.risks?.length) {
+      html += '<div class="smart-divider">계약 리스크 체크</div>';
+      html += '<div class="risk-grid">';
+      const levelIcons = {high:'&#x1F534;', medium:'&#x1F7E1;', low:'&#x1F7E2;'};
+      const levelLabels = {high:'높음', medium:'중간', low:'낮음'};
+      for (const r of refData.risks) {
+        html += `<div class="risk-card risk-${r.level}">
+          <div class="risk-header">
+            <span class="risk-level">${levelIcons[r.level]||''} ${levelLabels[r.level]||''}</span>
+            <span class="risk-title">${escHtml(r.title)}</span>
+          </div>
+          <div class="risk-desc">${escHtml(r.desc)}</div>
+          <div class="risk-law">${escHtml(r.law)}</div>
+        </div>`;
+      }
+      html += '</div>';
+    }
+
     // 5a. 참고 조문 (전체 내용 + 하이라이트 + 펼치기/접기)
     if (refData.articles?.length) {
       html += `<div class="smart-divider">관련 조문 원문</div>
@@ -4396,8 +4471,16 @@ function structureBody(raw) {
   html = html.replace(/&lt;(개정)\s+([\d.]+)&gt;/g, '<span class="amend-tag amend-revised">개정 $2</span>');
   html = html.replace(/&lt;(신설)\s+([\d.]+)&gt;/g, '<span class="amend-tag amend-new">신설 $2</span>');
   html = html.replace(/&lt;(삭제)\s+([\d.]+)&gt;/g, '<span class="amend-tag amend-deleted">삭제 $2</span>');
-  // 조문 참조 링크화: "제7조" → 클릭 가능 링크
-  html = html.replace(/제(\d+)조(?:의(\d+))?/g, (match) => {
+  // 다른 법령 참조 링크화: 「법령명」 패턴
+  html = html.replace(/「([^」]+)」\s*(제\d+조(?:의\d+)?)?/g, (match, lawName, artNum) => {
+    if (artNum) {
+      return `<a class="ext-law-ref" onclick="event.stopPropagation();openLawArticle('${escHtml(lawName)}','법률','${escHtml(artNum)}')" title="${lawName} ${artNum} 열기">「${escHtml(lawName)}」 ${escHtml(artNum)}</a>`;
+    }
+    return `<a class="ext-law-ref" onclick="event.stopPropagation();openLaw('${escHtml(lawName)}')" title="${lawName} 열기">「${escHtml(lawName)}」</a>`;
+  });
+  // 조문 참조 링크화: "제7조" → 클릭 가능 링크 (이미 링크 안에 있는 것은 제외)
+  html = html.replace(/(<a[^>]*>.*?<\/a>)|제(\d+)조(?:의(\d+))?/g, (match, anchor, num) => {
+    if (anchor) return anchor; // 이미 앵커 태그 내부이면 그대로 유지
     return `<a class="art-ref-link" onclick="event.stopPropagation();scrollToArticleByNum('${match}')" title="${match}으로 이동">${match}</a>`;
   });
   // 용어사전 하이라이트 (glossaryData가 로드된 후에만)

@@ -468,6 +468,63 @@ def get_reference_data(query, recommendations):
             day += days
         ref["timeline"] = {"steps": timeline, "total_days": day}
 
+    # ── 5. 계약 리스크 체커 ──
+    RISK_DB = [
+        {"keywords":["공사","건설","시공"],"risks":[
+            {"level":"high","title":"안전사고 리스크","desc":"공사현장 사망사고 시 중대재해처벌법 적용. 발주자도 안전관리의무 위반 시 형사처벌 가능.","law":"산업안전보건법 제63조"},
+            {"level":"high","title":"하도급 대금 미지급","desc":"하도급대금 60일 이내 미지급 시 과징금 부과. 직접지급 사유 발생 시 원도급자 부담.","law":"하도급법 제13조"},
+            {"level":"medium","title":"설계변경 분쟁","desc":"설계변경 범위·금액 산정 시 발주자-시공자 간 분쟁 빈발. 변경 전 서면 승인 필수.","law":"시행령 제65조"},
+            {"level":"low","title":"물가변동 조정 누락","desc":"입찰일 기준 90일 경과 + 3% 등락 요건 확인 누락 시 계약금액 조정 기회 상실.","law":"시행령 제64조"},
+        ]},
+        {"keywords":["물품","구매","납품","자재","기자재","수산물","식품"],"risks":[
+            {"level":"high","title":"납품 부적격 리스크","desc":"규격·품질 미달 납품 시 계약해제 사유. 원전 관련 물품은 원전비리방지법 적용.","law":"국가계약법 제27조"},
+            {"level":"medium","title":"검수 지연","desc":"납품 후 14일 이내 검사 미완료 시 자동 검사 합격 간주 가능. 검수체계 사전 수립 필요.","law":"시행령 제55조"},
+            {"level":"low","title":"단가 변동","desc":"단가계약 기간 중 시장가격 급등락 시 계약 조정 협의 필요.","law":"시행령 제22조"},
+        ]},
+        {"keywords":["용역","설계","컨설팅","SW","IT","엔지니어링"],"risks":[
+            {"level":"high","title":"성과물 저작권 분쟁","desc":"용역 결과물의 저작권 귀속을 계약서에 명확히 규정하지 않으면 분쟁 발생.","law":"저작권법 제2조"},
+            {"level":"medium","title":"과업범위 변경","desc":"추가 과업 요구 시 계약변경 없이 수행하면 추가비용 청구 불가.","law":"시행령 제65조"},
+            {"level":"low","title":"기성금 정산 오류","desc":"투입인력·기간 기준 기성금 산정 시 실투입 확인 절차 미비로 과다지급 위험.","law":"시행령 제55조"},
+        ]},
+        {"keywords":["입찰","공고","경쟁","참가자격"],"risks":[
+            {"level":"high","title":"입찰담합","desc":"2인 이상 업체 간 담합 적발 시 입찰참가자격 2년 제한 + 과징금.","law":"독점규제법 제40조"},
+            {"level":"medium","title":"참가자격 하자","desc":"입찰참가자격 미충족 업체의 낙찰 시 계약 무효 가능. PQ 검증 철저히.","law":"시행령 제12조"},
+            {"level":"low","title":"예정가격 유출","desc":"예정가격 사전 유출 시 입찰 무효 + 관련자 형사처벌.","law":"국가계약법 제27조"},
+        ]},
+        {"keywords":["수의계약","수의","긴급"],"risks":[
+            {"level":"high","title":"수의계약 사유 부적합","desc":"수의계약 사유 미해당 시 감사 지적. 긴급성 입증 자료 사전 확보 필수.","law":"시행령 제26조"},
+            {"level":"medium","title":"특혜 시비","desc":"특정 업체 반복 수의계약 시 특혜 의혹. 견적서 2인 이상 징수 + 업체 교차 선정.","law":"공기업규칙 제7조"},
+        ]},
+        {"keywords":["원전","원자력","핵","방사선"],"risks":[
+            {"level":"high","title":"품질보증(QA) 부적합","desc":"안전등급 기기의 QA 미이행 시 원전비리방지법 적용. 최대 2년 입찰제한.","law":"원전비리방지법 제6조"},
+            {"level":"high","title":"허위 시험성적서","desc":"시험성적서 위조 시 형사처벌 + 영구 입찰제한 가능.","law":"원전비리방지법 제3조"},
+            {"level":"medium","title":"방사선 안전","desc":"방사선 작업 관련 계약 시 방사선 종사자 피폭관리 의무.","law":"원자력안전법 제91조"},
+        ]},
+        {"keywords":["보증금","이행보증","하자보증"],"risks":[
+            {"level":"medium","title":"보증서 유효기간 만료","desc":"보증보험증권 유효기간이 계약기간보다 짧으면 보증 공백 발생. 연장 확인 필수.","law":"시행령 제50조"},
+            {"level":"low","title":"보증금 면제 오남용","desc":"면제 사유 미해당 시 감사 지적. 면제 사유 근거 서류 반드시 보관.","law":"시행령 제37조"},
+        ]},
+        {"keywords":["해지","해제","계약종료"],"risks":[
+            {"level":"high","title":"부당 해지","desc":"해지 사유 미충족 시 손해배상 청구 당할 수 있음. 법무 검토 필수.","law":"민법 제544조"},
+            {"level":"medium","title":"기성정산 분쟁","desc":"해지 시점의 이행 완료 부분 산정에서 발주자-시공자 간 이견 빈발.","law":"시행령 제77조"},
+        ]},
+    ]
+
+    risks = []
+    for r in RISK_DB:
+        if any(kw in q for kw in r["keywords"]):
+            risks.extend(r["risks"])
+    # 중복 제거 + 레벨 정렬
+    seen_titles = set()
+    unique_risks = []
+    for r in risks:
+        if r["title"] not in seen_titles:
+            seen_titles.add(r["title"])
+            unique_risks.append(r)
+    level_order = {"high":0, "medium":1, "low":2}
+    unique_risks.sort(key=lambda x: level_order.get(x["level"], 9))
+    ref["risks"] = unique_risks[:8]
+
     return ref
 
 def get_related_queries(query):
