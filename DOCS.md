@@ -281,9 +281,35 @@ python build_index.py
 
 | 날짜 | 변경 내용 |
 |------|-----------|
+| 2026-04-04 | 3차 QA: 성능 최적화 (응답 크기 축소, 검색 조기종료), 접근성 개선 (aria-label, 색상 대비), 보안 강화 (XSS 방어, 입력 길이 제한), font-display: swap |
 | 2026-04-03 | 2차 QA + 고도화: key_articles 누락 27건 보완, refData 변수 참조 버그 수정, 접기/펼치기 섹션 4종 추가, 로딩 인디케이터 개선, 에러 메시지 사용자 친화적 개선 |
 | 2026-04-03 | 3차 고도화: 금액별 계약방식 자동 판별 (공사/용역/물품, 6단계 금액 구간), 최근 검색 이력 (localStorage, 최대 10건), 유사 검색어 추천 (시나리오 키워드 기반) |
 | 2026-04-03 | 계약 프로세스 플로우 기능 추가: 검색 키워드 기반 6가지 계약 유형(입찰, 공사, 용역, 구매, 단가, 수의계약)의 단계별 프로세스를 시각적으로 표시. 백엔드 `PROCESS_FLOWS` 데이터 및 `get_reference_data` 연동, 프론트엔드 프로세스 다이어그램 렌더링 구현. |
+
+### 2026-04-04 (3차 QA)
+- **성능 최적화 (백엔드)**:
+  - `get_reference_data`: 참고 조문 content를 1000자로 제한 (응답 크기 축소)
+  - `search_laws`: khnp_priority 캐싱, 조문 매칭 5개 도달 시 조기 종료, 불필요한 `.lower()` 재계산 제거
+  - `_get_khnp_priority()` 캐시 함수 분리
+- **성능 최적화 (프론트엔드)**:
+  - Pretendard 폰트에 `font-display: swap` 적용 (폰트 로딩 중에도 텍스트 표시)
+  - `loadBidResults`, `loadClauses`는 이미 비동기(async) 호출로 최적화 확인 완료
+- **접근성(a11y) 개선**:
+  - 검색 input 2개에 `aria-label` 추가 (법령 검색, AI 어드바이저 검색)
+  - 카테고리 select에 `aria-label` 추가
+  - 테마 토글 버튼에 `aria-label` 추가
+  - 음성 검색 버튼 2개에 `aria-label` 추가
+  - 검색 버튼 2개, 즐겨찾기 버튼에 `aria-label` 추가
+  - 다크모드 `--text-muted` 색상을 `#636a7e` → `#8890a4`로 변경 (WCAG AA 대비율 4.5:1 이상 충족)
+- **보안 강화**:
+  - 모든 API 엔드포인트에 입력 길이 제한 추가 (`/api/search` 200자, `/api/advisor` 500자, `/api/bids` 100자, `/api/summarize` context 500자/law_name 200자/articles_text 5000자, `/api/check-updates` 2000자·30개 제한)
+  - `/api/search`의 category 파라미터 화이트리스트 검증 추가
+  - `viewerMeta` innerHTML에 `escHtml()` 적용 (소관부처, 공포일자, 시행일자, 상태)
+  - `typeTabs` 버튼 렌더링에 `escHtml()` 적용 (lawName, type)
+  - `renderArticles`의 `a.number`, `a.title` 표시에 `escHtml()` 적용
+  - `tocGrid` 목차의 `a.number`, `a.title`에 `escHtml()` 적용
+  - `escHtml()` 적용 여부 전수 검사: `structureBody`, `hlContent`, `hlContentGlobal` 모두 escHtml 선행 처리 확인 완료
+  - localStorage: searchHistory(10개), activityLog(50개), lawCache(10개) 크기 제한 확인 완료
 
 ### 2026-04-03 (2차 QA + 고도화)
 - **백엔드 (api/index.py)**: ADVISOR_SCENARIOS 전 시나리오(24개)의 recommendations에 key_articles 누락 27건 보완 (원자력사업 8건, 공사계약 3건, 용역계약 2건, 물품구매 2건, 입찰절차 1건, 전력사업 1건, 준공하자 1건, 하도급관리 1건, 청렴부정당 1건, 안전관리 2건, 공공기관경영 1건, 방폐물해체 1건, 단가계약 1건, 낙찰심사 1건, 대가지급 1건)

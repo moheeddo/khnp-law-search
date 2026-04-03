@@ -6,6 +6,7 @@
 <title>한수원 계약 법령 검색</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚖</text></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+<style>@font-face { font-family: 'Pretendard Variable'; font-display: swap; }</style>
 <style>
 /* ===== Design Tokens ===== */
 :root {
@@ -69,7 +70,7 @@
   --border-light: rgba(255,255,255,0.05);
   --text-primary: #e8eaed;
   --text-secondary: #9aa0b0;
-  --text-muted: #636a7e;
+  --text-muted: #8890a4;
   --text-inverse: #0f1117;
   --accent-muted: rgba(37,99,235,0.15);
   --success-muted: rgba(5,150,105,0.15);
@@ -4151,12 +4152,12 @@ kbd {
       </div>
     </div>
     <div class="header-right">
-      <button class="btn btn-sm" onclick="showView('bookmarks')" id="headerBmBtn" style="display:none">&#9733; 즐겨찾기</button>
+      <button class="btn btn-sm" onclick="showView('bookmarks')" id="headerBmBtn" style="display:none" aria-label="즐겨찾기 목록 보기">&#9733; 즐겨찾기</button>
       <div class="header-stats" id="headerStats">
         <span>법령 <strong id="statLaws">-</strong></span>
         <span>조문 <strong id="statArticles">-</strong></span>
       </div>
-      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="테마 변경">&#x1F319;</button>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="테마 변경" aria-label="다크/라이트 테마 전환">&#x1F319;</button>
       <div class="auth-area" id="authArea"></div>
     </div>
   </div>
@@ -4165,13 +4166,14 @@ kbd {
       <div class="search-input-wrap">
         <span style="font-size:16px">&#x1F50D;</span>
         <input type="text" class="search-input" id="searchInput"
-               placeholder="법령명, 조문 내용, 키워드 검색 (예: 입찰, 하자보수, 계약보증금)">
+               placeholder="법령명, 조문 내용, 키워드 검색 (예: 입찰, 하자보수, 계약보증금)"
+               aria-label="법령 검색어 입력">
       </div>
-      <select class="search-filter" id="categoryFilter">
+      <select class="search-filter" id="categoryFilter" aria-label="법령 카테고리 필터">
         <option value="">전체 법령</option>
       </select>
-      <button class="voice-btn" onclick="startVoiceSearch('searchInput')" title="음성 검색">&#x1F3A4;</button>
-      <button class="search-btn" id="searchBtn">검색</button>
+      <button class="voice-btn" onclick="startVoiceSearch('searchInput')" title="음성 검색" aria-label="음성으로 검색">&#x1F3A4;</button>
+      <button class="search-btn" id="searchBtn" aria-label="법령 검색 실행">검색</button>
     </div>
     <div class="quick-tags" id="quickTags">
       <span class="quick-tag" data-q="입찰">입찰</span>
@@ -4287,9 +4289,10 @@ kbd {
     <div id="activityTimeline"></div>
     <div class="advisor-search">
       <input type="text" id="advisorInput" class="advisor-input"
-             placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경...">
-      <button class="voice-btn" onclick="startVoiceSearch('advisorInput')" title="음성 검색">&#x1F3A4;</button>
-      <button class="advisor-btn" id="advisorBtn">검색</button>
+             placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경..."
+             aria-label="AI 어드바이저 검색어 입력">
+      <button class="voice-btn" onclick="startVoiceSearch('advisorInput')" title="음성 검색" aria-label="음성으로 어드바이저 검색">&#x1F3A4;</button>
+      <button class="advisor-btn" id="advisorBtn" aria-label="AI 어드바이저 검색 실행">검색</button>
     </div>
     <div id="myContracts" class="my-contracts"></div>
     <div id="searchHistory" class="search-history"></div>
@@ -6827,17 +6830,17 @@ async function openLaw(lawName, fileType, advInfo) {
   $('#viewerTitle').textContent = data.title || lawName;
   const meta = data.meta || {};
   $('#viewerMeta').innerHTML = [
-    meta['소관부처']?.length ? `소관: ${meta['소관부처'].join(', ')}` : '',
-    meta['공포일자'] ? `공포: ${meta['공포일자']}` : '',
-    meta['시행일자'] ? `시행: ${meta['시행일자']}` : '',
-    meta['상태'] || '',
+    meta['소관부처']?.length ? `소관: ${escHtml(meta['소관부처'].join(', '))}` : '',
+    meta['공포일자'] ? `공포: ${escHtml(meta['공포일자'])}` : '',
+    meta['시행일자'] ? `시행: ${escHtml(meta['시행일자'])}` : '',
+    meta['상태'] ? escHtml(meta['상태']) : '',
   ].filter(Boolean).map(s => `<span>${s}</span>`).join('');
 
   const link = $('#lawGoKr');
   if (meta['출처']) { link.href = meta['출처']; link.style.display = ''; } else { link.style.display = 'none'; }
 
   $('#typeTabs').innerHTML = (data.available_types || []).map(t =>
-    `<button class="type-tab ${t === data.file_type ? 'active' : ''}" onclick="openLaw('${lawName}','${t}')">${t}</button>`
+    `<button class="type-tab ${t === data.file_type ? 'active' : ''}" onclick="openLaw('${escHtml(lawName)}','${escHtml(t)}')">${escHtml(t)}</button>`
   ).join('');
 
   // 비교 보기 버튼 표시 (2개 이상 타입일 때)
@@ -6863,7 +6866,7 @@ async function openLaw(lawName, fileType, advInfo) {
   // TOC에 핵심 조문 표시
   $('#tocGrid').innerHTML = arts.map((a, i) => {
     const isHL = highlightedArticles.includes(a.number);
-    return `<div class="toc-item ${isHL ? 'active' : ''}" data-idx="${i}" onclick="scrollToArt(${i})">${isHL ? '&#x1F4CC; ' : ''}${a.number}${a.title ? ' (' + a.title + ')' : ''}</div>`;
+    return `<div class="toc-item ${isHL ? 'active' : ''}" data-idx="${i}" onclick="scrollToArt(${i})">${isHL ? '&#x1F4CC; ' : ''}${escHtml(a.number)}${a.title ? ' (' + escHtml(a.title) + ')' : ''}</div>`;
   }).join('');
 
   // TOC count and auto-collapse
@@ -7045,8 +7048,8 @@ function renderArticles(articles) {
     return `
       <div class="art-block ${hlClass}" id="art-${i}" ${focusMode && !isHL ? 'style="display:none"' : ''}>
         <div class="art-head">
-          <span class="art-num">${a.number}</span>
-          ${a.title ? `<span class="art-title-text">(${a.title})</span>` : ''}
+          <span class="art-num">${escHtml(a.number)}</span>
+          ${a.title ? `<span class="art-title-text">(${escHtml(a.title)})</span>` : ''}
           ${isHL ? '<span class="art-highlight-badge">&#x1F4CC; 핵심</span>' : ''}
           <button class="btn-bookmark art-bookmark-btn ${bmActive}" data-num="${a.number}"
                   onclick="event.stopPropagation();openMemoModal('${escHtml(currentLaw)}','${escHtml(currentFileType)}','${a.number}','${escHtml(a.title)}')">

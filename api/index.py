@@ -118,18 +118,29 @@ def get_index():
     return _index
 
 # ===== Search =====
+_khnp_priority_cache = None
+def _get_khnp_priority():
+    global _khnp_priority_cache
+    if _khnp_priority_cache is None:
+        _khnp_priority_cache = set()
+        for cat in KHNP_CATEGORIES.values():
+            _khnp_priority_cache.update(cat["laws"])
+    return _khnp_priority_cache
+
 def search_laws(query, category=None, limit=30):
     index = get_index()
     results = []
     keywords = query.lower().split()
-    khnp_priority = set()
-    for cat in KHNP_CATEGORIES.values():
-        khnp_priority.update(cat["laws"])
+    if not keywords:
+        return []
+    khnp_priority = _get_khnp_priority()
     scope = index
     if category and category in KHNP_CATEGORIES:
-        scope = {k: v for k, v in index.items() if k in KHNP_CATEGORIES[category]["laws"]}
+        cat_laws = set(KHNP_CATEGORIES[category]["laws"])
+        scope = {k: v for k, v in index.items() if k in cat_laws}
     for law_name, law_data in scope.items():
-        name_match = all(kw in law_name.lower() for kw in keywords)
+        law_name_lower = law_name.lower()
+        name_match = all(kw in law_name_lower for kw in keywords)
         name_score = 100 if name_match else 0
         khnp_bonus = 200 if law_name in khnp_priority else 0
         for file_type, file_data in law_data["files"].items():
@@ -142,12 +153,15 @@ def search_laws(query, category=None, limit=30):
                 art_text = f"{art['number']} {art['title']} {art['content']}".lower()
                 if all(kw in art_text for kw in keywords):
                     s = ""
+                    content_lower = art['content'].lower()
                     for kw in keywords:
-                        idx = art['content'].lower().find(kw)
+                        idx = content_lower.find(kw)
                         if idx >= 0:
                             s = "..." + art['content'][max(0,idx-60):idx+len(kw)+60] + "..."
                             break
                     matching.append({"number":art["number"],"title":art["title"],"snippet":s or art["content"][:150]+"...","score":50})
+                    if len(matching) >= 5:
+                        break  # 조문 매칭 5개까지만 검색 (성능 최적화)
             if name_score > 0 or matching:
                 results.append({"law_name":law_name,"file_type":file_type,"title":meta.get("제목",law_name),"meta":{"소관부처":meta.get("소관부처",[]),"공포일자":meta.get("공포일자",""),"상태":meta.get("상태",""),"출처":meta.get("출처","")},"matching_articles":sorted(matching,key=lambda x:-x["score"])[:5],"score":name_score+khnp_bonus+sum(a["score"] for a in matching[:5])})
     results.sort(key=lambda x:-x["score"])
@@ -604,11 +618,13 @@ def get_reference_data(query, recommendations):
         for art in fd.get("articles",[]):
             if art["number"] in art_nums and art["number"] not in seen_arts:
                 seen_arts.add(art["number"])
-                # 전체 내용 전달 (프론트에서 펼치기/접기)
+                # 내용 1000자로 제한 (응답 크기 최적화)
+                content = art["content"]
+                truncated = len(content) > 1000
                 ref["articles"].append({
                     "law": law_name, "type": file_type,
                     "number": art["number"], "title": art["title"],
-                    "content": art["content"],
+                    "content": content[:1000] + ("..." if truncated else ""),
                     "reason": r.get("reason",""),
                     "priority": r.get("priority","참고"),
                 })
@@ -626,10 +642,12 @@ def get_reference_data(query, recommendations):
                     text = f"{art['title']} {art['content']}".lower()
                     if all(kw in text for kw in kws):
                         seen_arts.add(k)
+                        content = art["content"]
+                        truncated = len(content) > 1000
                         ref["articles"].append({
                             "law": law_name, "type": ft,
                             "number": art["number"], "title": art["title"],
-                            "content": art["content"],
+                            "content": content[:1000] + ("..." if truncated else ""),
                             "reason": f"'{query}' 키워드 포함 조문",
                             "priority": "참고",
                         })
@@ -1010,13 +1028,14 @@ def api_stats():
 
 @app.route("/api/search")
 def api_search():
-    q = request.args.get("q","").strip()
+    q = request.args.get("q","").strip()[:200]  # 입력 길이 제한
     if not q: return jsonify([])
-    return jsonify(search_laws(q, request.args.get("category") or None))
+    cat = request.args.get("category","").strip()
+    return jsonify(search_laws(q, cat if cat in KHNP_CATEGORIES else None))
 
 @app.route("/api/advisor")
 def api_advisor():
-    q = request.args.get("q","").strip()
+    q = request.args.get("q","").strip()[:500]  # 입력 길이 제한
     if not q: return jsonify({"error":"검색어를 입력해주세요"}),400
     return jsonify(advise(q))
 
@@ -1062,11 +1081,14 @@ def api_law():
 @app.route("/api/summarize", methods=["POST"])
 def api_summarize():
     data = request.get_json() or {}
-    return jsonify(summarize(data.get("context",""), data.get("law_name",""), data.get("articles_text","")))
+    context = (data.get("context","") or "")[:500]
+    law_name = (data.get("law_name","") or "")[:200]
+    articles_text = (data.get("articles_text","") or "")[:5000]
+    return jsonify(summarize(context, law_name, articles_text))
 
 @app.route("/api/bids")
 def api_bids():
-    q = request.args.get("q","").strip()
+    q = request.args.get("q","").strip()[:100]  # 입력 길이 제한
     if not q: return jsonify([])
     return jsonify(fetch_g2b_bids(q))
 
@@ -1077,14 +1099,14 @@ def auth_me():
 
 @app.route("/api/glossary")
 def api_glossary():
-    q = request.args.get("q","").strip()
+    q = request.args.get("q","").strip()[:100]
     if q and q in GLOSSARY:
         return jsonify({"term": q, "definition": GLOSSARY[q]})
     return jsonify({"terms": GLOSSARY})
 
 @app.route("/api/clauses")
 def api_clauses():
-    q = request.args.get("q","").strip().lower()
+    q = request.args.get("q","").strip()[:100].lower()
     if q:
         return jsonify([c for c in CONTRACT_CLAUSES if q in c["clause"].lower() or q in c["desc"].lower()])
     return jsonify(CONTRACT_CLAUSES)
@@ -1110,7 +1132,8 @@ def api_templates():
 @app.route("/api/check-updates")
 def api_check_updates():
     """구독 법령의 메타 정보 반환 (프론트에서 변경 비교)"""
-    names = request.args.get("names","").split(",")
+    names = request.args.get("names","")[:2000].split(",")  # 입력 길이 제한
+    names = names[:30]  # 최대 30개 법령
     index = get_index()
     result = []
     for name in names:
