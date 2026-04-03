@@ -117,6 +117,50 @@ def get_index():
                 _index.update(json.load(f))
     return _index
 
+# ===== 검색어 동의어·약어 확장 =====
+QUERY_SYNONYMS = {
+    "sw": "소프트웨어 SW", "SW": "소프트웨어 SW",
+    "it": "정보기술 IT 소프트웨어", "IT": "정보기술 IT 소프트웨어",
+    "si": "시스템통합 SI", "SI": "시스템통합 SI",
+    "pq": "사전심사 PQ 입찰참가자격", "PQ": "사전심사 PQ 입찰참가자격",
+    "mas": "다수공급자계약 MAS 단가", "MAS": "다수공급자계약 MAS 단가",
+    "qa": "품질보증 QA 품질관리", "QA": "품질보증 QA 품질관리",
+    "epc": "설계시공일괄 EPC 턴키", "EPC": "설계시공일괄 EPC 턴키",
+    "cm": "건설사업관리 CM 감리", "CM": "건설사업관리 CM 감리",
+    "bim": "건축정보모델링 BIM 설계", "BIM": "건축정보모델링 BIM 설계",
+    "erp": "전사자원관리 ERP 시스템", "ERP": "전사자원관리 ERP 시스템",
+    "sw사업": "소프트웨어 SW 용역 IT 정보기술",
+    "it사업": "정보기술 IT 소프트웨어 SW 용역",
+    "전산": "소프트웨어 SW IT 정보기술 전산",
+    "전자입찰": "전자조달 나라장터 전자입찰",
+    "나라장터": "전자조달 나라장터 조달",
+    "긴급구매": "긴급 수의계약 긴급구매",
+    "긴급조달": "긴급 수의계약 긴급조달",
+    "원전": "원자력 원전 핵 원자력발전",
+    "방폐물": "방사성폐기물 방폐물 해체",
+    "안전": "산업안전 안전관리 안전보건",
+    "하자": "하자보수 하자담보 하자보증",
+    "준공": "준공검사 준공 검수",
+    "기성": "기성금 기성검사 대가지급",
+}
+
+def expand_query(query):
+    """검색어의 약어·동의어를 확장하여 보충 키워드 추가"""
+    words = query.split()
+    expanded = list(words)
+    for w in words:
+        if w in QUERY_SYNONYMS:
+            for syn in QUERY_SYNONYMS[w].split():
+                if syn not in expanded:
+                    expanded.append(syn)
+        # 소문자도 체크
+        wl = w.lower()
+        if wl in QUERY_SYNONYMS:
+            for syn in QUERY_SYNONYMS[wl].split():
+                if syn not in expanded:
+                    expanded.append(syn)
+    return " ".join(expanded)
+
 # ===== Search =====
 _khnp_priority_cache = None
 def _get_khnp_priority():
@@ -130,7 +174,11 @@ def _get_khnp_priority():
 def search_laws(query, category=None, limit=30):
     index = get_index()
     results = []
-    keywords = query.lower().split()
+    original_kws = query.lower().split()
+    expanded_kws = expand_query(query).lower().split()
+    # 확장된 키워드 중 원래 없던 것 (동의어)
+    synonym_kws = [kw for kw in expanded_kws if kw not in original_kws]
+    keywords = original_kws
     if not keywords:
         return []
     khnp_priority = _get_khnp_priority()
@@ -141,25 +189,35 @@ def search_laws(query, category=None, limit=30):
     for law_name, law_data in scope.items():
         law_name_lower = law_name.lower()
         name_match = all(kw in law_name_lower for kw in keywords)
-        name_score = 100 if name_match else 0
+        # 동의어로도 법령명 매칭 시도
+        syn_name_match = synonym_kws and any(kw in law_name_lower for kw in synonym_kws)
+        name_score = 100 if name_match else (60 if syn_name_match else 0)
         khnp_bonus = 200 if law_name in khnp_priority else 0
         for file_type, file_data in law_data["files"].items():
             meta = file_data.get("meta", {})
             title = meta.get("제목", law_name)
-            if all(kw in title.lower() for kw in keywords):
+            title_lower = title.lower()
+            if all(kw in title_lower for kw in keywords):
                 name_score = max(name_score, 90)
+            elif synonym_kws and any(kw in title_lower for kw in synonym_kws):
+                name_score = max(name_score, 50)
             matching = []
             for art in file_data.get("articles", []):
                 art_text = f"{art['number']} {art['title']} {art['content']}".lower()
-                if all(kw in art_text for kw in keywords):
+                # 원래 키워드 전체 매칭 OR 동의어 중 하나 이상 매칭
+                orig_match = all(kw in art_text for kw in keywords)
+                syn_match = synonym_kws and any(kw in art_text for kw in synonym_kws)
+                if orig_match or syn_match:
                     s = ""
                     content_lower = art['content'].lower()
-                    for kw in keywords:
+                    all_kws = keywords + synonym_kws
+                    for kw in all_kws:
                         idx = content_lower.find(kw)
                         if idx >= 0:
                             s = "..." + art['content'][max(0,idx-60):idx+len(kw)+60] + "..."
                             break
-                    matching.append({"number":art["number"],"title":art["title"],"snippet":s or art["content"][:150]+"...","score":50})
+                    score = 50 if orig_match else 25
+                    matching.append({"number":art["number"],"title":art["title"],"snippet":s or art["content"][:150]+"...","score":score})
                     if len(matching) >= 5:
                         break  # 조문 매칭 5개까지만 검색 (성능 최적화)
             if name_score > 0 or matching:
@@ -169,7 +227,8 @@ def search_laws(query, category=None, limit=30):
 
 # ===== Advisor =====
 def advise_keyword(query):
-    q = query.lower()
+    expanded = expand_query(query)
+    q = expanded.lower()
     matched = []
     for s in ADVISOR_SCENARIOS:
         score = sum(len(kw) for kw in s["keywords"] if kw.lower() in q)
