@@ -1883,6 +1883,161 @@ body.landing .landing-wrap { display: flex; }
   flex-shrink: 0;
 }
 .alio-ref-card:hover .alio-ref-arrow { color: var(--success); }
+
+/* Reference: Case cards */
+.ref-case-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+}
+.ref-case-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.ref-case-icon { font-size: 18px; }
+.ref-case-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.ref-case-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 10px;
+}
+.ref-case-laws {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.ref-case-law {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 500;
+}
+.ref-checklist {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+}
+.ref-checklist-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--success);
+  margin-bottom: 8px;
+}
+.ref-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.ref-check-item input[type="checkbox"] {
+  margin-top: 2px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+.ref-check-item:has(input:checked) span {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Reference: Article cards */
+.ref-article-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.ref-article-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.ref-article-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.ref-article-law {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.ref-article-type {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-active);
+  color: var(--text-muted);
+}
+.ref-article-num {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+}
+.ref-article-content {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+  padding: 8px 0;
+  border-top: 1px solid var(--border-light);
+  word-break: keep-all;
+}
+.ref-article-reason {
+  font-size: 11px;
+  color: var(--cyan);
+  margin-top: 4px;
+}
+
+/* Reference: External links (compact) */
+.ref-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.ref-link {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: all var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.ref-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ref-link span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
 </style>
 </head>
 <body class="landing">
@@ -2787,31 +2942,63 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 5. 알리오 참고자료 (카테고리별 그룹)
-  if (advisorData?.alio_refs?.length) {
-    html += '<div class="smart-divider">외부 참고자료</div>';
-    const alioIcons = {bid:'&#x1F4CB;',contract:'&#x1F4DD;',info:'&#x1F3DB;',warn:'&#9888;',link:'&#x1F517;'};
-    const catIcons = {'한수원':'&#x1F3ED;','공기업·공공기관':'&#x1F3DB;','전체':'&#x1F310;'};
-    const catColors = {'한수원':'var(--accent-muted)','공기업·공공기관':'var(--purple-muted)','전체':'var(--success-muted)'};
-    for (const group of advisorData.alio_refs) {
+  // 5. 참고자료: 계약 사례 + 참고 조문 + 외부 링크
+  const refData = advisorData?.ref_data;
+  if (refData) {
+    // 5a. 계약 사례
+    if (refData.cases?.length) {
+      html += '<div class="smart-divider">계약 사례 · 실무 가이드</div>';
+      for (const c of refData.cases) {
+        html += `
+          <div class="ref-case-card">
+            <div class="ref-case-head">
+              <span class="ref-case-icon">&#x1F4BC;</span>
+              <span class="ref-case-title">${escHtml(c.title)}</span>
+            </div>
+            <div class="ref-case-desc">${escHtml(c.desc)}</div>
+            ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">&#x1F4D6; ${escHtml(l)}</span>`).join('')}</div>` : ''}
+            ${c.checklist?.length ? `
+              <div class="ref-checklist">
+                <div class="ref-checklist-title">&#x2705; 실무 체크리스트</div>
+                ${c.checklist.map(item=>`<label class="ref-check-item"><input type="checkbox"><span>${escHtml(item)}</span></label>`).join('')}
+              </div>` : ''}
+          </div>`;
+      }
+    }
+
+    // 5b. 참고 조문 (실제 조문 내용)
+    if (refData.articles?.length) {
       html += `
+        <div class="smart-divider">참고 조문</div>
         <div class="smart-section">
           <div class="smart-section-head">
-            <div class="smart-section-icon" style="background:${catColors[group.category]||'var(--success-muted)'}">${catIcons[group.category]||'&#x1F310;'}</div>
-            <div class="smart-section-title">${escHtml(group.category)}</div>
-            <div class="smart-section-count">${group.refs.length}건</div>
+            <div class="smart-section-icon articles">&#x1F4D6;</div>
+            <div class="smart-section-title">관련 참고 조문</div>
+            <div class="smart-section-count">${refData.articles.length}건</div>
           </div>
       `;
-      for (const ref of group.refs) {
+      for (const a of refData.articles) {
+        const contentPreview = a.content.replace(/\n/g,' ').substring(0, 200);
         html += `
-          <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" onclick="event.stopPropagation()">
-            <div class="alio-ref-icon" style="background:${catColors[group.category]||'var(--success-muted)'}">${alioIcons[ref.icon] || '&#x1F517;'}</div>
-            <div class="alio-ref-body">
-              <div class="alio-ref-title">${escHtml(ref.title)}</div>
-              <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
+          <div class="ref-article-card" onclick="openLawArticle('${escHtml(a.law)}','${escHtml(a.type)}','${escHtml(a.number)}')">
+            <div class="ref-article-head">
+              <span class="ref-article-law">${escHtml(a.law)}</span>
+              <span class="ref-article-type">${escHtml(a.type)}</span>
+              <span class="smart-priority-badge p-${a.priority}">${a.priority}</span>
             </div>
-            <div class="alio-ref-arrow">&#8599;</div>
-          </a>`;
+            <div class="ref-article-num">${escHtml(a.number)} ${a.title ? '('+escHtml(a.title)+')' : ''}</div>
+            <div class="ref-article-content">${escHtml(contentPreview)}...</div>
+            <div class="ref-article-reason">${escHtml(a.reason)}</div>
+          </div>`;
+      }
+      html += '</div>';
+    }
+
+    // 5c. 외부 링크 (간소화)
+    if (refData.links?.length) {
+      html += '<div class="ref-links">';
+      for (const l of refData.links) {
+        html += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)} <span>${escHtml(l.desc)}</span></a>`;
       }
       html += '</div>';
     }
@@ -3116,24 +3303,26 @@ function renderAdvisor(data) {
     </div>
   `).join('');
 
-  // 알리오 참고자료 (카테고리별)
-  if (data.alio_refs?.length) {
-    const alioIcons = {bid:'&#x1F4CB;',contract:'&#x1F4DD;',info:'&#x1F3DB;',warn:'&#9888;',link:'&#x1F517;'};
-    const catLabels = {'한수원':'&#x1F3ED; 한수원','공기업·공공기관':'&#x1F3DB; 공기업·공공기관','전체':'&#x1F310; 전체'};
-    for (const group of data.alio_refs) {
-      listHtml += `<div style="padding:12px 16px 4px;font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;border-top:1px solid var(--border);margin-top:4px">${catLabels[group.category]||group.category} 참고자료</div>`;
-      for (const ref of group.refs) {
-        listHtml += `
-          <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" style="margin:4px 8px" onclick="event.stopPropagation()">
-            <div class="alio-ref-icon">${alioIcons[ref.icon] || '&#x1F517;'}</div>
-            <div class="alio-ref-body">
-              <div class="alio-ref-title">${escHtml(ref.title)}</div>
-              <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
-            </div>
-            <div class="alio-ref-arrow">&#8599;</div>
-          </a>`;
-      }
+  // 참고자료: 계약 사례 + 외부 링크
+  const refData = data.ref_data;
+  if (refData?.cases?.length) {
+    listHtml += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--text-muted);font-weight:600;border-top:1px solid var(--border);margin-top:4px">&#x1F4BC; 계약 사례 · 실무 가이드</div>';
+    for (const c of refData.cases) {
+      listHtml += `
+        <div class="ref-case-card" style="margin:4px 8px">
+          <div class="ref-case-head"><span class="ref-case-icon">&#x1F4BC;</span><span class="ref-case-title">${escHtml(c.title)}</span></div>
+          <div class="ref-case-desc">${escHtml(c.desc)}</div>
+          ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">&#x1F4D6; ${escHtml(l)}</span>`).join('')}</div>` : ''}
+          ${c.checklist?.length ? `<div class="ref-checklist"><div class="ref-checklist-title">&#x2705; 체크리스트</div>${c.checklist.map(item=>`<label class="ref-check-item"><input type="checkbox"><span>${escHtml(item)}</span></label>`).join('')}</div>` : ''}
+        </div>`;
     }
+  }
+  if (refData?.links?.length) {
+    listHtml += '<div class="ref-links" style="margin:8px">';
+    for (const l of refData.links) {
+      listHtml += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)} <span>${escHtml(l.desc)}</span></a>`;
+    }
+    listHtml += '</div>';
   }
 
   $('#advList').innerHTML = listHtml;
