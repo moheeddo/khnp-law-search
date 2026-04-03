@@ -138,12 +138,13 @@ def call_solar(query, kw_result):
     except: return None
 
 def get_reference_data(query, recommendations):
-    """검색어 + 추천 법령 기반 참고 조문·계약 사례·외부 링크 생성"""
+    """검색어 + 추천 법령 기반 참고 조문·계약 사례 생성"""
     index = get_index()
     q = query.lower()
-    ref = {"articles":[], "cases":[], "links":[]}
+    keywords = [kw for kw in q.split() if len(kw) >= 1]
+    ref = {"articles":[], "cases":[], "links":[], "query_keywords": keywords}
 
-    # ── 1. 참고 조문: 추천 법령의 key_articles 실제 내용 추출 ──
+    # ── 1. 참고 조문: 추천 법령의 key_articles 전체 내용 추출 ──
     seen_arts = set()
     for r in recommendations[:8]:
         law_name = r.get("law","")
@@ -156,19 +157,20 @@ def get_reference_data(query, recommendations):
         for art in fd.get("articles",[]):
             if art["number"] in art_nums and art["number"] not in seen_arts:
                 seen_arts.add(art["number"])
+                # 전체 내용 전달 (프론트에서 펼치기/접기)
                 ref["articles"].append({
                     "law": law_name, "type": file_type,
                     "number": art["number"], "title": art["title"],
-                    "content": art["content"][:500],
+                    "content": art["content"],
                     "reason": r.get("reason",""),
                     "priority": r.get("priority","참고"),
                 })
-                if len(ref["articles"]) >= 12: break
-        if len(ref["articles"]) >= 12: break
+                if len(ref["articles"]) >= 10: break
+        if len(ref["articles"]) >= 10: break
 
-    # 키워드 매칭으로 추가 관련 조문 보충
-    if len(ref["articles"]) < 6:
-        kws = q.split()
+    # 키워드 매칭으로 추가 관련 조문 보충 (전체 내용)
+    if len(ref["articles"]) < 5:
+        kws = keywords
         for law_name, law_data in index.items():
             for ft, fd in law_data["files"].items():
                 for art in fd.get("articles",[]):
@@ -180,13 +182,13 @@ def get_reference_data(query, recommendations):
                         ref["articles"].append({
                             "law": law_name, "type": ft,
                             "number": art["number"], "title": art["title"],
-                            "content": art["content"][:400],
+                            "content": art["content"],
                             "reason": f"'{query}' 키워드 포함 조문",
                             "priority": "참고",
                         })
-                        if len(ref["articles"]) >= 12: break
-                if len(ref["articles"]) >= 12: break
-            if len(ref["articles"]) >= 12: break
+                        if len(ref["articles"]) >= 10: break
+                if len(ref["articles"]) >= 10: break
+            if len(ref["articles"]) >= 10: break
 
     # ── 2. 계약 사례: 시나리오 기반 실무 사례 ──
     CASES = [
@@ -252,6 +254,45 @@ def summarize(context, law_name, articles_text):
             return json.loads(c)
     except Exception as e: return {"error":str(e)}
 
+# ===== 나라장터 입찰공고 프록시 =====
+G2B_API_KEY = os.environ.get("G2B_API_KEY", "")
+def fetch_g2b_bids(keyword, num=5):
+    """나라장터 OpenAPI에서 입찰공고 검색 (공공데이터포털 키 필요)"""
+    if not G2B_API_KEY: return []
+    try:
+        params = urllib.parse.urlencode({
+            "ServiceKey": G2B_API_KEY,
+            "numOfRows": str(num),
+            "pageNo": "1",
+            "inqryDiv": "1",
+            "inqryBgnDt": "",
+            "inqryEndDt": "",
+            "bidNtceNm": keyword,
+            "type": "json",
+        })
+        url = f"https://apis.data.go.kr/1230000/BidPublicInfoService04/getBidPblancListInfoThngPPSSrch01?{params}"
+        ctx = ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+            data = json.loads(resp.read())
+        items = data.get("response",{}).get("body",{}).get("items","")
+        if not items: return []
+        item_list = items if isinstance(items, list) else items.get("item",[])
+        if isinstance(item_list, dict): item_list = [item_list]
+        results = []
+        for it in item_list[:num]:
+            results.append({
+                "title": it.get("bidNtceNm",""),
+                "org": it.get("ntceInsttNm",""),
+                "date": it.get("bidNtceDt","")[:10] if it.get("bidNtceDt") else "",
+                "deadline": it.get("bidClseDt","")[:10] if it.get("bidClseDt") else "",
+                "amount": it.get("presmptPrce",""),
+                "url": it.get("bidNtceDtlUrl",""),
+                "method": it.get("bidMethdNm",""),
+            })
+        return results
+    except: return []
+
 # ===== Routes =====
 @app.route("/")
 def home():
@@ -300,6 +341,12 @@ def api_law():
 def api_summarize():
     data = request.get_json()
     return jsonify(summarize(data.get("context",""), data.get("law_name",""), data.get("articles_text","")))
+
+@app.route("/api/bids")
+def api_bids():
+    q = request.args.get("q","").strip()
+    if not q: return jsonify([])
+    return jsonify(fetch_g2b_bids(q))
 
 # Auth stubs for Vercel (no persistent DB)
 @app.route("/api/auth/me")

@@ -2038,6 +2038,82 @@ body.landing .landing-wrap { display: flex; }
   color: var(--text-muted);
   font-size: 10px;
 }
+
+/* Article expand button */
+.ref-expand-btn {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  margin-top: 6px;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+}
+.ref-expand-btn:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+}
+
+/* Article body with highlight */
+.ref-article-body {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  padding: 10px 0;
+  white-space: pre-line;
+  word-break: keep-all;
+  max-height: 600px;
+  overflow-y: auto;
+}
+.ref-article-body mark {
+  background: rgba(37,99,235,0.15);
+  color: var(--accent);
+  padding: 1px 3px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+/* Bid cards */
+.ref-bid-card {
+  display: block;
+  padding: 12px 16px;
+  margin-bottom: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition);
+}
+.ref-bid-card:hover {
+  border-color: var(--success);
+  background: var(--bg-hover);
+}
+.ref-bid-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+.ref-bid-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.ref-bid-amount {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 4px;
+}
 </style>
 </head>
 <body class="landing">
@@ -2942,10 +3018,57 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 5. 참고자료: 계약 사례 + 참고 조문 + 외부 링크
+  // 5. 참고자료
   const refData = advisorData?.ref_data;
   if (refData) {
-    // 5a. 계약 사례
+    const qkws = refData.query_keywords || query.toLowerCase().split(/\s+/);
+
+    // 키워드 하이라이트 함수 (조문 내용에 적용)
+    function hlContent(text) {
+      let h = escHtml(text);
+      for (const kw of qkws) {
+        if (kw.length < 1) continue;
+        const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+        h = h.replace(re, '<mark>$1</mark>');
+      }
+      return h;
+    }
+
+    // 5a. 참고 조문 (전체 내용 + 하이라이트 + 펼치기/접기)
+    if (refData.articles?.length) {
+      html += `<div class="smart-divider">관련 조문 원문</div>
+        <div class="smart-section">
+          <div class="smart-section-head">
+            <div class="smart-section-icon articles">&#x1F4D6;</div>
+            <div class="smart-section-title">검색어 관련 조문 (키워드 하이라이트)</div>
+            <div class="smart-section-count">${refData.articles.length}건</div>
+          </div>`;
+      refData.articles.forEach((a, ai) => {
+        const fullContent = a.content || '';
+        const lines = fullContent.split('\n').filter(l=>l.trim());
+        const preview = lines.slice(0, 5).join('\n');
+        const hasMore = lines.length > 5;
+        html += `
+          <div class="ref-article-card">
+            <div class="ref-article-head">
+              <span class="ref-article-law">${escHtml(a.law)}</span>
+              <span class="ref-article-type">${escHtml(a.type)}</span>
+              <span class="smart-priority-badge p-${a.priority}">${a.priority}</span>
+              <button class="btn btn-sm" style="margin-left:auto" onclick="event.stopPropagation();openLawArticle('${escHtml(a.law)}','${escHtml(a.type)}','${escHtml(a.number)}')">법령 열기 &#8594;</button>
+            </div>
+            <div class="ref-article-num">${escHtml(a.number)} ${a.title ? '('+escHtml(a.title)+')' : ''}</div>
+            <div class="ref-article-body" id="refArt${ai}">${hlContent(preview)}</div>
+            ${hasMore ? `
+              <button class="ref-expand-btn" id="refExpBtn${ai}" onclick="event.stopPropagation();toggleRefArticle(${ai}, ${JSON.stringify(fullContent).replace(/</g,'\\x3c')})">
+                &#x25BC; 전문 보기 (${lines.length}줄)
+              </button>` : ''}
+            <div class="ref-article-reason">${escHtml(a.reason)}</div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+
+    // 5b. 계약 사례
     if (refData.cases?.length) {
       html += '<div class="smart-divider">계약 사례 · 실무 가이드</div>';
       for (const c of refData.cases) {
@@ -2955,8 +3078,8 @@ function renderSmartResults(searchResults, advisorData, query) {
               <span class="ref-case-icon">&#x1F4BC;</span>
               <span class="ref-case-title">${escHtml(c.title)}</span>
             </div>
-            <div class="ref-case-desc">${escHtml(c.desc)}</div>
-            ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">&#x1F4D6; ${escHtml(l)}</span>`).join('')}</div>` : ''}
+            <div class="ref-case-desc">${hlContent(c.desc)}</div>
+            ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">${escHtml(l)}</span>`).join('')}</div>` : ''}
             ${c.checklist?.length ? `
               <div class="ref-checklist">
                 <div class="ref-checklist-title">&#x2705; 실무 체크리스트</div>
@@ -2966,39 +3089,14 @@ function renderSmartResults(searchResults, advisorData, query) {
       }
     }
 
-    // 5b. 참고 조문 (실제 조문 내용)
-    if (refData.articles?.length) {
-      html += `
-        <div class="smart-divider">참고 조문</div>
-        <div class="smart-section">
-          <div class="smart-section-head">
-            <div class="smart-section-icon articles">&#x1F4D6;</div>
-            <div class="smart-section-title">관련 참고 조문</div>
-            <div class="smart-section-count">${refData.articles.length}건</div>
-          </div>
-      `;
-      for (const a of refData.articles) {
-        const contentPreview = a.content.replace(/\n/g,' ').substring(0, 200);
-        html += `
-          <div class="ref-article-card" onclick="openLawArticle('${escHtml(a.law)}','${escHtml(a.type)}','${escHtml(a.number)}')">
-            <div class="ref-article-head">
-              <span class="ref-article-law">${escHtml(a.law)}</span>
-              <span class="ref-article-type">${escHtml(a.type)}</span>
-              <span class="smart-priority-badge p-${a.priority}">${a.priority}</span>
-            </div>
-            <div class="ref-article-num">${escHtml(a.number)} ${a.title ? '('+escHtml(a.title)+')' : ''}</div>
-            <div class="ref-article-content">${escHtml(contentPreview)}...</div>
-            <div class="ref-article-reason">${escHtml(a.reason)}</div>
-          </div>`;
-      }
-      html += '</div>';
-    }
+    // 5c. 나라장터 실시간 입찰공고 (비동기 로드)
+    html += '<div id="bidResults"></div>';
 
-    // 5c. 외부 링크 (간소화)
+    // 5d. 외부 링크
     if (refData.links?.length) {
       html += '<div class="ref-links">';
       for (const l of refData.links) {
-        html += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)} <span>${escHtml(l.desc)}</span></a>`;
+        html += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)}</a>`;
       }
       html += '</div>';
     }
@@ -3006,6 +3104,71 @@ function renderSmartResults(searchResults, advisorData, query) {
 
   html += '</div>';
   $('#resultsList').innerHTML = html;
+
+  // 전역 키워드 설정 (펼치기/접기에서 사용)
+  _refQueryKws = refData?.query_keywords || query.toLowerCase().split(/\s+/);
+
+  // 나라장터 입찰공고 비동기 로드
+  if (refData) loadBidResults(query);
+}
+
+// 조문 펼치기/접기
+function toggleRefArticle(ai, fullContent) {
+  const body = document.getElementById('refArt' + ai);
+  const btn = document.getElementById('refExpBtn' + ai);
+  if (!body || !btn) return;
+  const isExpanded = btn.dataset.expanded === '1';
+  if (isExpanded) {
+    const lines = fullContent.split('\n').filter(l=>l.trim());
+    body.innerHTML = hlContentGlobal(lines.slice(0,5).join('\n'));
+    btn.innerHTML = '&#x25BC; 전문 보기 (' + fullContent.split('\n').filter(l=>l.trim()).length + '줄)';
+    btn.dataset.expanded = '0';
+  } else {
+    body.innerHTML = hlContentGlobal(fullContent);
+    btn.innerHTML = '&#x25B2; 접기';
+    btn.dataset.expanded = '1';
+  }
+}
+
+// 전역 하이라이트 (toggleRefArticle에서 사용)
+let _refQueryKws = [];
+function hlContentGlobal(text) {
+  let h = escHtml(text);
+  for (const kw of _refQueryKws) {
+    if (kw.length < 1) continue;
+    const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+    h = h.replace(re, '<mark>$1</mark>');
+  }
+  return h;
+}
+
+// 나라장터 입찰공고 비동기 로드
+async function loadBidResults(query) {
+  const el = document.getElementById('bidResults');
+  if (!el) return;
+  el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-muted)">나라장터 입찰공고 검색 중...</div>';
+  try {
+    const bids = await api('/api/bids?q=' + encodeURIComponent(query));
+    if (!bids || !bids.length) {
+      el.innerHTML = '';
+      return;
+    }
+    let h = '<div class="smart-divider">나라장터 최신 입찰공고</div><div class="smart-section"><div class="smart-section-head"><div class="smart-section-icon" style="background:var(--success-muted)">&#x1F4CB;</div><div class="smart-section-title">관련 입찰공고</div><div class="smart-section-count">' + bids.length + '건</div></div>';
+    for (const b of bids) {
+      h += '<a href="' + escHtml(b.url || '#') + '" target="_blank" rel="noopener" class="ref-bid-card">';
+      h += '<div class="ref-bid-title">' + escHtml(b.title) + '</div>';
+      h += '<div class="ref-bid-meta">';
+      if (b.org) h += '<span>' + escHtml(b.org) + '</span>';
+      if (b.date) h += '<span>공고: ' + escHtml(b.date) + '</span>';
+      if (b.deadline) h += '<span>마감: ' + escHtml(b.deadline) + '</span>';
+      if (b.method) h += '<span>' + escHtml(b.method) + '</span>';
+      h += '</div>';
+      if (b.amount) h += '<div class="ref-bid-amount">' + Number(b.amount).toLocaleString() + '원</div>';
+      h += '</a>';
+    }
+    h += '</div>';
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML = ''; }
 }
 
 function openFromSmartAdvisor(idx) {
