@@ -91,6 +91,18 @@ RELATED_LAWS = {
     ],
 }
 
+# ===== 법률-시행령 핵심 차이 매핑 =====
+LAW_DECREE_DIFF = {
+    "국가를당사자로하는계약에관한법률": [
+        {"law_article":"제7조 (계약의 방법)","decree_article":"제12~26조","summary":"법률은 '경쟁입찰 원칙'만 규정. 시행령에서 제한경쟁·지명경쟁·수의계약의 구체적 사유와 절차를 규정"},
+        {"law_article":"제10조 (낙찰자 결정)","decree_article":"제42~43조","summary":"법률은 '낙찰 기준' 위임. 시행령에서 적격심사·종합심사·협상계약의 세부 기준과 절차를 규정"},
+        {"law_article":"제12조 (보증금)","decree_article":"제50~54조","summary":"법률은 '보증금 납부 의무' 규정. 시행령에서 비율(10~15%)·면제 사유·귀속 절차를 상세 규정"},
+        {"law_article":"제14조 (검사·인수)","decree_article":"제55~57조","summary":"법률은 '검사 의무' 규정. 시행령에서 검사 기한(14일)·자동합격·부분검사 기준을 규정"},
+        {"law_article":"제15조 (대가지급)","decree_article":"제58~59조","summary":"법률은 '적기 지급 의무' 규정. 시행령에서 선급금(70%)·기성금·지급기한(14일) 세부 규정"},
+        {"law_article":"제27조 (부정당업자)","decree_article":"제76~76조의2","summary":"법률은 '제재 근거' 규정. 시행령에서 제재 사유별 기간(6월~2년)·감경 사유·과징금 기준을 규정"},
+    ],
+}
+
 # ===== Load Data =====
 _index = None
 def get_index():
@@ -817,7 +829,8 @@ def api_law():
             if pub_date > datetime.now():
                 warnings.append({"type":"future","msg":f"공포일: {promulgation} (아직 공포 전)"})
     except: pass
-    return jsonify({"law_name":law_name,"file_type":ft,"title":meta.get("제목",law_name),"meta":meta,"articles":fd["articles"],"available_types":list(law["files"].keys()),"related_laws":related[:5],"warnings":warnings})
+    has_diff = law_name in LAW_DECREE_DIFF
+    return jsonify({"law_name":law_name,"file_type":ft,"title":meta.get("제목",law_name),"meta":meta,"articles":fd["articles"],"available_types":list(law["files"].keys()),"related_laws":related[:5],"warnings":warnings,"has_diff":has_diff})
 
 @app.route("/api/summarize", methods=["POST"])
 def api_summarize():
@@ -852,3 +865,10 @@ def api_clauses():
 @app.route("/api/bookmarks")
 def get_bm():
     return jsonify([])
+
+@app.route("/api/law-diff")
+def api_law_diff():
+    name = request.args.get("name","")
+    if name in LAW_DECREE_DIFF:
+        return jsonify({"law": name, "diffs": LAW_DECREE_DIFF[name]})
+    return jsonify({"law": name, "diffs": []})

@@ -2871,6 +2871,42 @@ kbd {
 }
 .law-warn-icon { font-size: 16px; flex-shrink: 0; }
 
+/* ===== Law-Decree Diff View ===== */
+.law-diff-view {
+  margin: 12px 22px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.diff-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--purple);
+  margin-bottom: 12px;
+}
+.diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.diff-table th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 2px solid var(--purple);
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.diff-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.diff-law-col { color: var(--accent); font-weight: 600; white-space: nowrap; }
+.diff-decree-col { color: var(--purple); font-weight: 600; white-space: nowrap; }
+.diff-summary { color: var(--text-secondary); }
+
 /* ===== Glossary Term Tooltip ===== */
 .glossary-term {
   border-bottom: 1px dotted var(--cyan);
@@ -3405,6 +3441,7 @@ kbd {
             <span>북마크</span>
           </button>
           <button class="btn btn-sm" onclick="shareLaw()" title="URL 복사">&#x1F517; 공유</button>
+          <button class="btn btn-sm" id="diffBtn" style="display:none">&#x2194; 법률↔시행령 차이</button>
           <a class="btn btn-sm" id="lawGoKr" href="#" target="_blank" rel="noopener">
             &#x1F517; 법령정보센터
           </a>
@@ -4651,11 +4688,14 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 5e. 계약 검토 요청서 생성 버튼
+  // 5e. 계약 검토 요청서 생성 버튼 + 체크리스트 출력 버튼
   if (refData) {
-    html += `<div style="text-align:center;padding:16px 0">
+    html += `<div style="text-align:center;padding:16px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button class="btn btn-accent" onclick="generateReviewRequest()" style="padding:10px 24px;font-size:14px">
         &#x1F4C4; 계약 검토 요청서 생성
+      </button>
+      <button class="btn" onclick="printChecklist()" style="padding:10px 24px;font-size:14px">
+        &#x2705; 체크리스트 출력
       </button>
     </div>`;
   }
@@ -5040,6 +5080,15 @@ async function openLaw(lawName, fileType, advInfo) {
     compareBtn.textContent = '\u2194 비교 보기';
   } else {
     compareBtn.style.display = 'none';
+  }
+
+  // 법률↔시행령 차이 버튼
+  const diffBtn = document.getElementById('diffBtn');
+  if (data.has_diff) {
+    diffBtn.style.display = '';
+    diffBtn.onclick = () => showLawDiff(lawName);
+  } else {
+    diffBtn.style.display = 'none';
   }
 
   const arts = data.articles || [];
@@ -5578,6 +5627,132 @@ function generateReviewRequest() {
   a.click();
   URL.revokeObjectURL(a.href);
   toast('계약 검토 요청서가 생성되었습니다', 'success');
+}
+
+// ===== 체크리스트 출력 =====
+function printChecklist() {
+  if (!lastAdvisorData) { toast('검색을 먼저 수행해주세요', 'info'); return; }
+  const data = lastAdvisorData;
+  const refData = data.ref_data || {};
+  const cm = refData.contract_method || {};
+
+  const win = window.open('', '_blank');
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>계약 체크리스트 - ${escHtml(data.query)}</title>
+    <style>
+      body { font-family: 'Pretendard Variable', sans-serif; padding: 30px; color: #222; line-height: 1.6; }
+      h1 { font-size: 18px; border-bottom: 2px solid #222; padding-bottom: 8px; margin-bottom: 16px; }
+      h2 { font-size: 14px; margin: 20px 0 8px; padding: 4px 8px; background: #f0f0f0; }
+      .meta { font-size: 12px; color: #666; margin-bottom: 16px; }
+      .check-item { font-size: 13px; padding: 4px 0; display: flex; align-items: flex-start; gap: 8px; }
+      .check-box { width: 14px; height: 14px; border: 1.5px solid #333; flex-shrink: 0; margin-top: 2px; }
+      .risk-item { font-size: 12px; padding: 3px 0; }
+      .risk-high { color: #dc2626; }
+      .risk-medium { color: #d97706; }
+      .clause-item { font-size: 12px; padding: 4px 0 4px 16px; border-left: 2px solid #999; margin: 4px 0; }
+      .footer { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; font-size: 10px; color: #999; text-align: center; }
+      @media print { body { padding: 15px; } }
+    </style>
+  </head><body>`;
+
+  html += `<h1>&#x2705; 계약 체크리스트</h1>`;
+  html += `<div class="meta">`;
+  html += `계약 내용: <strong>${escHtml(data.query)}</strong><br>`;
+  if (cm.amount_display) html += `추정 금액: <strong>${escHtml(cm.amount_display)}</strong> | `;
+  if (cm.method) html += `계약 방식: <strong>${escHtml(cm.method)}</strong>`;
+  html += `<br>작성일: ${new Date().toLocaleDateString('ko-KR')} | 작성자: ${currentUser?.display_name || '________'}`;
+  html += `</div>`;
+
+  // 1. 계약 방식 체크
+  if (cm.details?.length) {
+    html += '<h2>1. 계약 방식 확인</h2>';
+    cm.details.forEach(d => {
+      html += `<div class="check-item"><div class="check-box"></div>${escHtml(d)}</div>`;
+    });
+  }
+
+  // 2. 경고 사항
+  if (cm.warnings?.length) {
+    html += '<h2>2. 주의 사항</h2>';
+    cm.warnings.forEach(w => {
+      html += `<div class="check-item"><div class="check-box"></div><strong>&#x26A0;</strong> ${escHtml(w)}</div>`;
+    });
+  }
+
+  // 3. 리스크 체크
+  if (refData.risks?.length) {
+    html += '<h2>3. 리스크 점검</h2>';
+    refData.risks.forEach(r => {
+      const cls = r.level === 'high' ? 'risk-high' : r.level === 'medium' ? 'risk-medium' : '';
+      html += `<div class="check-item ${cls}"><div class="check-box"></div><strong>[${r.level === 'high' ? '높음' : r.level === 'medium' ? '중간' : '낮음'}]</strong> ${escHtml(r.title)}: ${escHtml(r.desc)}</div>`;
+    });
+  }
+
+  // 4. 실무 체크리스트 (사례별)
+  if (refData.cases?.length) {
+    let secNum = (cm.details?.length ? 1 : 0) + (cm.warnings?.length ? 1 : 0) + (refData.risks?.length ? 1 : 0) + 1;
+    refData.cases.forEach(c => {
+      html += `<h2>${secNum}. ${escHtml(c.title)}</h2>`;
+      if (c.checklist?.length) {
+        c.checklist.forEach(item => {
+          html += `<div class="check-item"><div class="check-box"></div>${escHtml(item)}</div>`;
+        });
+      }
+      secNum++;
+    });
+  }
+
+  // 5. 특약 조항 검토
+  if (refData.special_clauses?.length) {
+    html += '<h2>특약 조항 검토</h2>';
+    refData.special_clauses.forEach(sc => {
+      html += `<div class="check-item"><div class="check-box"></div><strong>${escHtml(sc.title)}</strong></div>`;
+      html += `<div class="clause-item">${escHtml(sc.text)}</div>`;
+    });
+  }
+
+  // 6. 관련 법령
+  if (data.recommendations?.length) {
+    html += '<h2>관련 법령 확인</h2>';
+    data.recommendations.forEach(r => {
+      html += `<div class="check-item"><div class="check-box"></div>[${escHtml(r.priority)}] ${escHtml(r.law)} (${escHtml(r.type)})${r.key_articles ? ' - ' + escHtml(r.key_articles) : ''}</div>`;
+    });
+  }
+
+  html += `<div class="footer">한수원 계약 법령 검색 시스템에서 자동 생성 | ${new Date().toLocaleDateString('ko-KR')}</div>`;
+  html += `<script>window.onload=function(){window.print();}<\/script>`;
+  html += '</body></html>';
+
+  win.document.write(html);
+  win.document.close();
+}
+
+// ===== 법률↔시행령 핵심 차이 =====
+async function showLawDiff(lawName) {
+  const data = await api('/api/law-diff?name=' + encodeURIComponent(lawName));
+  if (!data?.diffs?.length) { toast('차이 데이터가 없습니다', 'info'); return; }
+
+  const area = document.getElementById('aiSummaryArea');
+  // 토글
+  if (area.querySelector('.law-diff-view')) {
+    area.querySelector('.law-diff-view').remove();
+    return;
+  }
+
+  let html = '<div class="law-diff-view">';
+  html += '<div class="diff-title">&#x2194; 법률 ↔ 시행령 핵심 차이</div>';
+  html += '<table class="diff-table"><thead><tr><th>법률 조문</th><th>시행령 조문</th><th>핵심 차이</th></tr></thead><tbody>';
+
+  data.diffs.forEach(d => {
+    html += `<tr>
+      <td class="diff-law-col">${escHtml(d.law_article)}</td>
+      <td class="diff-decree-col">${escHtml(d.decree_article)}</td>
+      <td class="diff-summary">${escHtml(d.summary)}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  area.insertAdjacentHTML('beforeend', html);
 }
 
 // ===== 조문 AI 요약 =====
