@@ -782,26 +782,6 @@ body {
   font-weight: 500;
 }
 
-.res-meta {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 6px;
-  display: flex;
-  gap: 12px;
-}
-
-.res-art {
-  padding: 8px 12px;
-  margin-top: 5px;
-  background: var(--bg-hover);
-  border-radius: var(--radius-sm);
-  border-left: 2px solid var(--accent);
-}
-
-.res-art .art-num { font-weight: 600; color: var(--accent); font-size: 12px; }
-.res-art .art-title { color: var(--text-secondary); font-size: 12px; }
-.res-art .art-snip { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
-
 mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; border-radius: 2px; }
 
 /* ===== Law Viewer ===== */
@@ -2031,8 +2011,6 @@ kbd {
   .scenario-grid { grid-template-columns: 1fr; }
   .viewer-head { flex-direction: column; }
   .toc-grid { grid-template-columns: 1fr; }
-  .flow-steps { flex-wrap: wrap; }
-  .flow-arrow { display: none; }
   .sidebar { flex-wrap: wrap; }
 }
 
@@ -2390,55 +2368,6 @@ kbd {
   margin-top: 4px;
   flex-shrink: 0;
 }
-
-/* Alio reference cards */
-.alio-ref-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  margin-bottom: 6px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  text-decoration: none;
-  color: inherit;
-  transition: all var(--transition);
-}
-.alio-ref-card:hover {
-  border-color: var(--success);
-  background: var(--bg-hover);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
-.alio-ref-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-sm);
-  background: var(--success-muted);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  flex-shrink: 0;
-}
-.alio-ref-body { flex: 1; min-width: 0; }
-.alio-ref-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-.alio-ref-desc {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-top: 1px;
-}
-.alio-ref-arrow {
-  font-size: 14px;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-.alio-ref-card:hover .alio-ref-arrow { color: var(--success); }
 
 /* Reference: Case cards */
 .ref-case-card {
@@ -4427,9 +4356,6 @@ kbd {
 <aside class="sidebar" id="sidebar"></aside>
 <div class="main-wrap" id="mainWrap" style="display:none">
   <main class="content" id="contentArea">
-    <!-- Welcome / Advisor Landing -->
-    <div id="welcomeView"></div>
-
     <!-- Advisor Results -->
     <div class="card advisor-results" id="advisorView">
       <div class="adv-head">
@@ -4606,6 +4532,9 @@ const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const api = async (path, opts) => {
   const res = await fetch(path, opts);
+  if (!res.ok && res.status !== 400) {
+    console.error(`API error: ${res.status} ${path}`);
+  }
   return res.json();
 };
 const post = (path, data) => api(path, {
@@ -4725,36 +4654,40 @@ function renderSubscriptions() {
 }
 
 async function checkSubscriptionUpdates() {
-  const subs = getSubscriptions();
-  if (!subs.length) return;
+  try {
+    const subs = getSubscriptions();
+    if (!subs.length) return;
 
-  const names = subs.map(s => s.law).join(',');
-  const data = await api('/api/check-updates?names=' + encodeURIComponent(names));
-  if (!data?.length) return;
+    const names = subs.map(s => s.law).join(',');
+    const data = await api('/api/check-updates?names=' + encodeURIComponent(names));
+    if (!Array.isArray(data) || !data.length) return;
 
-  let alerts = [];
-  for (const s of subs) {
-    const current = data.find(d => d.law === s.law);
-    if (!current) continue;
+    let alerts = [];
+    for (const s of subs) {
+      const current = data.find(d => d.law === s.law);
+      if (!current) continue;
 
-    const currentMeta = `${current.enforcement}|${current.promulgation}|${current.status}`;
+      const currentMeta = `${current.enforcement}|${current.promulgation}|${current.status}`;
 
-    if (s.savedMeta && s.savedMeta !== currentMeta) {
-      alerts.push({
-        law: s.law,
-        msg: `시행일: ${current.enforcement}, 상태: ${current.status}`,
-        type: 'changed',
+      if (s.savedMeta && s.savedMeta !== currentMeta) {
+        alerts.push({
+          law: s.law,
+          msg: `시행일: ${current.enforcement}, 상태: ${current.status}`,
+          type: 'changed',
+        });
+      }
+
+      s.savedMeta = currentMeta;
+    }
+    saveSubscriptions(subs);
+
+    if (alerts.length) {
+      alerts.forEach(a => {
+        toast(`법령 변경 감지: ${a.law}`, 'info');
       });
     }
-
-    s.savedMeta = currentMeta;
-  }
-  saveSubscriptions(subs);
-
-  if (alerts.length) {
-    alerts.forEach(a => {
-      toast(`법령 변경 감지: ${a.law}`, 'info');
-    });
+  } catch(e) {
+    console.error('Subscription update check failed:', e);
   }
 }
 
@@ -4770,8 +4703,13 @@ function highlight(text, keywords) {
 
 // ===== Glossary =====
 async function loadGlossary() {
-  const data = await api('/api/glossary');
-  glossaryData = data?.terms || {};
+  try {
+    const data = await api('/api/glossary');
+    glossaryData = data?.terms || {};
+  } catch(e) {
+    console.error('Failed to load glossary:', e);
+    glossaryData = {};
+  }
 }
 
 // ===== Recent Law Tabs =====
@@ -5162,9 +5100,12 @@ function initTheme() {
 function printLaw() {
   if (!currentLaw) return;
 
-  const title = document.getElementById('viewerTitle').textContent;
-  const meta = document.getElementById('viewerMeta').textContent;
+  const titleEl = document.getElementById('viewerTitle');
+  const metaEl = document.getElementById('viewerMeta');
   const lawBody = document.getElementById('lawBody');
+  if (!titleEl || !metaEl || !lawBody) return;
+  const title = titleEl.textContent;
+  const meta = metaEl.textContent;
 
   const win = window.open('', '_blank');
   let html = `<!DOCTYPE html><html><head><meta charset="utf-8">
@@ -5221,6 +5162,15 @@ function printLaw() {
   win.document.write(html);
   win.document.close();
 }
+
+// ===== Global Error Handlers =====
+window.addEventListener('error', (e) => {
+  console.error('Global error:', e.message, e.filename, e.lineno);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('Unhandled promise:', e.reason);
+  e.preventDefault();
+});
 
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', async () => {
@@ -5396,12 +5346,18 @@ function setupEvents() {
 
 // ===== Auth =====
 async function checkAuth() {
-  const data = await api('/api/auth/me');
-  if (data.logged_in) {
-    currentUser = data.user;
-    renderAuthUI();
-    await loadBookmarks();
-  } else {
+  try {
+    const data = await api('/api/auth/me');
+    if (data && data.logged_in) {
+      currentUser = data.user;
+      renderAuthUI();
+      await loadBookmarks();
+    } else {
+      currentUser = null;
+      renderAuthUI();
+    }
+  } catch(e) {
+    console.error('Auth check failed:', e);
     currentUser = null;
     renderAuthUI();
   }
@@ -5449,39 +5405,53 @@ function showRegister() {
 function closeModal() { $('#authModal').classList.remove('visible'); }
 
 async function doLogin() {
-  const username = $('#loginId').value.trim();
-  const password = $('#loginPw').value;
-  if (!username || !password) { $('#loginError').textContent = '아이디와 비밀번호를 입력해주세요'; return; }
-  const res = await post('/api/auth/login', { username, password });
-  if (res.error) { $('#loginError').textContent = res.error; return; }
-  currentUser = res.user;
-  closeModal();
-  renderAuthUI();
-  await loadBookmarks();
-  toast(`${currentUser.display_name}님 환영합니다`, 'success');
+  try {
+    const username = $('#loginId').value.trim();
+    const password = $('#loginPw').value;
+    if (!username || !password) { $('#loginError').textContent = '아이디와 비밀번호를 입력해주세요'; return; }
+    const res = await post('/api/auth/login', { username, password });
+    if (!res || res.error) { $('#loginError').textContent = res?.error || '로그인에 실패했습니다'; return; }
+    currentUser = res.user;
+    closeModal();
+    renderAuthUI();
+    await loadBookmarks();
+    toast(`${currentUser.display_name}님 환영합니다`, 'success');
+  } catch(e) {
+    console.error('Login failed:', e);
+    $('#loginError').textContent = '서버 연결에 실패했습니다';
+  }
 }
 
 async function doRegister() {
-  const data = {
-    username: $('#regId').value.trim(),
-    password: $('#regPw').value,
-    display_name: $('#regName').value.trim(),
-    department: $('#regDept').value.trim(),
-  };
-  if (!data.username || !data.password || !data.display_name) {
-    $('#regError').textContent = '필수 항목을 모두 입력해주세요';
-    return;
+  try {
+    const data = {
+      username: $('#regId').value.trim(),
+      password: $('#regPw').value,
+      display_name: $('#regName').value.trim(),
+      department: $('#regDept').value.trim(),
+    };
+    if (!data.username || !data.password || !data.display_name) {
+      $('#regError').textContent = '필수 항목을 모두 입력해주세요';
+      return;
+    }
+    const res = await post('/api/auth/register', data);
+    if (!res || res.error) { $('#regError').textContent = res?.error || '회원가입에 실패했습니다'; return; }
+    currentUser = res.user;
+    closeModal();
+    renderAuthUI();
+    toast('회원가입이 완료되었습니다', 'success');
+  } catch(e) {
+    console.error('Register failed:', e);
+    $('#regError').textContent = '서버 연결에 실패했습니다';
   }
-  const res = await post('/api/auth/register', data);
-  if (res.error) { $('#regError').textContent = res.error; return; }
-  currentUser = res.user;
-  closeModal();
-  renderAuthUI();
-  toast('회원가입이 완료되었습니다', 'success');
 }
 
 async function doLogout() {
-  await post('/api/auth/logout', {});
+  try {
+    await post('/api/auth/logout', {});
+  } catch(e) {
+    console.error('Logout request failed:', e);
+  }
   currentUser = null;
   bookmarks = [];
   renderAuthUI();
@@ -5491,7 +5461,13 @@ async function doLogout() {
 // ===== Bookmarks =====
 async function loadBookmarks() {
   if (!currentUser) return;
-  bookmarks = await api('/api/bookmarks');
+  try {
+    const data = await api('/api/bookmarks');
+    bookmarks = Array.isArray(data) ? data : [];
+  } catch(e) {
+    console.error('Failed to load bookmarks:', e);
+    bookmarks = [];
+  }
   renderBookmarkNav();
 }
 
@@ -5527,16 +5503,22 @@ function renderBookmarkNav() {
 
 async function showBookmarks() {
   if (!currentUser) { showLogin(); return; }
-  await loadBookmarks();
-  showView('bookmarks');
+  try {
+    await loadBookmarks();
+    showView('bookmarks');
 
-  const folders = ['전체', ...new Set(bookmarks.map(b => b.folder))];
-  const folderHtml = folders.map(f =>
-    `<button class="bm-folder-tab ${f === bmActiveFolder ? 'active' : ''}" onclick="filterBmFolder('${escHtml(f)}')">${escHtml(f)}</button>`
-  ).join('');
-  $('#bmFolders').innerHTML = folderHtml;
+    const folders = ['전체', ...new Set(bookmarks.map(b => b.folder))];
+    const folderHtml = folders.map(f =>
+      `<button class="bm-folder-tab ${f === bmActiveFolder ? 'active' : ''}" onclick="filterBmFolder('${escHtml(f)}')">${escHtml(f)}</button>`
+    ).join('');
+    const bmFoldersEl = $('#bmFolders');
+    if (bmFoldersEl) bmFoldersEl.innerHTML = folderHtml;
 
-  renderBookmarkList();
+    renderBookmarkList();
+  } catch(e) {
+    console.error('Failed to show bookmarks:', e);
+    toast('북마크를 불러올 수 없습니다', 'error');
+  }
 }
 
 function filterBmFolder(folder) {
@@ -5608,25 +5590,35 @@ function closeMemoModal() { $('#memoModal').classList.remove('visible'); bmPendi
 
 async function saveMemo() {
   if (!bmPending) return;
-  const data = {
-    ...bmPending,
-    folder: $('#memoFolder').value.trim() || '기본',
-    memo: $('#memoText').value.trim(),
-  };
-  const res = await post('/api/bookmarks', data);
-  if (res.error) { toast(res.error, 'error'); return; }
-  closeMemoModal();
-  await loadBookmarks();
-  updateBookmarkButtons();
-  logActivity('bookmark', data.law_name + (data.article_num ? ' ' + data.article_num : ''));
-  toast('북마크에 추가되었습니다', 'success');
+  try {
+    const data = {
+      ...bmPending,
+      folder: $('#memoFolder').value.trim() || '기본',
+      memo: $('#memoText').value.trim(),
+    };
+    const res = await post('/api/bookmarks', data);
+    if (res?.error) { toast(res.error, 'error'); return; }
+    closeMemoModal();
+    await loadBookmarks();
+    updateBookmarkButtons();
+    logActivity('bookmark', data.law_name + (data.article_num ? ' ' + data.article_num : ''));
+    toast('북마크에 추가되었습니다', 'success');
+  } catch(e) {
+    console.error('Failed to save bookmark:', e);
+    toast('북마크 저장에 실패했습니다', 'error');
+  }
 }
 
 async function removeBookmark(id) {
-  await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
-  await loadBookmarks();
-  updateBookmarkButtons();
-  toast('북마크에서 제거되었습니다', 'info');
+  try {
+    await fetch(`/api/bookmarks/${id}`, { method: 'DELETE' });
+    await loadBookmarks();
+    updateBookmarkButtons();
+    toast('북마크에서 제거되었습니다', 'info');
+  } catch(e) {
+    console.error('Failed to remove bookmark:', e);
+    toast('북마크 삭제에 실패했습니다', 'error');
+  }
 }
 
 function toggleLawBookmark() {
@@ -5662,8 +5654,11 @@ const catIconClass = {contract_core:'contract', public_org:'public', nuclear_ene
 const catIcons = {contract_core:'📋', public_org:'🏛', nuclear_energy:'⚛', construction_subcontract:'🏗', fair_trade:'⚖', safety_environment:'🛡'};
 
 async function loadCategories() {
+  try {
   const cats = await api('/api/categories');
+  if (!cats || typeof cats !== 'object') return;
   const sb = $('#sidebar');
+  if (!sb) return;
   sb.innerHTML = '<div class="nav-label">법령 카테고리</div>';
   const filter = $('#categoryFilter');
 
@@ -5694,15 +5689,25 @@ async function loadCategories() {
     const opt = document.createElement('option');
     opt.value = id;
     opt.textContent = cat.name;
-    filter.appendChild(opt);
+    if (filter) filter.appendChild(opt);
   }
   renderBookmarkNav();
+  } catch(e) {
+    console.error('Failed to load categories:', e);
+  }
 }
 
 async function loadStats() {
-  const s = await api('/api/stats');
-  $('#statLaws').textContent = s.total_laws.toLocaleString();
-  $('#statArticles').textContent = s.total_articles.toLocaleString();
+  try {
+    const s = await api('/api/stats');
+    if (!s) return;
+    const lawsEl = $('#statLaws');
+    const articlesEl = $('#statArticles');
+    if (lawsEl) lawsEl.textContent = (s.total_laws || 0).toLocaleString();
+    if (articlesEl) articlesEl.textContent = (s.total_articles || 0).toLocaleString();
+  } catch(e) {
+    console.error('Failed to load stats:', e);
+  }
 }
 
 // ===== Smart Search =====
@@ -6604,6 +6609,7 @@ async function compareContracts() {
 
   toast('두 계약을 분석 중...', 'info');
 
+  try {
   const [r1, r2] = await Promise.all([
     api('/api/advisor?q=' + encodeURIComponent(c1.name)),
     api('/api/advisor?q=' + encodeURIComponent(c2.name)),
@@ -6658,6 +6664,10 @@ async function compareContracts() {
 
   div.innerHTML = h;
   document.body.appendChild(div);
+  } catch(e) {
+    console.error('Contract comparison failed:', e);
+    toast('계약 비교 분석에 실패했습니다', 'error');
+  }
 }
 
 // ===== 주간 업무 리포트 =====
@@ -7120,9 +7130,11 @@ function saveLawNote() {
 
 async function toggleCompareView() {
   if (!currentLaw) return;
+  try {
   const lawParams = new URLSearchParams({name: currentLaw});
   // 현재 타입 외 다른 타입 로드
   const viewerView = document.getElementById('viewerView');
+  if (!viewerView) return;
   const tabs = viewerView.querySelectorAll('.type-tab');
   const types = [...tabs].map(t => t.textContent);
   const otherType = types.find(t => t !== currentFileType) || types[0];
@@ -7170,6 +7182,10 @@ async function toggleCompareView() {
   } else {
     lawBody.insertAdjacentHTML('afterbegin', compareHtml);
     document.getElementById('compareBtn').textContent = '\u2194 비교 닫기';
+  }
+  } catch(e) {
+    console.error('Compare view failed:', e);
+    toast('비교 보기를 불러올 수 없습니다', 'error');
   }
 }
 
@@ -7306,17 +7322,22 @@ function scrollToArt(idx) {
 }
 
 async function openLawArticle(lawName, fileType, articleNum) {
-  await openLaw(lawName, fileType);
-  setTimeout(() => {
-    $$('.art-block').forEach((block, i) => {
-      if (block.querySelector('.art-num')?.textContent === articleNum) {
-        scrollToArt(i);
-      }
-    });
-    // 조문 해시 업데이트
-    const hash = `law=${encodeURIComponent(lawName)}&type=${encodeURIComponent(fileType)}&art=${encodeURIComponent(articleNum)}`;
-    history.replaceState(null, '', '#' + hash);
-  }, 100);
+  try {
+    await openLaw(lawName, fileType);
+    setTimeout(() => {
+      $$('.art-block').forEach((block, i) => {
+        if (block.querySelector('.art-num')?.textContent === articleNum) {
+          scrollToArt(i);
+        }
+      });
+      // 조문 해시 업데이트
+      const hash = `law=${encodeURIComponent(lawName)}&type=${encodeURIComponent(fileType)}&art=${encodeURIComponent(articleNum)}`;
+      history.replaceState(null, '', '#' + hash);
+    }, 100);
+  } catch(e) {
+    console.error('Failed to open law article:', e);
+    toast('조문을 불러올 수 없습니다', 'error');
+  }
 }
 
 function filterArticles(q) {
@@ -7960,10 +7981,12 @@ function generateFullReport() {
 
 // ===== 법률↔시행령 핵심 차이 =====
 async function showLawDiff(lawName) {
+  try {
   const data = await api('/api/law-diff?name=' + encodeURIComponent(lawName));
   if (!data?.diffs?.length) { toast('차이 데이터가 없습니다', 'info'); return; }
 
   const area = document.getElementById('aiSummaryArea');
+  if (!area) return;
   // 토글
   if (area.querySelector('.law-diff-view')) {
     area.querySelector('.law-diff-view').remove();
@@ -7984,6 +8007,10 @@ async function showLawDiff(lawName) {
 
   html += '</tbody></table></div>';
   area.insertAdjacentHTML('beforeend', html);
+  } catch(e) {
+    console.error('Law diff failed:', e);
+    toast('법률↔시행령 차이 데이터를 불러올 수 없습니다', 'error');
+  }
 }
 
 // ===== 조문 AI 요약 =====
@@ -8264,13 +8291,20 @@ async function viewAllBookmarkedArticles() {
   const articleBms = bookmarks.filter(b => b.article_num);
   if (!articleBms.length) { toast('조문 북마크가 없습니다', 'info'); return; }
 
+  try {
   showView('viewer');
-  document.getElementById('viewerTitle').textContent = '북마크 조문 모아보기';
-  document.getElementById('viewerMeta').innerHTML = `<span>${articleBms.length}개 조문</span>`;
-  document.getElementById('typeTabs').innerHTML = '';
-  document.getElementById('lawBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  document.getElementById('focusToggle').style.display = 'none';
-  document.getElementById('relatedLaws').style.display = 'none';
+  const vtEl = document.getElementById('viewerTitle');
+  const vmEl = document.getElementById('viewerMeta');
+  const ttEl = document.getElementById('typeTabs');
+  const lbEl = document.getElementById('lawBody');
+  const ftEl = document.getElementById('focusToggle');
+  const rlEl = document.getElementById('relatedLaws');
+  if (vtEl) vtEl.textContent = '북마크 조문 모아보기';
+  if (vmEl) vmEl.innerHTML = `<span>${articleBms.length}개 조문</span>`;
+  if (ttEl) ttEl.innerHTML = '';
+  if (lbEl) lbEl.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  if (ftEl) ftEl.style.display = 'none';
+  if (rlEl) rlEl.style.display = 'none';
 
   let html = '';
   const lawCache = {};
@@ -8299,8 +8333,13 @@ async function viewAllBookmarkedArticles() {
     `;
   }
 
-  document.getElementById('lawBody').innerHTML = html || '<div class="empty"><h3>조문 데이터를 불러올 수 없습니다</h3></div>';
-  document.getElementById('tocGrid').innerHTML = '';
+  if (lbEl) lbEl.innerHTML = html || '<div class="empty"><h3>조문 데이터를 불러올 수 없습니다</h3></div>';
+  const tgEl = document.getElementById('tocGrid');
+  if (tgEl) tgEl.innerHTML = '';
+  } catch(e) {
+    console.error('Failed to load bookmarked articles:', e);
+    toast('북마크 조문을 불러올 수 없습니다', 'error');
+  }
 }
 
 // ===== Cost Simulator =====

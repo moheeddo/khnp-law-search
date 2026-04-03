@@ -281,12 +281,52 @@ python build_index.py
 
 | 날짜 | 변경 내용 |
 |------|-----------|
+| 2026-04-04 | 6차 QA (최종 안정화): JS 에러 핸들링 전수 조사 및 보강 (17개 async 함수 try-catch 추가), 전역 에러 핸들러 추가, API 응답 검증 강화, DOM null 체크 보강, 미사용 CSS/HTML 정리, 전체 API 라우트 통합 테스트 PASS |
 | 2026-04-04 | 5차 QA: CSS 변수 정합성 (--bg-card 미정의 수정), 데이터 무결성 6건 수정, 검색 Enter 시 모바일 키보드 닫힘, 맨 위로 스크롤 버튼 추가 |
 | 2026-04-04 | 4차 QA: Vercel 배포 검증, 엣지케이스 방어 강화, UX 개선 (스켈레톤 로딩, 첫 방문 안내, 뒤로가기 히스토리 스택), app.py 동기화 목록 정리 |
 | 2026-04-04 | 3차 QA: 성능 최적화 (응답 크기 축소, 검색 조기종료), 접근성 개선 (aria-label, 색상 대비), 보안 강화 (XSS 방어, 입력 길이 제한), font-display: swap |
 | 2026-04-03 | 2차 QA + 고도화: key_articles 누락 27건 보완, refData 변수 참조 버그 수정, 접기/펼치기 섹션 4종 추가, 로딩 인디케이터 개선, 에러 메시지 사용자 친화적 개선 |
 | 2026-04-03 | 3차 고도화: 금액별 계약방식 자동 판별 (공사/용역/물품, 6단계 금액 구간), 최근 검색 이력 (localStorage, 최대 10건), 유사 검색어 추천 (시나리오 키워드 기반) |
 | 2026-04-03 | 계약 프로세스 플로우 기능 추가: 검색 키워드 기반 6가지 계약 유형(입찰, 공사, 용역, 구매, 단가, 수의계약)의 단계별 프로세스를 시각적으로 표시. 백엔드 `PROCESS_FLOWS` 데이터 및 `get_reference_data` 연동, 프론트엔드 프로세스 다이어그램 렌더링 구현. |
+
+### 2026-04-04 (6차 QA - 최종 안정화)
+- **JS 에러 핸들링 전수 조사 (17개 async 함수)**:
+  - try-catch 추가: `checkAuth`, `doLogin`, `doRegister`, `doLogout`, `loadBookmarks`, `showBookmarks`, `saveMemo`, `removeBookmark`, `loadCategories`, `loadStats`, `loadGlossary`, `checkSubscriptionUpdates`, `compareContracts`, `toggleCompareView`, `showLawDiff`, `viewAllBookmarkedArticles`, `openLawArticle`
+  - 이미 try-catch 있는 함수 확인: `doSearch`, `doAdvisor`, `openLaw`, `loadBidResults`, `loadClauses`, `summarizeArticle`
+  - catch 블록에서 `console.error`로 디버깅 정보 출력 + `toast()`로 사용자 안내
+- **API 응답 검증 강화**:
+  - `api()` 헬퍼에 HTTP 에러 상태 로깅 추가
+  - `checkAuth`: `data.logged_in` 접근 전 `data && data.logged_in` null 체크
+  - `loadBookmarks`: `Array.isArray(data)` 검증 추가 (배열이 아닌 응답 방어)
+  - `loadCategories`: `cats` 객체 유효성 검증 추가
+  - `loadStats`: `s.total_laws` 접근 전 null 체크 + fallback 0
+  - `checkSubscriptionUpdates`: `Array.isArray(data)` 검증 추가
+  - `doLogin/doRegister`: `res?.error` optional chaining으로 null 안전 접근
+- **DOM null 체크 보강**:
+  - `printLaw()`: `viewerTitle`, `viewerMeta`, `lawBody` 요소 null 체크 추가
+  - `loadCategories`: `filter` 요소 null 체크 (`if (filter)`)
+  - `loadStats`: `statLaws`, `statArticles` 요소 null 체크
+  - `showBookmarks`: `bmFolders` 요소 null 체크
+  - `toggleCompareView`: `viewerView` 요소 null 체크
+  - `showLawDiff`: `aiSummaryArea` 요소 null 체크
+  - `viewAllBookmarkedArticles`: 6개 DOM 요소 null 체크 추가
+- **전역 에러 핸들러 추가**:
+  - `window.addEventListener('error', ...)`: 예기치 않은 JS 에러 콘솔 로깅
+  - `window.addEventListener('unhandledrejection', ...)`: 미처리 Promise rejection 감지 + `preventDefault()`로 사용자 노출 방지
+- **미사용 코드 정리**:
+  - CSS: `.alio-ref-*` 클래스 7개 제거 (HTML/JS에서 미참조)
+  - CSS: `.res-meta`, `.res-art` 관련 클래스 5개 제거 (HTML/JS에서 미참조)
+  - CSS: `.flow-steps`, `.flow-arrow` 미디어쿼리 규칙 제거 (HTML/JS에서 미참조)
+  - HTML: 비어있는 `<div id="welcomeView"></div>` 제거 (JS에서 미참조)
+- **통합 테스트 (13개 라우트 전체 PASS)**:
+  - `/api/categories` 200, `/api/stats` 200, `/api/search?q=입찰` 200
+  - `/api/advisor?q=공사` 200, `/api/law?name=국가를당사자로하는계약에관한법률&type=법률` 200
+  - `/api/glossary` 200, `/api/clauses` 200, `/api/templates` 200
+  - `/api/law-diff?name=국가를당사자로하는계약에관한법률` 200
+  - `/api/check-updates?names=국가를당사자로하는계약에관한법률` 200
+  - `/api/bids?q=한수원` 200, `/api/auth/me` 200, `/api/bookmarks` 200
+  - 에러 케이스: `/api/advisor` (쿼리 없음) 400, `/api/law?name=없는법률` 404
+- **총 수정 건수**: 80건째~약 100건 (기존 79건 + 약 21건)
 
 ### 2026-04-04 (5차 QA)
 - **CSS 일관성 수정**:
