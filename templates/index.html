@@ -49,6 +49,13 @@
   --shadow-lg: 0 2px 8px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.1);
   --shadow-glow: 0 0 0 3px rgba(37,99,235,0.15);
   --transition: 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
+  --border-hover: rgba(0,0,0,0.15);
+  --bg-tint: rgba(0,0,0,0.02);
+  --bg-kp: rgba(255,255,255,0.6);
+  --switch-bg: rgba(0,0,0,0.12);
+  --switch-knob: #ffffff;
+  --smart-banner-bg: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(37,99,235,0.06) 100%);
+  --option-bg: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -75,6 +82,13 @@
   --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
   --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
   --shadow-lg: 0 2px 8px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.3);
+  --border-hover: rgba(255,255,255,0.15);
+  --bg-tint: rgba(255,255,255,0.03);
+  --bg-kp: rgba(255,255,255,0.05);
+  --switch-bg: rgba(255,255,255,0.15);
+  --switch-knob: #e8eaed;
+  --smart-banner-bg: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(37,99,235,0.1) 100%);
+  --option-bg: #22262f;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -233,7 +247,7 @@ body {
   white-space: nowrap;
 }
 
-.btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: rgba(0,0,0,0.15); }
+.btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-hover); }
 
 .btn-accent {
   background: var(--accent);
@@ -328,7 +342,7 @@ body {
   outline: none;
 }
 
-.search-filter option { background: #fff; }
+.search-filter option { background: var(--option-bg); }
 
 .search-btn {
   padding: 10px 24px;
@@ -421,7 +435,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.cat-card:hover { border-color: rgba(0,0,0,0.12); box-shadow: var(--shadow); }
+.cat-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
 .cat-card.active { border-color: var(--accent); box-shadow: var(--shadow-glow); }
 
 .cat-head {
@@ -524,7 +538,7 @@ body {
   box-shadow: var(--shadow-sm);
 }
 
-.bm-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: rgba(0,0,0,0.12); }
+.bm-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-hover); }
 .bm-nav-btn.active { background: var(--warn-muted); border-color: var(--bookmark); color: var(--bookmark); }
 
 .bm-nav-btn svg { flex-shrink: 0; }
@@ -920,7 +934,7 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 .viewer-toc {
   padding: 14px 22px;
   border-bottom: 1px solid var(--border);
-  background: rgba(0,0,0,0.02);
+  background: var(--bg-tint);
   max-height: 220px;
   overflow-y: auto;
 }
@@ -997,7 +1011,7 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 
 .ai-kp {
   padding: 10px 14px;
-  background: rgba(255,255,255,0.6);
+  background: var(--bg-kp);
   border-radius: var(--radius);
   border-left: 3px solid var(--cyan);
 }
@@ -1069,7 +1083,7 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 .focus-switch {
   width: 36px;
   height: 20px;
-  background: rgba(0,0,0,0.12);
+  background: var(--switch-bg);
   border-radius: 10px;
   position: relative;
   cursor: pointer;
@@ -1085,9 +1099,9 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
   left: 2px;
   width: 16px;
   height: 16px;
-  background: white;
+  background: var(--switch-knob);
   border-radius: 50%;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-sm);
   transition: transform var(--transition);
 }
 
@@ -1898,7 +1912,7 @@ kbd {
 .smart-results { display: flex; flex-direction: column; gap: 0; }
 
 .smart-banner {
-  background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(37,99,235,0.06) 100%);
+  background: var(--smart-banner-bg);
 
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
@@ -4445,6 +4459,10 @@ const post = (path, data) => api(path, {
   headers: {'Content-Type':'application/json'},
   body: JSON.stringify(data),
 });
+function safeLSSet(key, value) {
+  try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); }
+  catch(e) { if (e.name === 'QuotaExceededError') toast('저장 공간이 부족합니다. 오래된 데이터를 정리해주세요.', 'warn'); }
+}
 
 function toast(msg, type='info') {
   const el = document.createElement('div');
@@ -4455,8 +4473,9 @@ function toast(msg, type='info') {
 }
 
 function escHtml(t) {
+  if (t == null) return '';
   const d = document.createElement('div');
-  d.textContent = t;
+  d.textContent = String(t);
   return d.innerHTML;
 }
 
@@ -4466,7 +4485,7 @@ function getSubscriptions() {
 }
 
 function saveSubscriptions(subs) {
-  localStorage.setItem('lawSubscriptions', JSON.stringify(subs));
+  safeLSSet('lawSubscriptions', subs);
 }
 
 function toggleSubscribe() {
@@ -4619,7 +4638,7 @@ function saveMemoInline(idx, law, type, num) {
   const text = document.getElementById('memoText_' + idx).value.trim();
   const key = `memo_${law}_${type}_${num}`;
   if (text) {
-    localStorage.setItem(key, text);
+    safeLSSet(key, text);
     toast('메모가 저장되었습니다', 'success');
   } else {
     localStorage.removeItem(key);
@@ -4653,7 +4672,7 @@ function getMyContracts() {
   return JSON.parse(localStorage.getItem('myContracts') || '[]');
 }
 function saveMyContracts(list) {
-  localStorage.setItem('myContracts', JSON.stringify(list));
+  safeLSSet('myContracts', list);
 }
 
 function addContract() {
@@ -4936,7 +4955,7 @@ function showQuizResult() {
   const stats = JSON.parse(localStorage.getItem('quizStats') || '{"attempts":0,"totalScore":0}');
   stats.attempts++;
   stats.totalScore += quizState.score;
-  localStorage.setItem('quizStats', JSON.stringify(stats));
+  safeLSSet('quizStats', stats);
 }
 
 // ===== Dark Mode =====
@@ -4945,7 +4964,7 @@ function toggleTheme() {
   const current = html.getAttribute('data-theme');
   const next = current === 'dark' ? 'light' : 'dark';
   html.setAttribute('data-theme', next);
-  localStorage.setItem('theme', next);
+  safeLSSet('theme', next);
   updateThemeIcon();
 }
 
@@ -5047,7 +5066,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const text = label.querySelector('span')?.textContent || '';
       const key = 'checklist_' + text.substring(0, 30);
       if (e.target.checked) {
-        localStorage.setItem(key, '1');
+        safeLSSet(key, '1');
       } else {
         localStorage.removeItem(key);
       }
@@ -5091,7 +5110,7 @@ function saveSearchHistory(query) {
   history = history.filter(h => h !== query);
   history.unshift(query);
   if (history.length > 10) history.pop();
-  localStorage.setItem('searchHistory', JSON.stringify(history));
+  safeLSSet('searchHistory', history);
   renderSearchHistory();
 }
 
@@ -5107,7 +5126,7 @@ function renderSearchHistory() {
 function removeHistory(query) {
   let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
   history = history.filter(h => h !== query);
-  localStorage.setItem('searchHistory', JSON.stringify(history));
+  safeLSSet('searchHistory', history);
   renderSearchHistory();
 }
 
@@ -5126,7 +5145,7 @@ function saveSearchStats(query) {
   for (const k of Object.keys(stats.weekly)) {
     if (k < cutoff) delete stats.weekly[k];
   }
-  localStorage.setItem('searchStats', JSON.stringify(stats));
+  safeLSSet('searchStats', stats);
   renderStats();
 }
 
@@ -6611,7 +6630,7 @@ function cacheLawData(lawName, fileType, data) {
       const oldest = keys.sort((a,b) => cache[a].cachedAt.localeCompare(cache[b].cachedAt))[0];
       delete cache[oldest];
     }
-    localStorage.setItem('lawCache', JSON.stringify(cache));
+    safeLSSet('lawCache', cache);
   } catch(e) { /* localStorage 용량 초과 시 무시 */ }
 }
 
@@ -6831,7 +6850,7 @@ function saveLawNote() {
   const key = `lawnote_${currentLaw}_${currentFileType}`;
   const text = document.getElementById('lawNoteText')?.value || '';
   if (text.trim()) {
-    localStorage.setItem(key, text);
+    safeLSSet(key, text);
   } else {
     localStorage.removeItem(key);
   }
@@ -8243,7 +8262,7 @@ function logActivity(type, detail) {
     time: new Date().toISOString(),
   });
   if (logs.length > 50) logs.splice(0, logs.length - 50);
-  localStorage.setItem('activityLog', JSON.stringify(logs));
+  safeLSSet('activityLog', logs);
   renderActivityTimeline();
 }
 

@@ -284,6 +284,15 @@ python build_index.py
 | 2026-04-03 | 3차 고도화: 금액별 계약방식 자동 판별 (공사/용역/물품, 6단계 금액 구간), 최근 검색 이력 (localStorage, 최대 10건), 유사 검색어 추천 (시나리오 키워드 기반) |
 | 2026-04-03 | 계약 프로세스 플로우 기능 추가: 검색 키워드 기반 6가지 계약 유형(입찰, 공사, 용역, 구매, 단가, 수의계약)의 단계별 프로세스를 시각적으로 표시. 백엔드 `PROCESS_FLOWS` 데이터 및 `get_reference_data` 연동, 프론트엔드 프로세스 다이어그램 렌더링 구현. |
 
+### 2026-04-03 (30차 - 품질 점검 및 버그 수정)
+- **백엔드**: `urllib.parse` 명시 import 추가 (나라장터 API 안정성)
+- **백엔드**: 모든 bare `except:` 절을 `except Exception:`으로 교체 (SystemExit/KeyboardInterrupt 누수 방지)
+- **백엔드**: 미사용 `timedelta` import 제거
+- **백엔드**: `api_summarize`에서 `request.get_json()` 반환값 None 방어 처리
+- **프론트**: 다크모드 하드코딩 색상 7곳을 CSS 변수로 교체 (`--border-hover`, `--bg-tint`, `--bg-kp`, `--switch-bg`, `--switch-knob`, `--smart-banner-bg`, `--option-bg`)
+- **프론트**: `escHtml()` 함수에 null/undefined 방어 처리 추가
+- **프론트**: 13개 `localStorage.setItem` 호출을 `safeLSSet()` 래퍼로 교체 (QuotaExceededError 처리)
+
 ### 2026-04-03 (29차 고도화)
 - 두 계약 비교 분석 (체크박스 2개 선택 → 법령·위험도·방식 비교 모달)
 - 주간 업무 리포트 (활동 요약·키워드·계약 현황 자동 정리)

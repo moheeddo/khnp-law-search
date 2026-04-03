@@ -1,5 +1,5 @@
 """Vercel Serverless Flask App - 한수원 계약 법령 검색"""
-import os, re, json, ssl, secrets, urllib.request, urllib.error
+import os, re, json, ssl, secrets, urllib.request, urllib.error, urllib.parse
 from pathlib import Path
 from flask import Flask, request, jsonify, send_from_directory
 
@@ -190,7 +190,8 @@ def call_solar(query, kw_result):
             c=json.loads(resp.read())["choices"][0]["message"]["content"].strip()
             if c.startswith("```"): c=c.split("```")[1]; c=c[4:] if c.startswith("json") else c
             return json.loads(c)
-    except: return None
+    except Exception:
+        return None
 
 def parse_amount(query):
     """검색어에서 금액 추출 (단위: 원)"""
@@ -920,7 +921,8 @@ def fetch_g2b_bids(keyword, num=5):
                 "method": it.get("bidMethdNm",""),
             })
         return results
-    except: return []
+    except Exception:
+        return []
 
 # ===== Glossary =====
 CONTRACT_CLAUSES = [
@@ -1035,7 +1037,7 @@ def api_law():
     related = [r for r in related if not (r["law"] == law_name and r["type"] == ft)]
     # 법령 시행일·개정일 경고
     warnings = []
-    from datetime import datetime, timedelta
+    from datetime import datetime
     meta = fd["meta"]
     try:
         enforcement = meta.get("시행일자","")
@@ -1052,13 +1054,14 @@ def api_law():
             pub_date = datetime.strptime(pub_str, "%Y-%m-%d")
             if pub_date > datetime.now():
                 warnings.append({"type":"future","msg":f"공포일: {promulgation} (아직 공포 전)"})
-    except: pass
+    except Exception:
+        pass
     has_diff = law_name in LAW_DECREE_DIFF
     return jsonify({"law_name":law_name,"file_type":ft,"title":meta.get("제목",law_name),"meta":meta,"articles":fd["articles"],"available_types":list(law["files"].keys()),"related_laws":related[:5],"warnings":warnings,"has_diff":has_diff})
 
 @app.route("/api/summarize", methods=["POST"])
 def api_summarize():
-    data = request.get_json()
+    data = request.get_json() or {}
     return jsonify(summarize(data.get("context",""), data.get("law_name",""), data.get("articles_text","")))
 
 @app.route("/api/bids")
