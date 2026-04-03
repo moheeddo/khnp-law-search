@@ -137,6 +137,90 @@ def call_solar(query, kw_result):
             return json.loads(c)
     except: return None
 
+def parse_amount(query):
+    """검색어에서 금액 추출 (단위: 원)"""
+    patterns = [
+        (r'(\d+(?:\.\d+)?)\s*억', 100000000),
+        (r'(\d+(?:,\d{3})*)\s*만\s*원', 10000),
+        (r'(\d+(?:\.\d+)?)\s*천만', 10000000),
+        (r'(\d+(?:,\d{3})*)\s*원', 1),
+    ]
+    for pat, mult in patterns:
+        m = re.search(pat, query)
+        if m:
+            num = float(m.group(1).replace(',',''))
+            return int(num * mult)
+    return None
+
+def get_contract_method(amount, query):
+    """금액·유형별 계약방식 판별"""
+    q = query.lower()
+    is_construction = any(kw in q for kw in ["공사","건설","시공","토목"])
+    is_service = any(kw in q for kw in ["용역","설계","컨설팅","SW","IT"])
+
+    result = {"amount": amount, "amount_display": "", "method": "", "details": [], "warnings": []}
+
+    # 금액 표시
+    if amount >= 100000000:
+        result["amount_display"] = f"{amount/100000000:.1f}억원"
+    elif amount >= 10000:
+        result["amount_display"] = f"{amount/10000:.0f}만원"
+    else:
+        result["amount_display"] = f"{amount:,}원"
+
+    # 공기업 기준 (한수원)
+    if is_construction:
+        if amount >= 30000000000:  # 300억 이상
+            result["method"] = "국제경쟁입찰"
+            result["details"] = ["WTO 정부조달협정 적용", "외국업체 참가 가능", "공고기간 40일 이상"]
+        elif amount >= 300000000:  # 3억 이상
+            result["method"] = "일반경쟁입찰 (제한경쟁 가능)"
+            result["details"] = ["적격심사 또는 종합심사낙찰제", "시공능력평가액 이상 업체", "PQ 사전심사 가능"]
+        elif amount >= 50000000:  # 5천만원 이상
+            result["method"] = "일반경쟁입찰"
+            result["details"] = ["소규모 공사 간이절차 가능", "적격심사 적용"]
+        else:
+            result["method"] = "수의계약 가능"
+            result["details"] = ["추정가격 5천만원 미만", "2인 이상 견적서 징수", "시행령 제26조 적용"]
+    elif is_service:
+        if amount >= 20000000000:  # 200억 이상
+            result["method"] = "국제경쟁입찰"
+            result["details"] = ["WTO 정부조달협정 적용"]
+        elif amount >= 200000000:  # 2억 이상
+            result["method"] = "제한경쟁 또는 협상에 의한 계약"
+            result["details"] = ["기술능력 평가 필수", "협상절차 (시행령 제43조)", "제안서 평가위원회 구성"]
+        elif amount >= 50000000:  # 5천만원 이상
+            result["method"] = "일반경쟁입찰"
+            result["details"] = ["적격심사 적용"]
+        else:
+            result["method"] = "수의계약 가능"
+            result["details"] = ["추정가격 5천만원 미만", "2인 이상 견적서 징수"]
+    else:  # 물품
+        if amount >= 20000000000:  # 200억 이상
+            result["method"] = "국제경쟁입찰"
+            result["details"] = ["WTO 정부조달협정 적용"]
+        elif amount >= 50000000:  # 5천만원 이상
+            result["method"] = "일반경쟁입찰"
+            result["details"] = ["나라장터 전자입찰", "최저가 낙찰 또는 적격심사"]
+            if amount >= 200000000:
+                result["details"].append("계약심사위원회 심의 권장")
+        elif amount >= 20000000:  # 2천만원 이상
+            result["method"] = "일반경쟁 또는 수의계약"
+            result["details"] = ["수의계약 시 2인 이상 견적", "소액수의계약 가능 범위 확인"]
+        else:
+            result["method"] = "수의계약 (소액)"
+            result["details"] = ["추정가격 2천만원 미만", "1인 견적 가능 (공기업 기준)"]
+
+    # 공통 경고
+    if amount >= 100000000:
+        result["warnings"].append("계약보증금 납부 필수 (계약금액의 10~15%)")
+    if amount >= 300000000:
+        result["warnings"].append("선급금 지급 시 선급금보증서 징구")
+    if is_construction and amount >= 100000000:
+        result["warnings"].append("건설공사보험 가입 확인")
+
+    return result
+
 PROCESS_FLOWS = {
     "입찰": [
         {"step":"수요확인","desc":"소요량·사양서 확정","law":""},
@@ -217,6 +301,11 @@ def get_reference_data(query, recommendations):
                 break
     ref["process"] = process
 
+    # ── 0.5. 금액별 계약방식 자동 판별 ──
+    amount = parse_amount(query)
+    if amount:
+        ref["contract_method"] = get_contract_method(amount, query)
+
     # ── 1. 참고 조문: 추천 법령의 key_articles 전체 내용 추출 ──
     seen_arts = set()
     for r in recommendations[:8]:
@@ -292,9 +381,21 @@ def get_reference_data(query, recommendations):
 
     return ref
 
+def get_related_queries(query):
+    """시나리오 키워드 기반 유사 검색어 추천"""
+    q = query.lower()
+    related = set()
+    for s in ADVISOR_SCENARIOS:
+        if any(kw.lower() in q for kw in s["keywords"]):
+            for kw in s["keywords"]:
+                if kw.lower() not in q and len(kw) >= 2:
+                    related.add(kw)
+    return list(related)[:8]
+
 def advise(query):
     kw = advise_keyword(query)
     solar = call_solar(query, kw)
+    related_queries = get_related_queries(query)
     if solar and "recommendations" in solar:
         index = get_index()
         recs,seen=[],set()
@@ -308,9 +409,10 @@ def advise(query):
         po={"필수":0,"권장":1,"해당시":2,"참고":3}
         recs.sort(key=lambda x:po.get(x.get("priority",""),9))
         ref_data = get_reference_data(query, recs)
-        return {"query":query,"analysis":solar.get("analysis",""),"categories":solar.get("categories",kw["categories"]),"recommendations":recs,"total":len(recs),"source":"solar","ref_data":ref_data}
+        return {"query":query,"analysis":solar.get("analysis",""),"categories":solar.get("categories",kw["categories"]),"recommendations":recs,"total":len(recs),"source":"solar","ref_data":ref_data,"related_queries":related_queries}
     ref_data = get_reference_data(query, kw["recommendations"])
     kw["ref_data"] = ref_data
+    kw["related_queries"] = related_queries
     return kw
 
 # ===== Summarize =====

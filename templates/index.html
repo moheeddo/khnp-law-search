@@ -2189,6 +2189,109 @@ body.landing .landing-wrap { display: flex; }
   border-radius: 3px;
   padding: 0 2px;
 }
+/* ===== Contract Method Card ===== */
+.contract-method-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warn);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  margin-bottom: 8px;
+}
+.cm-method {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+.cm-details { margin-bottom: 8px; }
+.cm-detail-item {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 2px 0;
+  line-height: 1.5;
+}
+.cm-warnings {
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.cm-warn-item {
+  font-size: 12px;
+  color: var(--warn);
+  padding: 2px 0;
+  line-height: 1.5;
+}
+
+/* ===== Search History ===== */
+.search-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.history-label {
+  width: 100%;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.history-item {
+  padding: 4px 12px;
+  border-radius: var(--radius-xl);
+  background: var(--accent-muted);
+  border: 1px solid rgba(37,99,235,0.15);
+  color: var(--accent);
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all var(--transition);
+}
+.history-item:hover {
+  background: var(--accent);
+  color: white;
+}
+.history-remove {
+  font-size: 10px;
+  opacity: 0.5;
+  cursor: pointer;
+}
+.history-remove:hover { opacity: 1; }
+
+/* ===== Related Queries ===== */
+.related-queries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  padding: 12px 0;
+  margin-top: 8px;
+}
+.rq-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.rq-item {
+  padding: 3px 10px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.rq-item:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 </style>
 </head>
 <body class="landing">
@@ -2341,6 +2444,7 @@ body.landing .landing-wrap { display: flex; }
              placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경...">
       <button class="advisor-btn" id="advisorBtn">검색</button>
     </div>
+    <div id="searchHistory" class="search-history"></div>
     <div class="advisor-examples">
       <span class="adv-example" data-q="원전 기자재 구매">원전 기자재 구매</span>
       <span class="adv-example" data-q="공사 하도급 관리">공사 하도급</span>
@@ -2559,7 +2663,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
   await Promise.all([loadCategories(), loadStats()]);
   setupEvents();
+  renderSearchHistory();
 });
+
+// ===== Search History =====
+function saveSearchHistory(query) {
+  let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  history = history.filter(h => h !== query);
+  history.unshift(query);
+  if (history.length > 10) history.pop();
+  localStorage.setItem('searchHistory', JSON.stringify(history));
+  renderSearchHistory();
+}
+
+function renderSearchHistory() {
+  const el = document.getElementById('searchHistory');
+  if (!el) return;
+  const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  if (!history.length) { el.innerHTML = ''; return; }
+  el.innerHTML = '<div class="history-label">최근 검색</div>' +
+    history.map(h => `<span class="history-item" onclick="doAdvisor('${escHtml(h)}')">${escHtml(h)} <span class="history-remove" onclick="event.stopPropagation();removeHistory('${escHtml(h)}')">&#x2715;</span></span>`).join('');
+}
+
+function removeHistory(query) {
+  let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  history = history.filter(h => h !== query);
+  localStorage.setItem('searchHistory', JSON.stringify(history));
+  renderSearchHistory();
+}
 
 function setupEvents() {
   // Advisor
@@ -2919,6 +3050,7 @@ async function doSearch(q) {
   if (q) input.value = q;
   const query = input.value.trim();
   if (!query) return;
+  saveSearchHistory(query);
   showView('results');
   $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   $('#resultsTitle').textContent = '';
@@ -3030,8 +3162,27 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 3.5. 계약 프로세스 플로우
+  // 3.4. 금액별 계약방식 판별
   const refData0 = advisorData?.ref_data;
+  if (refData0?.contract_method) {
+    const cm = refData0.contract_method;
+    html += `
+      <div class="smart-section">
+        <div class="smart-section-head">
+          <div class="smart-section-icon" style="background:var(--warn-muted)">&#x1F4B0;</div>
+          <div class="smart-section-title">금액별 계약방식 (${escHtml(cm.amount_display)})</div>
+        </div>
+        <div class="contract-method-card">
+          <div class="cm-method">${escHtml(cm.method)}</div>
+          <div class="cm-details">
+            ${cm.details.map(d => `<div class="cm-detail-item">&#x2022; ${escHtml(d)}</div>`).join('')}
+          </div>
+          ${cm.warnings?.length ? `<div class="cm-warnings">${cm.warnings.map(w => `<div class="cm-warn-item">&#x26A0; ${escHtml(w)}</div>`).join('')}</div>` : ''}
+        </div>
+      </div>`;
+  }
+
+  // 3.5. 계약 프로세스 플로우
   if (refData0?.process?.length) {
     html += '<div class="smart-divider">계약 프로세스</div>';
     html += '<div class="process-flow">';
@@ -3204,6 +3355,15 @@ function renderSmartResults(searchResults, advisorData, query) {
       }
       html += '</div>';
     }
+  }
+
+  // 6. 유사 검색어 추천
+  if (advisorData?.related_queries?.length) {
+    html += '<div class="related-queries"><span class="rq-label">관련 검색어</span>';
+    for (const rq of advisorData.related_queries) {
+      html += `<span class="rq-item" onclick="doSearch('${escHtml(rq)}')">${escHtml(rq)}</span>`;
+    }
+    html += '</div>';
   }
 
   html += '</div>';
@@ -3531,6 +3691,7 @@ async function doAdvisor(q) {
   if (q) input.value = q;
   const query = (input ? input.value : q || '').trim();
   if (!query) return;
+  saveSearchHistory(query);
   showView('advisor');
   $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);
