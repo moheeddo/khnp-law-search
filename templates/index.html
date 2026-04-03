@@ -811,12 +811,14 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 }
 
 .viewer-filter {
+  display: flex;
+  align-items: center;
   padding: 10px 22px;
   border-bottom: 1px solid var(--border);
 }
 
 .viewer-filter input {
-  width: 100%;
+  flex: 1;
   padding: 8px 14px;
   background: var(--bg-input);
   border: 1px solid var(--border);
@@ -828,6 +830,48 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 }
 
 .viewer-filter input:focus { border-color: var(--accent); box-shadow: var(--shadow-glow); }
+
+.related-laws {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 22px;
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+}
+.rl-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+.related-law-chip {
+  padding: 3px 10px;
+  border-radius: var(--radius-xl);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.related-law-chip:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.rl-type {
+  font-size: 9px;
+  padding: 1px 4px;
+  background: var(--bg-active);
+  border-radius: 3px;
+  color: var(--text-muted);
+}
 
 .viewer-toc {
   padding: 14px 22px;
@@ -2616,6 +2660,7 @@ kbd {
       <div class="type-tabs" id="typeTabs"></div>
       <button class="btn btn-sm" id="compareBtn" onclick="toggleCompareView()" style="display:none">&#x2194; 비교 보기</button>
       <div id="aiSummaryArea"></div>
+      <div id="relatedLaws" class="related-laws" style="display:none"></div>
       <div class="focus-toggle" id="focusToggle" style="display:none">
         <label>
           <div class="focus-switch" id="focusSwitch" onclick="toggleFocusMode()"></div>
@@ -2625,6 +2670,7 @@ kbd {
       </div>
       <div class="viewer-filter">
         <input type="text" id="viewerFilter" placeholder="조문 내 검색 (예: 보증금, 입찰)">
+        <span id="filterCount" style="font-size:11px;color:var(--text-muted);margin-left:8px"></span>
       </div>
       <div class="viewer-toc" id="viewerToc">
         <h4 onclick="toggleToc()" style="cursor:pointer;user-select:none">
@@ -2768,6 +2814,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCategories(), loadStats()]);
   setupEvents();
   renderSearchHistory();
+
+  // 체크리스트 localStorage 저장 (이벤트 위임)
+  document.addEventListener('change', (e) => {
+    if (e.target.matches('.ref-check-item input[type="checkbox"]')) {
+      const label = e.target.closest('.ref-check-item');
+      const text = label.querySelector('span')?.textContent || '';
+      const key = 'checklist_' + text.substring(0, 30);
+      if (e.target.checked) {
+        localStorage.setItem(key, '1');
+      } else {
+        localStorage.removeItem(key);
+      }
+    }
+  });
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
@@ -3468,7 +3528,7 @@ function renderSmartResults(searchResults, advisorData, query) {
             ${c.checklist?.length ? `
               <div class="ref-checklist">
                 <div class="ref-checklist-title">&#x2705; 실무 체크리스트</div>
-                ${c.checklist.map(item=>`<label class="ref-check-item"><input type="checkbox"><span>${escHtml(item)}</span></label>`).join('')}
+                ${c.checklist.map(item=>{const checked=localStorage.getItem('checklist_'+item.substring(0,30))==='1'?'checked':'';return `<label class="ref-check-item"><input type="checkbox" ${checked}><span>${escHtml(item)}</span></label>`;}).join('')}
               </div>` : ''}
           </div>`;
       }
@@ -3700,6 +3760,21 @@ async function openLaw(lawName, fileType, advInfo) {
   renderArticles(arts);
   updateBookmarkButtons();
 
+  // 관련 법령 표시
+  const rlContainer = document.getElementById('relatedLaws');
+  if (data.related_laws?.length && rlContainer) {
+    const rlHtml = data.related_laws.map(r =>
+      `<span class="related-law-chip" onclick="openLaw('${escHtml(r.law)}','${escHtml(r.type)}')" title="${escHtml(r.reason)}">
+        ${escHtml(r.law.length > 12 ? r.law.substring(0,12)+'…' : r.law)}
+        <span class="rl-type">${escHtml(r.type)}</span>
+      </span>`
+    ).join('');
+    rlContainer.innerHTML = '<span class="rl-label">함께 확인</span>' + rlHtml;
+    rlContainer.style.display = 'flex';
+  } else if (rlContainer) {
+    rlContainer.style.display = 'none';
+  }
+
   // AI 요약 (핵심 조문이 있으면 비동기 로드)
   if (highlightedArticles.length > 0 && advisorContext) {
     loadAiSummary(lawName, arts);
@@ -3887,9 +3962,54 @@ async function openLawArticle(lawName, fileType, articleNum) {
 
 function filterArticles(q) {
   const query = q.toLowerCase().trim();
-  $$('.art-block').forEach(b => {
-    b.style.display = !query || b.textContent.toLowerCase().includes(query) ? '' : 'none';
+  let matchCount = 0;
+  const blocks = document.querySelectorAll('.art-block');
+
+  blocks.forEach(b => {
+    const bodyEl = b.querySelector('.art-body');
+    if (!query) {
+      b.style.display = '';
+      // 하이라이트 제거: 원래 텍스트 복원
+      if (bodyEl) bodyEl.querySelectorAll('.filter-hl').forEach(m => {
+        m.replaceWith(m.textContent);
+      });
+      return;
+    }
+
+    const text = b.textContent.toLowerCase();
+    if (text.includes(query)) {
+      b.style.display = '';
+      matchCount++;
+      // 본문 내 하이라이트
+      if (bodyEl) {
+        const walker = document.createTreeWalker(bodyEl, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        nodes.forEach(node => {
+          const idx = node.textContent.toLowerCase().indexOf(query);
+          if (idx >= 0) {
+            const span = document.createElement('span');
+            span.className = 'filter-hl';
+            span.style.background = 'rgba(37,99,235,0.2)';
+            span.style.borderRadius = '2px';
+            span.style.padding = '0 1px';
+            const range = document.createRange();
+            range.setStart(node, idx);
+            range.setEnd(node, idx + query.length);
+            range.surroundContents(span);
+          }
+        });
+      }
+    } else {
+      b.style.display = 'none';
+    }
   });
+
+  // 매칭 개수 표시
+  const counter = document.getElementById('filterCount');
+  if (counter) {
+    counter.textContent = query ? `${matchCount}/${blocks.length}개 매칭` : '';
+  }
 }
 
 // ===== Advisor =====
@@ -3952,7 +4072,7 @@ function renderAdvisor(data) {
           <div class="ref-case-head"><span class="ref-case-icon">&#x1F4BC;</span><span class="ref-case-title">${escHtml(c.title)}</span></div>
           <div class="ref-case-desc">${escHtml(c.desc)}</div>
           ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">&#x1F4D6; ${escHtml(l)}</span>`).join('')}</div>` : ''}
-          ${c.checklist?.length ? `<div class="ref-checklist"><div class="ref-checklist-title">&#x2705; 체크리스트</div>${c.checklist.map(item=>`<label class="ref-check-item"><input type="checkbox"><span>${escHtml(item)}</span></label>`).join('')}</div>` : ''}
+          ${c.checklist?.length ? `<div class="ref-checklist"><div class="ref-checklist-title">&#x2705; 체크리스트</div>${c.checklist.map(item=>{const checked=localStorage.getItem('checklist_'+item.substring(0,30))==='1'?'checked':'';return `<label class="ref-check-item"><input type="checkbox" ${checked}><span>${escHtml(item)}</span></label>`;}).join('')}</div>` : ''}
         </div>`;
     }
   }

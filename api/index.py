@@ -59,6 +59,38 @@ ADVISOR_SCENARIOS = [
     ]},
 ]
 
+# 관련 법령 매핑 (같이 봐야 하는 법령들)
+RELATED_LAWS = {
+    "국가를당사자로하는계약에관한법률": [
+        {"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"계약 세부기준·절차"},
+        {"law":"국가를당사자로하는계약에관한법률","type":"시행규칙","reason":"서식·산출방법"},
+        {"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"한수원 등 공기업 특례"},
+    ],
+    "건설산업기본법": [
+        {"law":"건설산업기본법","type":"시행령","reason":"건설업 등록·하도급 세부기준"},
+        {"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"공사계약 절차"},
+        {"law":"산업안전보건법","type":"법률","reason":"공사현장 안전관리"},
+    ],
+    "원자력안전법": [
+        {"law":"원자력안전법","type":"시행령","reason":"허가·검사 세부절차"},
+        {"law":"원자력시설등의방호및방사능방재대책법","type":"법률","reason":"물리적 방호·비상대응"},
+        {"law":"원전비리방지를위한원자력발전사업자등의관리ㆍ감독에관한법률","type":"법률","reason":"납품비리 방지"},
+    ],
+    "하도급거래공정화에관한법률": [
+        {"law":"하도급거래공정화에관한법률","type":"시행령","reason":"하도급 대금지급 세부"},
+        {"law":"건설산업기본법","type":"법률","reason":"건설 하도급 제한"},
+    ],
+    "조달사업에관한법률": [
+        {"law":"전자조달의이용및촉진에관한법률","type":"법률","reason":"나라장터 전자입찰"},
+        {"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"계약 일반원칙"},
+    ],
+    "공기업ㆍ준정부기관계약사무규칙": [
+        {"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"계약 근거 법률"},
+        {"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"계약 세부기준"},
+        {"law":"공공기관의운영에관한법률","type":"법률","reason":"공공기관 운영 근거"},
+    ],
+}
+
 # ===== Load Data =====
 _index = None
 def get_index():
@@ -531,7 +563,10 @@ def api_law():
         avail = list(law["files"].keys())
         if avail: fd=law["files"][avail[0]]; ft=avail[0]
         else: return jsonify({"error":"문서 없음"}),404
-    return jsonify({"law_name":law_name,"file_type":ft,"title":fd["meta"].get("제목",law_name),"meta":fd["meta"],"articles":fd["articles"],"available_types":list(law["files"].keys())})
+    related = RELATED_LAWS.get(law_name, [])
+    # 현재 열린 법령은 제외
+    related = [r for r in related if not (r["law"] == law_name and r["type"] == ft)]
+    return jsonify({"law_name":law_name,"file_type":ft,"title":fd["meta"].get("제목",law_name),"meta":fd["meta"],"articles":fd["articles"],"available_types":list(law["files"].keys()),"related_laws":related[:5]})
 
 @app.route("/api/summarize", methods=["POST"])
 def api_summarize():
