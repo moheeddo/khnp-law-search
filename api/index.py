@@ -1150,9 +1150,46 @@ def api_summarize():
     articles_text = (data.get("articles_text","") or "")[:5000]
     return jsonify(summarize(context, law_name, articles_text))
 
+@app.route("/api/autocomplete")
+def api_autocomplete():
+    q = request.args.get("q","").strip()[:50]
+    if not q or len(q) < 1: return jsonify([])
+    ql = q.lower()
+    results = []
+    seen = set()
+    # 1. 법령명 매칭
+    index = get_index()
+    for law_name in index:
+        if ql in law_name.lower() or any(ql in kw for kw in law_name.lower().split()):
+            if law_name not in seen:
+                seen.add(law_name)
+                results.append({"text": law_name, "type": "법령", "icon": "book"})
+            if len(results) >= 5: break
+    # 2. 시나리오 카테고리 매칭
+    for s in ADVISOR_SCENARIOS:
+        if any(ql in kw.lower() for kw in s["keywords"]):
+            cat = s["category"]
+            if cat not in seen:
+                seen.add(cat)
+                kw_sample = ", ".join(s["keywords"][:4])
+                results.append({"text": cat, "type": "시나리오", "icon": "search", "hint": kw_sample})
+    # 3. 용어사전 매칭
+    for term in GLOSSARY:
+        if ql in term.lower():
+            if term not in seen:
+                seen.add(term)
+                results.append({"text": term, "type": "용어", "icon": "dict", "hint": GLOSSARY[term][:50]})
+    # 4. 동의어 확장 힌트
+    expanded = expand_query(q)
+    if expanded != q:
+        extra_words = [w for w in expanded.split() if w not in q.split()]
+        if extra_words:
+            results.append({"text": expanded, "type": "확장검색", "icon": "expand", "hint": "→ " + ", ".join(extra_words[:5])})
+    return jsonify(results[:10])
+
 @app.route("/api/bids")
 def api_bids():
-    q = request.args.get("q","").strip()[:100]  # 입력 길이 제한
+    q = request.args.get("q","").strip()[:100]
     if not q: return jsonify([])
     return jsonify(fetch_g2b_bids(q))
 

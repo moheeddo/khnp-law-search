@@ -332,6 +332,73 @@ body {
 
 .search-input::placeholder { color: var(--text-muted); }
 
+/* Autocomplete dropdown */
+.autocomplete-wrap { position: relative; }
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius) var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.ac-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background var(--transition);
+  border-bottom: 1px solid var(--border-light);
+}
+.ac-item:last-child { border-bottom: none; }
+.ac-item:hover, .ac-item.ac-active { background: var(--bg-hover); }
+.ac-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.ac-icon.book { background: var(--accent-muted); color: var(--accent); }
+.ac-icon.search { background: var(--cyan-muted); color: var(--cyan); }
+.ac-icon.dict { background: var(--purple-muted); color: var(--purple); }
+.ac-icon.expand { background: var(--success-muted); color: var(--success); }
+.ac-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ac-type {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.ac-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
 .search-filter {
   padding: 10px 14px;
   background: var(--bg-input);
@@ -4179,11 +4246,14 @@ kbd {
   </div>
   <div class="search-section">
     <div class="search-bar">
-      <div class="search-input-wrap">
+      <div class="search-input-wrap autocomplete-wrap">
         <span style="font-size:16px">&#x1F50D;</span>
         <input type="text" class="search-input" id="searchInput"
                placeholder="법령명, 조문 내용, 키워드 검색 (예: 입찰, 하자보수, 계약보증금)"
-               aria-label="법령 검색어 입력">
+               aria-label="법령 검색어 입력" autocomplete="off"
+               oninput="onAutocomplete('searchInput','searchAC')"
+               onfocus="onAutocomplete('searchInput','searchAC')">
+        <div class="autocomplete-list" id="searchAC" style="display:none"></div>
       </div>
       <select class="search-filter" id="categoryFilter" aria-label="법령 카테고리 필터">
         <option value="">전체 법령</option>
@@ -4306,10 +4376,13 @@ kbd {
     <p class="hero-sub">상황을 입력하면 확인해야 할 법령을 안내합니다</p>
     <div id="userStats"></div>
     <div id="activityTimeline"></div>
-    <div class="advisor-search">
+    <div class="advisor-search autocomplete-wrap">
       <input type="text" id="advisorInput" class="advisor-input"
              placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경..."
-             aria-label="AI 어드바이저 검색어 입력">
+             aria-label="AI 어드바이저 검색어 입력" autocomplete="off"
+             oninput="onAutocomplete('advisorInput','advisorAC')"
+             onfocus="onAutocomplete('advisorInput','advisorAC')">
+      <div class="autocomplete-list" id="advisorAC" style="display:none"></div>
       <button class="voice-btn" onclick="startVoiceSearch('advisorInput')" title="음성 검색" aria-label="음성으로 어드바이저 검색">&#x1F3A4;</button>
       <button class="advisor-btn" id="advisorBtn" aria-label="AI 어드바이저 검색 실행">검색</button>
     </div>
@@ -8544,6 +8617,90 @@ function importBookmarks() {
     toast('유효하지 않은 코드입니다', 'error');
   }
 }
+
+// ===== Autocomplete =====
+let _acTimer = null;
+let _acActiveIdx = -1;
+
+function onAutocomplete(inputId, listId) {
+  clearTimeout(_acTimer);
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  if (!input || !list) return;
+  const q = input.value.trim();
+  if (q.length < 1) { list.style.display = 'none'; return; }
+  _acTimer = setTimeout(async () => {
+    try {
+      const results = await api('/api/autocomplete?q=' + encodeURIComponent(q));
+      if (!results?.length) { list.style.display = 'none'; return; }
+      _acActiveIdx = -1;
+      const iconMap = {book:'&#x1F4D6;', search:'&#x1F50D;', dict:'&#x1F4DA;', expand:'&#x1F504;'};
+      list.innerHTML = results.map((r, i) => `
+        <div class="ac-item" data-idx="${i}" onmousedown="selectAutocomplete('${inputId}','${listId}',${i})">
+          <div class="ac-icon ${r.icon || ''}">${iconMap[r.icon] || '&#x1F50D;'}</div>
+          <div class="ac-text">${escHtml(r.text)}</div>
+          ${r.hint ? `<div class="ac-hint">${escHtml(r.hint)}</div>` : ''}
+          <div class="ac-type">${escHtml(r.type)}</div>
+        </div>
+      `).join('');
+      list.style.display = '';
+      list._data = results;
+    } catch(e) { list.style.display = 'none'; }
+  }, 200);
+}
+
+function selectAutocomplete(inputId, listId, idx) {
+  const list = document.getElementById(listId);
+  const input = document.getElementById(inputId);
+  if (!list?._data || !input) return;
+  const item = list._data[idx];
+  if (!item) return;
+  input.value = item.text;
+  list.style.display = 'none';
+  // 법령이면 바로 열기, 그 외는 검색
+  if (item.type === '법령') {
+    openLaw(item.text);
+  } else {
+    if (inputId === 'advisorInput') doAdvisor();
+    else doSearch();
+  }
+}
+
+// 키보드 네비게이션 (위/아래/Enter)
+document.addEventListener('keydown', (e) => {
+  // 검색 input에서만 동작
+  const inputId = e.target.id;
+  let listId = null;
+  if (inputId === 'searchInput') listId = 'searchAC';
+  else if (inputId === 'advisorInput') listId = 'advisorAC';
+  if (!listId) return;
+
+  const list = document.getElementById(listId);
+  if (!list || list.style.display === 'none' || !list._data?.length) return;
+
+  const items = list.querySelectorAll('.ac-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    _acActiveIdx = Math.min(_acActiveIdx + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('ac-active', i === _acActiveIdx));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    _acActiveIdx = Math.max(_acActiveIdx - 1, -1);
+    items.forEach((el, i) => el.classList.toggle('ac-active', i === _acActiveIdx));
+  } else if (e.key === 'Enter' && _acActiveIdx >= 0) {
+    e.preventDefault();
+    selectAutocomplete(inputId, listId, _acActiveIdx);
+  } else if (e.key === 'Escape') {
+    list.style.display = 'none';
+  }
+});
+
+// 바깥 클릭 시 닫기
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    document.querySelectorAll('.autocomplete-list').forEach(l => l.style.display = 'none');
+  }
+});
 
 // ===== Voice Search =====
 function startVoiceSearch(inputId) {
