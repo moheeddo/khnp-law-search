@@ -1122,6 +1122,71 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 .art-block:hover .btn-copy { opacity: 1; }
 .btn-copy:hover { color: var(--accent); background: var(--accent-muted); }
 
+.btn-summary {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 13px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  opacity: 0;
+}
+.art-block:hover .btn-summary { opacity: 1; }
+.btn-summary:hover { color: var(--cyan); background: var(--cyan-muted); }
+
+.art-summary {
+  margin-top: 8px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--cyan-muted), var(--accent-muted));
+  border: 1px solid rgba(8,145,178,0.15);
+  border-radius: var(--radius);
+  font-size: 13px;
+}
+.art-summary.loading {
+  color: var(--cyan);
+  font-size: 12px;
+  animation: pulse 1.5s infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.art-summary-head {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cyan);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.art-summary-text {
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+.art-summary-points { margin-bottom: 6px; }
+.art-summary-point {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 3px 0;
+  line-height: 1.5;
+}
+.art-summary-warn {
+  color: var(--warn);
+  font-size: 11px;
+  display: block;
+  margin-top: 2px;
+}
+.art-summary-tips {
+  padding-top: 6px;
+  border-top: 1px solid rgba(8,145,178,0.15);
+}
+.art-summary-tip {
+  font-size: 12px;
+  color: var(--success);
+  padding: 2px 0;
+}
+
 /* Structured body - visual hierarchy */
 .art-body {
   font-size: 14px;
@@ -4425,6 +4490,15 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
+  // 5e. 계약 검토 요청서 생성 버튼
+  if (refData) {
+    html += `<div style="text-align:center;padding:16px 0">
+      <button class="btn btn-accent" onclick="generateReviewRequest()" style="padding:10px 24px;font-size:14px">
+        &#x1F4C4; 계약 검토 요청서 생성
+      </button>
+    </div>`;
+  }
+
   // 6. 유사 검색어 추천
   if (advisorData?.related_queries?.length) {
     html += '<div class="related-queries"><span class="rq-label">관련 검색어</span>';
@@ -4951,6 +5025,9 @@ function renderArticles(articles) {
           <button class="btn-copy" data-num="${a.number}" data-title="${escHtml(a.title)}"
                   onclick="event.stopPropagation();copyArticle(this, '${escHtml(currentLaw)}', '${a.number}', '${escHtml(a.title)}')"
                   title="조문 복사">&#x1F4CB;</button>
+          <button class="btn-summary" data-idx="${i}"
+                  onclick="event.stopPropagation();summarizeArticle(${i},'${escHtml(currentLaw)}','${a.number}','${escHtml(a.title)}')"
+                  title="AI 요약">&#x26A1;</button>
         </div>
         <div class="art-body">${bodyHtml}</div>
         <div class="art-memo-area">
@@ -5231,6 +5308,176 @@ function copyClause(btn) {
     setTimeout(() => { btn.innerHTML = '&#x1F4CB; \uBCF5\uC0AC'; }, 1500);
     toast('\uD2B9\uC57D \uC870\uD56D\uC774 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success');
   });
+}
+
+// ===== 계약 검토 요청서 생성 =====
+function generateReviewRequest() {
+  if (!lastAdvisorData) { toast('검색을 먼저 수행해주세요', 'info'); return; }
+
+  const data = lastAdvisorData;
+  const refData = data.ref_data || {};
+  const cm = refData.contract_method || {};
+  const risks = refData.risks || [];
+  const process = refData.process || [];
+  const cases = refData.cases || [];
+  const clauses = refData.special_clauses || [];
+  const today = new Date();
+  const formatDate = (d) => `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일`;
+
+  let doc = '';
+  doc += '┌─────────────────────────────────────┐\n';
+  doc += '│        계 약 검 토 요 청 서         │\n';
+  doc += '└─────────────────────────────────────┘\n\n';
+  doc += `작성일: ${formatDate(today)}\n`;
+  doc += `작성자: ${currentUser?.display_name || '___________'}\n`;
+  doc += `부  서: ${currentUser?.department || '___________'}\n\n`;
+
+  doc += '━━━ 1. 계약 개요 ━━━\n';
+  doc += `○ 계약 내용: ${data.query}\n`;
+  if (cm.amount_display) doc += `○ 추정 금액: ${cm.amount_display}\n`;
+  if (cm.method) doc += `○ 계약 방식: ${cm.method}\n`;
+  if (cm.details?.length) {
+    doc += `○ 계약 방식 상세:\n`;
+    cm.details.forEach(d => { doc += `  - ${d}\n`; });
+  }
+  doc += '\n';
+
+  doc += '━━━ 2. 관련 법령 ━━━\n';
+  if (data.recommendations?.length) {
+    data.recommendations.forEach((r, i) => {
+      doc += `${i+1}. [${r.priority}] ${r.law} (${r.type})\n`;
+      doc += `   사유: ${r.reason}\n`;
+      if (r.key_articles) doc += `   핵심 조문: ${r.key_articles}\n`;
+    });
+  }
+  doc += '\n';
+
+  if (process.length) {
+    doc += '━━━ 3. 추정 일정 ━━━\n';
+    let day = 0;
+    process.forEach(s => {
+      doc += `  D+${String(day).padStart(3,' ')} │ ${s.step} (${s.duration || 7}일)\n`;
+      day += (s.duration || 7);
+    });
+    doc += `  ─────┼──────────────────\n`;
+    doc += `  합계 │ ${day}일 (약 ${Math.ceil(day/30)}개월)\n\n`;
+  }
+
+  if (risks.length) {
+    doc += '━━━ 4. 리스크 분석 ━━━\n';
+    risks.forEach(r => {
+      const marker = r.level === 'high' ? '▲' : r.level === 'medium' ? '●' : '○';
+      doc += `${marker} [${r.level === 'high' ? '높음' : r.level === 'medium' ? '중간' : '낮음'}] ${r.title}\n`;
+      doc += `  ${r.desc}\n`;
+      doc += `  근거: ${r.law}\n\n`;
+    });
+  }
+
+  if (cases.length) {
+    doc += '━━━ 5. 실무 체크리스트 ━━━\n';
+    cases.forEach(c => {
+      doc += `[${c.title}]\n`;
+      if (c.checklist?.length) {
+        c.checklist.forEach(item => { doc += `  □ ${item}\n`; });
+      }
+      doc += '\n';
+    });
+  }
+
+  if (clauses.length) {
+    doc += '━━━ 6. 특약 조항 검토 ━━━\n';
+    clauses.forEach(sc => {
+      doc += `○ ${sc.title}\n`;
+      doc += `  "${sc.text}"\n`;
+      if (sc.law) doc += `  근거: ${sc.law}\n`;
+      doc += '\n';
+    });
+  }
+
+  doc += '━━━ 7. 검토 요청 사항 ━━━\n';
+  doc += '  □ 계약 방식의 적정성 검토\n';
+  doc += '  □ 관련 법령 준수 여부 확인\n';
+  doc += '  □ 리스크 대응 방안 수립\n';
+  doc += '  □ 특약 조항 적합성 검토\n';
+  doc += '  □ 기타: ___________________________\n\n';
+
+  doc += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  doc += '         검토자: __________ (인)\n';
+  doc += '         일  자: ____년 __월 __일\n';
+  doc += '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+  doc += '\n※ 본 문서는 한수원 계약 법령 검색 시스템에서 자동 생성되었습니다.\n';
+
+  // 다운로드
+  const blob = new Blob([doc], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `계약검토요청서_${data.query.replace(/\s+/g,'_')}_${today.toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('계약 검토 요청서가 생성되었습니다', 'success');
+}
+
+// ===== 조문 AI 요약 =====
+async function summarizeArticle(idx, lawName, number, title) {
+  const block = document.getElementById('art-' + idx);
+  if (!block) return;
+
+  // 이미 요약이 있으면 토글
+  const existing = block.querySelector('.art-summary');
+  if (existing) { existing.remove(); return; }
+
+  const body = block.querySelector('.art-body');
+  const content = body.innerText.substring(0, 800);
+
+  // 로딩 표시
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'art-summary loading';
+  loadDiv.innerHTML = '&#x26A1; AI 요약 생성 중...';
+  block.appendChild(loadDiv);
+
+  try {
+    const result = await post('/api/summarize', {
+      context: '조문 핵심 요약',
+      law_name: lawName,
+      articles_text: `${number} (${title})\n${content}`,
+    });
+
+    if (result.error || !result.summary) {
+      loadDiv.remove();
+      toast('요약을 생성할 수 없습니다', 'info');
+      return;
+    }
+
+    let summaryHtml = `<div class="art-summary">
+      <div class="art-summary-head">&#x26A1; AI 요약</div>
+      <div class="art-summary-text">${escHtml(result.summary)}</div>`;
+
+    if (result.key_points?.length) {
+      summaryHtml += '<div class="art-summary-points">';
+      result.key_points.forEach(kp => {
+        summaryHtml += `<div class="art-summary-point">
+          <strong>${escHtml(kp.article || '')}</strong> ${escHtml(kp.point || '')}
+          ${kp.warning ? `<span class="art-summary-warn">&#x26A0; ${escHtml(kp.warning)}</span>` : ''}
+        </div>`;
+      });
+      summaryHtml += '</div>';
+    }
+
+    if (result.practical_tips?.length) {
+      summaryHtml += '<div class="art-summary-tips">';
+      result.practical_tips.forEach(tip => {
+        summaryHtml += `<div class="art-summary-tip">&#x1F4A1; ${escHtml(tip)}</div>`;
+      });
+      summaryHtml += '</div>';
+    }
+
+    summaryHtml += '</div>';
+    loadDiv.remove();
+    block.insertAdjacentHTML('beforeend', summaryHtml);
+  } catch(e) {
+    loadDiv.remove();
+    toast('요약 생성 실패', 'error');
+  }
 }
 
 // ===== TOC Toggle =====
