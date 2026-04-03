@@ -2554,6 +2554,55 @@ kbd {
   line-height: 1.5;
 }
 
+/* ===== Law Summary Cards ===== */
+.law-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.law-summary-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.law-summary-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.lsc-badge {
+  font-size: 10px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.lsc-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.3;
+}
+.lsc-short {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.lsc-scope {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.lsc-key {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
 /* ===== Calculator ===== */
 .calc-card {
   background: var(--bg-surface);
@@ -4681,12 +4730,77 @@ function renderMyContracts() {
       </div>
       <div class="mc-name" onclick="searchContract('${escHtml(c.name)}')" title="클릭하면 관련 법령 검색">${escHtml(c.name)}</div>
       ${c.deadline ? `<span class="mc-deadline ${isDueSoon(c.deadline) ? 'mc-urgent' : ''}">${c.deadline}</span>` : ''}
+      ${c.status === '완료' ? `<button class="btn btn-sm" onclick="event.stopPropagation();generateCompletionReport(${c.id})" title="완료 보고서" style="font-size:10px;padding:2px 6px">&#x1F4C4;</button>` : ''}
       <button class="mc-del" onclick="deleteContract(${c.id})" title="삭제">&#x2715;</button>
     </div>`;
   });
   html += '</div>';
   html += renderCalendarView();
   el.innerHTML = html;
+}
+
+// ===== Completion Report =====
+function generateCompletionReport(contractId) {
+  const contracts = getMyContracts();
+  const contract = contracts.find(c => c.id === contractId);
+  if (!contract) return;
+
+  const today = new Date();
+  const created = new Date(contract.createdAt);
+  const duration = Math.ceil((today - created) / (1000*60*60*24));
+
+  let doc = '';
+  doc += '\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n';
+  doc += '\u2551       \uACC4 \uC57D \uC644 \uB8CC \uBCF4 \uACE0 \uC11C           \u2551\n';
+  doc += '\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D\n\n';
+  doc += `\uACC4\uC57D\uBA85: ${contract.name}\n`;
+  doc += `\uC0C1  \uD0DC: ${contract.status}\n`;
+  doc += `\uB4F1\uB85D\uC77C: ${created.toLocaleDateString('ko-KR')}\n`;
+  if (contract.deadline) doc += `\uB9C8\uAC10\uC77C: ${contract.deadline}\n`;
+  doc += `\uC18C\uC694\uC77C: ${duration}\uC77C\n`;
+  doc += `\uC791\uC131\uC77C: ${today.toLocaleDateString('ko-KR')}\n`;
+  doc += `\uC791\uC131\uC790: ${currentUser?.display_name || '________'}\n\n`;
+
+  doc += '\u2501\u2501\u2501 1. \uACC4\uC57D \uC774\uD589 \uACB0\uACFC \u2501\u2501\u2501\n';
+  doc += '  \u25A1 \uACC4\uC57D \uC774\uD589 \uC644\uB8CC \uD655\uC778\n';
+  doc += '  \u25A1 \uB0A9\uD488/\uC900\uACF5 \uAC80\uC0AC \uC644\uB8CC\n';
+  doc += '  \u25A1 \uCD5C\uC885 \uB300\uAC00 \uC9C0\uAE09 \uC644\uB8CC\n';
+  doc += '  \u25A1 \uD558\uC790\uBCF4\uC218\uBCF4\uC99D\uAE08 \uC9D5\uAD6C\n\n';
+
+  doc += '\u2501\u2501\u2501 2. \uC815\uC0B0 \uB0B4\uC5ED \u2501\u2501\u2501\n';
+  doc += '  \u25CB \uC6D0\uACC4\uC57D\uAE08\uC561: ________________\uC6D0\n';
+  doc += '  \u25CB \uBCC0\uACBD\uACC4\uC57D\uAE08\uC561: ______________\uC6D0\n';
+  doc += '  \u25CB \uAE30\uC9C0\uAE09\uC561: __________________\uC6D0\n';
+  doc += '  \u25CB \uC794\uC5EC \uC9C0\uAE09\uC561: _______________\uC6D0\n';
+  doc += '  \u25CB \uC9C0\uCCB4\uC0C1\uAE08: __________________\uC6D0\n\n';
+
+  doc += '\u2501\u2501\u2501 3. \uD2B9\uC774\uC0AC\uD56D \u2501\u2501\u2501\n';
+  doc += '  \u25CB \uC124\uACC4\uBCC0\uACBD: \u25A1 \uC788\uC74C \u25A1 \uC5C6\uC74C\n';
+  doc += '  \u25CB \uACC4\uC57D\uAE08\uC561 \uC870\uC815: \u25A1 \uC788\uC74C \u25A1 \uC5C6\uC74C\n';
+  doc += '  \u25CB \uD074\uB808\uC784/\uBD84\uC7C1: \u25A1 \uC788\uC74C \u25A1 \uC5C6\uC74C\n';
+  doc += '  \u25CB \uAC10\uC0AC \uC9C0\uC801: \u25A1 \uC788\uC74C \u25A1 \uC5C6\uC74C\n\n';
+
+  doc += '\u2501\u2501\u2501 4. \uD558\uC790\uB2F4\uBCF4 \uAD00\uB9AC \u2501\u2501\u2501\n';
+  doc += '  \u25CB \uD558\uC790\uB2F4\uBCF4\uAE30\uAC04: ____\uB144 __\uC6D4 __\uC77C ~ ____\uB144 __\uC6D4 __\uC77C\n';
+  doc += '  \u25CB \uD558\uC790\uBCF4\uC218\uBCF4\uC99D\uAE08: _______________\uC6D0\n';
+  doc += '  \u25CB \uBCF4\uC99D\uC11C \uB9CC\uB8CC\uC77C: ____\uB144 __\uC6D4 __\uC77C\n\n';
+
+  doc += '\u2501\u2501\u2501 5. \uAD50\uD6C8/\uAC1C\uC120\uC0AC\uD56D \u2501\u2501\u2501\n';
+  doc += '  \u25CB \n';
+  doc += '  \u25CB \n\n';
+
+  doc += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+  doc += '         \uD655\uC778\uC790: __________ (\uC778)\n';
+  doc += `         \uC77C  \uC790: ${today.getFullYear()}\uB144 ${today.getMonth()+1}\uC6D4 ${today.getDate()}\uC77C\n`;
+  doc += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+
+  const blob = new Blob([doc], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `\uC644\uB8CC\uBCF4\uACE0\uC11C_${contract.name.replace(/\s+/g,'_')}_${today.toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('\uC644\uB8CC \uBCF4\uACE0\uC11C\uAC00 \uC0DD\uC131\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success');
 }
 
 // ===== Quiz =====
@@ -5509,8 +5623,24 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 3.4. 금액별 계약방식 판별
+  // 3.3. 주요 법령 요약 카드
   const refData0 = advisorData?.ref_data;
+  if (refData0?.law_cards?.length) {
+    html += '<div class="law-cards-grid">';
+    refData0.law_cards.forEach(lc => {
+      const pColor = lc.priority === '필수' ? 'var(--danger)' : lc.priority === '권장' ? 'var(--accent)' : 'var(--text-muted)';
+      html += `<div class="law-summary-card" onclick="openLaw('${escHtml(lc.law)}','${escHtml(lc.type)}')">
+        <div class="lsc-badge" style="color:${pColor}">${escHtml(lc.priority)}</div>
+        <div class="lsc-name">${escHtml(lc.law.length > 16 ? lc.law.substring(0,16)+'…' : lc.law)}</div>
+        <div class="lsc-short">${escHtml(lc.short)}</div>
+        <div class="lsc-scope">${escHtml(lc.scope)}</div>
+        <div class="lsc-key">${escHtml(lc.key)}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // 3.4. 금액별 계약방식 판별
   if (refData0?.contract_method) {
     const cm = refData0.contract_method;
     html += `

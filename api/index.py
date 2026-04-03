@@ -545,6 +545,26 @@ ROLE_MAP = [
     ]},
 ]
 
+LAW_SUMMARIES = {
+    "국가를당사자로하는계약에관한법률": {"short":"국가기관 계약의 기본법", "scope":"입찰·계약·이행·검사·대가지급", "key":"경쟁입찰 원칙, 예외적 수의계약"},
+    "공기업ㆍ준정부기관계약사무규칙": {"short":"한수원 등 공기업 계약 특례", "scope":"입찰·계약·보증금·부정당업자", "key":"국가계약법의 공기업 적용 특례"},
+    "건설산업기본법": {"short":"건설업 등록·하도급·하자담보", "scope":"건설업 등록, 도급 한도, 하자보수", "key":"건설 하도급 제한, 하자담보책임기간"},
+    "하도급거래공정화에관한법률": {"short":"하도급 대금 지급·공정거래", "scope":"하도급대금, 기술유용 금지", "key":"60일 이내 지급 의무, 직접지급"},
+    "원자력안전법": {"short":"원자력시설 안전규제", "scope":"허가·검사·안전관리·방사선", "key":"시설 건설운영 허가, 품질보증(QA)"},
+    "원전비리방지를위한원자력발전사업자등의관리ㆍ감독에관한법률": {"short":"원전 납품비리 방지", "scope":"품질관리, 시험성적서, 가중제재", "key":"허위성적서 형사처벌, 2년 입찰제한"},
+    "조달사업에관한법률": {"short":"조달청 계약·MAS", "scope":"다수공급자계약, 우수조달물품", "key":"나라장터, MAS 단가계약"},
+    "전자조달의이용및촉진에관한법률": {"short":"나라장터 전자입찰", "scope":"전자입찰, 전자계약", "key":"나라장터 의무 사용"},
+    "산업안전보건법": {"short":"사업장 안전보건 의무", "scope":"안전관리, 중대재해, 보건관리", "key":"안전관리계획 수립, 안전보건비"},
+    "민법": {"short":"계약 일반원칙", "scope":"계약 총칙, 해제·해지, 손해배상", "key":"채무불이행, 계약해제 요건"},
+    "독점규제및공정거래에관한법률": {"short":"독점·담합 규제", "scope":"입찰담합, 불공정행위", "key":"담합 과징금, 공정위 신고"},
+    "공공기관의운영에관한법률": {"short":"공공기관 운영·경영", "scope":"경영평가, 정보공개, 감사", "key":"경영공시 의무, 감사 근거"},
+    "환경영향평가법": {"short":"환경영향평가", "scope":"환경영향평가 대상·절차", "key":"일정 규모 이상 사업"},
+    "방사성폐기물관리법": {"short":"방사성폐기물 관리", "scope":"방폐물 처리·처분", "key":"처분시설 건설·운영"},
+    "전기사업법": {"short":"전기사업 허가·전력거래", "scope":"발전·송전·배전사업", "key":"전력거래, 계통연계"},
+    "전력기술관리법": {"short":"전력기술 관리", "scope":"전력기술자, 설계·감리", "key":"전력시설물 관리"},
+    "에너지법": {"short":"에너지 정책", "scope":"국가에너지기본계획", "key":"에너지 전환 정책"},
+}
+
 def get_reference_data(query, recommendations):
     """검색어 + 추천 법령 기반 참고 조문·계약 사례 생성"""
     index = get_index()
@@ -803,6 +823,15 @@ def get_reference_data(query, recommendations):
     risk_score = min(100, risk_score)
     grade = "안전" if risk_score < 30 else "주의" if risk_score < 60 else "위험"
     ref["risk_score"] = {"score": risk_score, "grade": grade, "factors": risk_factors}
+
+    # ── 9. 주요 법령 요약 카드 ──
+    law_cards = []
+    for r in recommendations[:6]:
+        name = r.get("law","")
+        if name in LAW_SUMMARIES:
+            s = LAW_SUMMARIES[name]
+            law_cards.append({"law":name, "type":r.get("type",""), "short":s["short"], "scope":s["scope"], "key":s["key"], "priority":r.get("priority","")})
+    ref["law_cards"] = law_cards
 
     return ref
 
