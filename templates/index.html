@@ -51,6 +51,29 @@
   --transition: 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
+[data-theme="dark"] {
+  --bg-root: #0f1117;
+  --bg-surface: #1a1d27;
+  --bg-elevated: #22262f;
+  --bg-hover: #2a2e38;
+  --bg-active: #32363f;
+  --bg-input: #181b22;
+  --border: rgba(255,255,255,0.08);
+  --border-light: rgba(255,255,255,0.05);
+  --text-primary: #e8eaed;
+  --text-secondary: #9aa0b0;
+  --text-muted: #636a7e;
+  --text-inverse: #0f1117;
+  --accent-muted: rgba(37,99,235,0.15);
+  --success-muted: rgba(5,150,105,0.15);
+  --warn-muted: rgba(217,119,6,0.15);
+  --danger-muted: rgba(220,38,38,0.15);
+  --cyan-muted: rgba(8,145,178,0.15);
+  --purple-muted: rgba(124,58,237,0.15);
+  --glass: #1a1d27;
+  --glass-border: rgba(255,255,255,0.06);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
@@ -137,6 +160,25 @@ body {
 }
 
 .header-stats strong { color: var(--text-secondary); }
+
+/* Theme Toggle */
+.theme-toggle {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+.theme-toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
 
 /* Auth UI in header */
 .auth-area {
@@ -3801,6 +3843,7 @@ kbd {
         <span>법령 <strong id="statLaws">-</strong></span>
         <span>조문 <strong id="statArticles">-</strong></span>
       </div>
+      <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle" title="테마 변경">&#x1F319;</button>
       <div class="auth-area" id="authArea"></div>
     </div>
   </div>
@@ -4020,6 +4063,7 @@ kbd {
           </button>
           <button class="btn btn-sm" onclick="shareLaw()" title="URL 복사">&#x1F517; 공유</button>
           <button class="btn btn-sm" id="diffBtn" style="display:none">&#x2194; 법률↔시행령 차이</button>
+          <button class="btn btn-sm" onclick="printLaw()" title="법령 인쇄/PDF">&#x1F5A8; PDF</button>
           <a class="btn btn-sm" id="lawGoKr" href="#" target="_blank" rel="noopener">
             &#x1F517; 법령정보센터
           </a>
@@ -4586,8 +4630,98 @@ function showQuizResult() {
   localStorage.setItem('quizStats', JSON.stringify(stats));
 }
 
+// ===== Dark Mode =====
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('theme', next);
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  btn.textContent = isDark ? '\u2600\uFE0F' : '\uD83C\uDF19';
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme');
+  if (saved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+  updateThemeIcon();
+}
+
+// ===== Law PDF Print =====
+function printLaw() {
+  if (!currentLaw) return;
+
+  const title = document.getElementById('viewerTitle').textContent;
+  const meta = document.getElementById('viewerMeta').textContent;
+  const lawBody = document.getElementById('lawBody');
+
+  const win = window.open('', '_blank');
+  let html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>${escHtml(title)}</title>
+    <style>
+      @page { margin: 20mm 15mm; }
+      body { font-family: 'Pretendard Variable', sans-serif; color: #222; line-height: 1.8; font-size: 12px; }
+      h1 { font-size: 18px; text-align: center; border-bottom: 2px solid #333; padding-bottom: 8px; margin-bottom: 4px; }
+      .meta { text-align: center; font-size: 11px; color: #666; margin-bottom: 20px; }
+      .article { margin-bottom: 12px; page-break-inside: avoid; }
+      .art-num { font-weight: 700; color: #1a1a2e; font-size: 13px; }
+      .art-title { color: #444; }
+      .art-content { padding-left: 8px; }
+      .para-num { font-weight: 700; }
+      .sub-item { padding-left: 20px; color: #555; }
+      .sub-sub-item { padding-left: 40px; color: #666; font-size: 11px; }
+      .amendment { color: #999; font-style: italic; font-size: 10px; }
+      .footer { text-align: center; font-size: 9px; color: #999; border-top: 1px solid #ccc; padding-top: 8px; margin-top: 20px; }
+      .memo { background: #fff8e1; padding: 4px 8px; border-radius: 3px; font-size: 10px; color: #795548; margin-top: 4px; }
+    </style>
+  </head><body>`;
+
+  html += `<h1>${escHtml(title)}</h1>`;
+  html += `<div class="meta">${escHtml(meta)}</div>`;
+
+  const blocks = lawBody.querySelectorAll('.art-block');
+  blocks.forEach(block => {
+    html += '<div class="article">';
+    const num = block.querySelector('.art-num')?.textContent || '';
+    const artTitle = block.querySelector('.art-title-text')?.textContent || '';
+    html += `<div><span class="art-num">${escHtml(num)}</span> <span class="art-title">${escHtml(artTitle)}</span></div>`;
+
+    const body = block.querySelector('.art-body');
+    if (body) {
+      html += '<div class="art-content">' + body.innerHTML
+        .replace(/class="glossary-term"[^>]*/g, '')
+        .replace(/class="art-ref-link"[^>]*/g, '')
+        .replace(/class="ext-law-ref"[^>]*/g, '')
+        + '</div>';
+    }
+
+    const memo = block.querySelector('.art-memo-saved');
+    if (memo) {
+      html += `<div class="memo">\uD83D\uDCDD \uBA54\uBAA8: ${escHtml(memo.textContent)}</div>`;
+    }
+
+    html += '</div>';
+  });
+
+  html += `<div class="footer">\uD55C\uC218\uC6D0 \uACC4\uC57D \uBC95\uB839 \uAC80\uC0C9 \uC2DC\uC2A4\uD15C | ${new Date().toLocaleDateString('ko-KR')} \uCD9C\uB825</div>`;
+  html += `<script>window.onload=function(){window.print();}<\/script>`;
+  html += '</body></html>';
+
+  win.document.write(html);
+  win.document.close();
+}
+
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', async () => {
+  initTheme();
   await checkAuth();
   await Promise.all([loadCategories(), loadStats(), loadGlossary()]);
   setupEvents();
