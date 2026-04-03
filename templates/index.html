@@ -1477,6 +1477,46 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+.loading-text {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-muted);
+  animation: pulse 1.5s infinite;
+}
+
+.loading-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 12px;
+}
+.loading-inline .spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+
+/* Error message */
+.error-card {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+}
+.error-card .error-icon { font-size: 36px; opacity: 0.4; margin-bottom: 8px; }
+.error-card h3 { font-size: 15px; color: var(--text-secondary); margin-bottom: 6px; }
+.error-card p { font-size: 13px; line-height: 1.6; }
+.error-card .error-hint {
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+}
+
 /* ===== Toast ===== */
 .toast-container {
   position: fixed;
@@ -1961,6 +2001,27 @@ kbd {
 
 .smart-section {
   margin-bottom: 16px;
+}
+.smart-section.collapsible .smart-section-head {
+  cursor: pointer;
+  user-select: none;
+}
+.smart-section.collapsible .smart-section-head:hover {
+  background: var(--bg-hover);
+  border-radius: var(--radius-sm);
+}
+.smart-section-toggle {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform var(--transition);
+  flex-shrink: 0;
+}
+.smart-section.collapsed .smart-section-toggle {
+  transform: rotate(-90deg);
+}
+.smart-section.collapsed .smart-section-body {
+  display: none;
 }
 .smart-section-head {
   display: flex;
@@ -5538,20 +5599,29 @@ async function doSearch(q) {
   saveSearchStats(query);
   logActivity('search', query);
   showView('results');
-  $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">법령 데이터를 검색하고 AI 분석 중입니다...</div></div>';
   $('#resultsTitle').textContent = '';
   $('#resultsCount').textContent = '';
   const cat = $('#categoryFilter').value;
   const params = new URLSearchParams({ q: query });
   if (cat) params.set('category', cat);
 
-  // 검색 + 어드바이저 병렬 호출
-  const [searchResults, advisorData] = await Promise.all([
-    api(`/api/search?${params}`),
-    api(`/api/advisor?q=${encodeURIComponent(query)}`).catch(() => null)
-  ]);
+  try {
+    // 검색 + 어드바이저 병렬 호출
+    const [searchResults, advisorData] = await Promise.all([
+      api(`/api/search?${params}`),
+      api(`/api/advisor?q=${encodeURIComponent(query)}`).catch(() => null)
+    ]);
 
-  renderSmartResults(searchResults, advisorData, query);
+    renderSmartResults(searchResults, advisorData, query);
+  } catch (e) {
+    $('#resultsList').innerHTML = `<div class="error-card">
+      <div class="error-icon">&#x26A0;</div>
+      <h3>검색 중 문제가 발생했습니다</h3>
+      <p>네트워크 연결을 확인하고 다시 시도해주세요.</p>
+      <div class="error-hint">오류: ${escHtml(e.message || '서버 응답 없음')}</div>
+    </div>`;
+  }
 }
 
 function renderSmartResults(searchResults, advisorData, query) {
@@ -5563,7 +5633,16 @@ function renderSmartResults(searchResults, advisorData, query) {
   $('#resultsCount').textContent = `${totalCount}건`;
 
   if (!hasAdvisor && !hasSearch) {
-    $('#resultsList').innerHTML = `<div class="empty"><div style="font-size:40px;opacity:0.4">&#x1F50D;</div><h3>검색 결과가 없습니다</h3><p>다른 키워드로 검색하거나 카테고리에서 직접 찾아보세요.</p></div>`;
+    $('#resultsList').innerHTML = `<div class="error-card">
+      <div class="error-icon">&#x1F50D;</div>
+      <h3>"${escHtml(query)}" 검색 결과가 없습니다</h3>
+      <p>찾으시는 법령이나 조문이 없습니다. 아래 방법을 시도해보세요.</p>
+      <div class="error-hint">
+        &#x2022; 검색어를 줄여보세요 (예: "입찰 보증금" → "보증금")<br>
+        &#x2022; 카테고리에서 직접 법령을 찾아보세요<br>
+        &#x2022; 한글 맞춤법을 확인해주세요
+      </div>
+    </div>`;
     return;
   }
 
@@ -5845,10 +5924,17 @@ function renderSmartResults(searchResults, advisorData, query) {
   }
 
   // 3.7. 단계별 담당 부서·역할
-  if (refData.role_map?.length) {
-    html += '<div class="smart-divider">단계별 담당 부서·역할</div>';
-    html += '<div class="role-timeline">';
-    refData.role_map.forEach(stage => {
+  if (refData0?.role_map?.length) {
+    html += `<div class="smart-section collapsible collapsed">
+      <div class="smart-section-head" onclick="toggleSmartSection(this)">
+        <div class="smart-section-icon" style="background:var(--accent-muted)">&#x1F465;</div>
+        <div class="smart-section-title">단계별 담당 부서·역할</div>
+        <div class="smart-section-count">${refData0.role_map.length}단계</div>
+        <span class="smart-section-toggle">&#x25BC;</span>
+      </div>
+      <div class="smart-section-body">
+    <div class="role-timeline">`;
+    refData0.role_map.forEach(stage => {
       html += `<div class="role-stage">
         <div class="role-stage-name">${escHtml(stage.stage)}</div>
         <div class="role-list">
@@ -5862,7 +5948,7 @@ function renderSmartResults(searchResults, advisorData, query) {
         </div>
       </div>`;
     });
-    html += '</div>';
+    html += '</div></div></div>';
   }
 
   // 4. 조문 검색 결과 (키워드 매칭)
@@ -5992,8 +6078,15 @@ function renderSmartResults(searchResults, advisorData, query) {
 
     // 5-pre4. 감사 지적 사례
     if (refData.audit_cases?.length) {
-      html += '<div class="smart-divider">감사 지적 사례</div>';
-      html += '<div class="audit-list">';
+      html += `<div class="smart-section collapsible collapsed">
+        <div class="smart-section-head" onclick="toggleSmartSection(this)">
+          <div class="smart-section-icon" style="background:var(--danger-muted)">&#x26D4;</div>
+          <div class="smart-section-title">감사 지적 사례</div>
+          <div class="smart-section-count">${refData.audit_cases.length}건</div>
+          <span class="smart-section-toggle">&#x25BC;</span>
+        </div>
+        <div class="smart-section-body">
+        <div class="audit-list">`;
       for (const ac of refData.audit_cases) {
         html += `<div class="audit-card">
           <div class="audit-title">&#x26D4; ${escHtml(ac.title)}</div>
@@ -6004,7 +6097,7 @@ function renderSmartResults(searchResults, advisorData, query) {
           </div>
         </div>`;
       }
-      html += '</div>';
+      html += '</div></div></div>';
     }
 
     // 5a. 참고 조문 (전체 내용 + 하이라이트 + 펼치기/접기)
@@ -6064,8 +6157,15 @@ function renderSmartResults(searchResults, advisorData, query) {
 
     // 5b2. 계약서 특약 조항 예시
     if (refData.special_clauses?.length) {
-      html += '<div class="smart-divider">계약서 특약 조항 예시</div>';
-      html += '<div class="clause-examples">';
+      html += `<div class="smart-section collapsible collapsed">
+        <div class="smart-section-head" onclick="toggleSmartSection(this)">
+          <div class="smart-section-icon" style="background:var(--purple-muted)">&#x1F4DD;</div>
+          <div class="smart-section-title">계약서 특약 조항 예시</div>
+          <div class="smart-section-count">${refData.special_clauses.length}건</div>
+          <span class="smart-section-toggle">&#x25BC;</span>
+        </div>
+        <div class="smart-section-body">
+        <div class="clause-examples">`;
       for (const sc of refData.special_clauses) {
         html += `<div class="spec-clause-card">
           <div class="spec-clause-head">
@@ -6076,12 +6176,19 @@ function renderSmartResults(searchResults, advisorData, query) {
           ${sc.law ? `<div class="spec-clause-law">${escHtml(sc.law)}</div>` : ''}
         </div>`;
       }
-      html += '</div>';
+      html += '</div></div></div>';
     }
 
     // 5b3. 계약 서식 템플릿
     if (refData.templates?.length) {
-      html += '<div class="smart-divider">계약 서식 템플릿</div>';
+      html += `<div class="smart-section collapsible collapsed">
+        <div class="smart-section-head" onclick="toggleSmartSection(this)">
+          <div class="smart-section-icon" style="background:var(--accent-muted)">&#x1F4C4;</div>
+          <div class="smart-section-title">계약 서식 템플릿</div>
+          <div class="smart-section-count">${refData.templates.length}건</div>
+          <span class="smart-section-toggle">&#x25BC;</span>
+        </div>
+        <div class="smart-section-body">`;
       refData.templates.forEach(t => {
         html += `<div class="template-card">
           <div class="template-head">
@@ -6097,6 +6204,7 @@ function renderSmartResults(searchResults, advisorData, query) {
           </div>
         </div>`;
       });
+      html += '</div></div>';
     }
 
     // 5c. 나라장터 실시간 입찰공고 (비동기 로드)
@@ -6175,6 +6283,13 @@ async function loadClauses(query) {
     h += '</div>';
     el.innerHTML = h;
   } catch(e) { el.innerHTML = ''; }
+}
+
+// 스마트 검색 결과 섹션 접기/펼치기
+function toggleSmartSection(el) {
+  const section = el.closest('.smart-section');
+  if (!section) return;
+  section.classList.toggle('collapsed');
 }
 
 // 조문 펼치기/접기
@@ -6493,7 +6608,7 @@ function exportWeeklyReport() {
 async function loadBidResults(query) {
   const el = document.getElementById('bidResults');
   if (!el) return;
-  el.innerHTML = '<div style="padding:12px;font-size:12px;color:var(--text-muted)">나라장터 입찰공고 검색 중...</div>';
+  el.innerHTML = '<div class="loading-inline"><div class="spinner"></div> 나라장터 입찰공고 검색 중...</div>';
   try {
     const bids = await api('/api/bids?q=' + encodeURIComponent(query));
     if (!bids || !bids.length) {
@@ -6664,7 +6779,7 @@ function showCacheStatus() {
 async function openLaw(lawName, fileType, advInfo) {
   showView('viewer');
   logActivity('view', lawName + ' (' + fileType + ')');
-  $('#lawBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  $('#lawBody').innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">법령 조문을 불러오는 중...</div></div>';
   $('#aiSummaryArea').innerHTML = '';
   focusMode = false;
 
@@ -6691,7 +6806,15 @@ async function openLaw(lawName, fileType, advInfo) {
       data = cached;
       toast('오프라인 캐시에서 불러왔습니다', 'info');
     } else {
-      $('#lawBody').innerHTML = `<div class="empty"><h3>${data?.error || '법령을 불러올 수 없습니다'}</h3></div>`; return;
+      $('#lawBody').innerHTML = `<div class="error-card">
+        <div class="error-icon">&#x1F4D6;</div>
+        <h3>${escHtml(data?.error || '법령을 불러올 수 없습니다')}</h3>
+        <p>요청하신 법령 데이터를 찾을 수 없습니다.</p>
+        <div class="error-hint">
+          &#x2022; 네트워크 연결을 확인해주세요<br>
+          &#x2022; 법령명이 정확한지 확인해주세요
+        </div>
+      </div>`; return;
     }
   }
 
@@ -7119,9 +7242,18 @@ async function doAdvisor(q) {
   saveSearchStats(query);
   logActivity('search', query);
   showView('advisor');
-  $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);
-  renderAdvisor(data);
+  $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">AI 어드바이저가 법령을 분석 중입니다...</div></div>';
+  try {
+    const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);
+    renderAdvisor(data);
+  } catch (e) {
+    $('#advList').innerHTML = `<div class="error-card">
+      <div class="error-icon">&#x26A0;</div>
+      <h3>분석 중 문제가 발생했습니다</h3>
+      <p>네트워크 연결을 확인하고 다시 시도해주세요.</p>
+      <div class="error-hint">오류: ${escHtml(e.message || '서버 응답 없음')}</div>
+    </div>`;
+  }
 }
 
 let lastAdvisorData = null;
@@ -7135,7 +7267,15 @@ function renderAdvisor(data) {
   $('#advCount').textContent = `${data.total}건`;
 
   if (!data.recommendations?.length) {
-    $('#advList').innerHTML = '<div class="empty"><h3>관련 법령을 찾지 못했습니다</h3><p>다른 키워드로 검색해보세요.</p></div>';
+    $('#advList').innerHTML = `<div class="error-card">
+      <div class="error-icon">&#x1F4CB;</div>
+      <h3>관련 법령을 찾지 못했습니다</h3>
+      <p>입력하신 내용과 매칭되는 법령이 없습니다.</p>
+      <div class="error-hint">
+        &#x2022; 계약 유형을 구체적으로 입력해보세요 (예: "공사 입찰", "물품 구매")<br>
+        &#x2022; 상단 검색바에서 법령명으로 직접 검색해보세요
+      </div>
+    </div>`;
     return;
   }
 
