@@ -29,7 +29,7 @@ ADVISOR_SCENARIOS = [
     {"keywords":["구매","물품","자재","조달","납품","장비","기자재","부품"],"category":"물품구매","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"물품 구매 입찰·계약 절차","priority":"필수"},{"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 물품구매 계약사무 규정","priority":"필수"},{"law":"조달사업에관한법률","type":"법률","reason":"조달청 계약·다수공급자계약(MAS)","priority":"권장"},{"law":"전자조달의이용및촉진에관한법률","type":"법률","reason":"나라장터 전자입찰 절차","priority":"권장"}]},
     {"keywords":["원전","원자력","핵","방사선","방사능","원자로","핵연료"],"category":"원자력사업","recommendations":[{"law":"원자력안전법","type":"법률","reason":"원자력시설 건설·운영 허가, 안전규제 전반","priority":"필수"},{"law":"원자력안전법","type":"시행령","reason":"허가 기준, 검사 절차 상세","priority":"필수"},{"law":"원자력시설등의방호및방사능방재대책법","type":"법률","reason":"원자력시설 물리적방호, 비상대응","priority":"필수"},{"law":"원자력손해배상법","type":"법률","reason":"원자력 사고 시 손해배상 책임","priority":"필수"},{"law":"원자력손해배상보상계약에관한법률","type":"법률","reason":"손해배상 보상계약 체결 의무","priority":"필수"},{"law":"원전비리방지를위한원자력발전사업자등의관리ㆍ감독에관한법률","type":"법률","reason":"납품비리 방지, 품질관리 의무","priority":"필수"},{"law":"원자력진흥법","type":"법률","reason":"원자력 연구개발, 기술자립 지원","priority":"권장"},{"law":"방사성폐기물관리법","type":"법률","reason":"방사성폐기물 처리·처분 의무","priority":"해당시"}]},
     {"keywords":["발전","전기","전력","송전","변전","배전","전력거래","계통"],"category":"전력사업","recommendations":[{"law":"전기사업법","type":"법률","reason":"발전·송전·배전사업 허가, 전력거래","priority":"필수"},{"law":"전력기술관리법","type":"법률","reason":"전력기술자, 전력시설물 설계·감리","priority":"필수"},{"law":"에너지법","type":"법률","reason":"국가에너지기본계획","priority":"권장"}]},
-    {"keywords":["입찰","공고","경쟁입찰","제한경쟁"],"category":"입찰절차","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"입찰 방법·절차 (제7~10조)","priority":"필수"},{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"입찰참가자격, 입찰보증금","priority":"필수"},{"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 입찰 특례","priority":"필수"},{"law":"전자조달의이용및촉진에관한법률","type":"법률","reason":"전자입찰 절차","priority":"권장"}]},
+    {"keywords":["입찰","공고","경쟁입찰","제한경쟁","참가자격","입찰자격","PQ","사전심사"],"category":"입찰절차","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"입찰 방법·절차 (제7~10조)","priority":"필수","key_articles":"제7조, 제8조, 제10조, 제27조"},{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"입찰참가자격 제한, 보증금, 적격심사","priority":"필수","key_articles":"제12조, 제13조, 제21조, 제76조"},{"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 입찰참가자격·사전심사 특례","priority":"필수","key_articles":"제6조, 제7조, 제15조"},{"law":"전자조달의이용및촉진에관한법률","type":"법률","reason":"전자입찰 절차","priority":"권장"}]},
     {"keywords":["수의계약","수의","1인견적","긴급"],"category":"수의계약","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"수의계약 사유 (시행령 제26조)","priority":"필수"},{"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 수의계약 한도·사유","priority":"필수"}]},
     {"keywords":["계약보증","보증금","이행보증","하자보증","선급금보증"],"category":"보증·보험","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"계약보증금 납부 의무 (제12조)","priority":"필수"},{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"보증금 비율, 면제 사유","priority":"필수"}]},
     {"keywords":["설계변경","물가변동","계약금액조정","에스컬레이션"],"category":"계약금액조정","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"설계변경·물가변동 계약금액 조정 (제64~66조)","priority":"필수"},{"law":"국가를당사자로하는계약에관한법률","type":"시행규칙","reason":"물가변동 산출방법 상세","priority":"필수"}]},
@@ -137,9 +137,30 @@ def call_solar(query, kw_result):
             return json.loads(c)
     except: return None
 
+def get_alio_refs(query):
+    """검색어 기반 알리오/나라장터 참고자료 링크 생성"""
+    q = query.lower()
+    refs = []
+    # 한수원 기관코드: C0220
+    if any(kw in q for kw in ["입찰","공고","경쟁","제한경쟁","참가자격","PQ","낙찰"]):
+        refs.append({"title":"한수원 입찰공고 (알리오)","url":"https://www.alio.go.kr/popSusi.do?apbaId=C0220&reportFormRootNo=B1030","desc":"한수원 최신 입찰공고 현황","icon":"bid"})
+        refs.append({"title":"나라장터 입찰정보","url":"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameTgong.do?url=https://www.g2b.go.kr:8101/ep/tbid/tbidList.do","desc":"공공조달 입찰공고 통합검색","icon":"bid"})
+    if any(kw in q for kw in ["계약","단가","수의","공사","용역","구매","물품","조달"]):
+        refs.append({"title":"한수원 계약정보 (알리오)","url":"https://www.alio.go.kr/popSusi.do?apbaId=C0220&reportFormRootNo=B1040","desc":"한수원 계약 체결 현황","icon":"contract"})
+    if any(kw in q for kw in ["경영","공시","평가","감사","임원"]):
+        refs.append({"title":"한수원 경영공시 (알리오)","url":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","desc":"한수원 경영정보 공시","icon":"info"})
+    if any(kw in q for kw in ["부정당","제재","비리","청렴"]):
+        refs.append({"title":"부정당업자 제재현황","url":"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameTgong.do?url=https://www.g2b.go.kr:8101/ep/rslt/rsltSanctnList.do","desc":"나라장터 부정당업자 제재 목록","icon":"warn"})
+    # 기본: 항상 알리오 기관정보 표시
+    if not refs:
+        refs.append({"title":"한수원 기관정보 (알리오)","url":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","desc":"한국수력원자력 경영정보 공시","icon":"info"})
+    refs.append({"title":"한수원 전자입찰","url":"https://ebiz.khnp.co.kr","desc":"한수원 전자조달시스템","icon":"link"})
+    return refs
+
 def advise(query):
     kw = advise_keyword(query)
     solar = call_solar(query, kw)
+    alio = get_alio_refs(query)
     if solar and "recommendations" in solar:
         index = get_index()
         recs,seen=[],set()
@@ -152,7 +173,8 @@ def advise(query):
             if k not in seen and r["priority"]=="필수": seen.add(k); recs.append(r)
         po={"필수":0,"권장":1,"해당시":2,"참고":3}
         recs.sort(key=lambda x:po.get(x.get("priority",""),9))
-        return {"query":query,"analysis":solar.get("analysis",""),"categories":solar.get("categories",kw["categories"]),"recommendations":recs,"total":len(recs),"source":"solar"}
+        return {"query":query,"analysis":solar.get("analysis",""),"categories":solar.get("categories",kw["categories"]),"recommendations":recs,"total":len(recs),"source":"solar","alio_refs":alio}
+    kw["alio_refs"] = alio
     return kw
 
 # ===== Summarize =====

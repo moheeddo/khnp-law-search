@@ -1795,6 +1795,55 @@ body.landing .landing-wrap { display: flex; }
   height: 1px;
   background: var(--border);
 }
+
+/* Alio reference cards */
+.alio-ref-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 6px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  text-decoration: none;
+  color: inherit;
+  transition: all var(--transition);
+}
+.alio-ref-card:hover {
+  border-color: var(--success);
+  background: var(--bg-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.alio-ref-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--success-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.alio-ref-body { flex: 1; min-width: 0; }
+.alio-ref-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.alio-ref-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+.alio-ref-arrow {
+  font-size: 14px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.alio-ref-card:hover .alio-ref-arrow { color: var(--success); }
 </style>
 </head>
 <body class="landing">
@@ -2623,6 +2672,33 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
+  // 5. 알리오 참고자료
+  if (advisorData?.alio_refs?.length) {
+    html += `
+      <div class="smart-divider">외부 참고자료</div>
+      <div class="smart-section">
+        <div class="smart-section-head">
+          <div class="smart-section-icon" style="background:var(--success-muted)">&#x1F310;</div>
+          <div class="smart-section-title">알리오 · 나라장터 참고자료</div>
+          <div class="smart-section-count">${advisorData.alio_refs.length}건</div>
+        </div>
+    `;
+    const alioIcons = {bid:'&#x1F4CB;',contract:'&#x1F4DD;',info:'&#x1F3DB;',warn:'&#9888;',link:'&#x1F517;'};
+    for (const ref of advisorData.alio_refs) {
+      html += `
+        <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" onclick="event.stopPropagation()">
+          <div class="alio-ref-icon">${alioIcons[ref.icon] || '&#x1F517;'}</div>
+          <div class="alio-ref-body">
+            <div class="alio-ref-title">${escHtml(ref.title)}</div>
+            <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
+          </div>
+          <div class="alio-ref-arrow">&#8599;</div>
+        </a>
+      `;
+    }
+    html += '</div>';
+  }
+
   html += '</div>';
   $('#resultsList').innerHTML = html;
 }
@@ -2907,7 +2983,7 @@ function renderAdvisor(data) {
     </div>
   ` : '';
 
-  $('#advList').innerHTML = analysisHtml + data.recommendations.map((r, idx) => `
+  let listHtml = analysisHtml + data.recommendations.map((r, idx) => `
     <div class="adv-item" onclick="openFromAdvisor(${idx})">
       <div class="adv-priority p-${r.priority}">${r.priority}</div>
       <div class="adv-item-body">
@@ -2921,6 +2997,25 @@ function renderAdvisor(data) {
       </div>
     </div>
   `).join('');
+
+  // 알리오 참고자료
+  if (data.alio_refs?.length) {
+    const alioIcons = {bid:'&#x1F4CB;',contract:'&#x1F4DD;',info:'&#x1F3DB;',warn:'&#9888;',link:'&#x1F517;'};
+    listHtml += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;border-top:1px solid var(--border);margin-top:4px">&#x1F310; 알리오 · 나라장터 참고자료</div>';
+    for (const ref of data.alio_refs) {
+      listHtml += `
+        <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" style="margin:4px 8px" onclick="event.stopPropagation()">
+          <div class="alio-ref-icon">${alioIcons[ref.icon] || '&#x1F517;'}</div>
+          <div class="alio-ref-body">
+            <div class="alio-ref-title">${escHtml(ref.title)}</div>
+            <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
+          </div>
+          <div class="alio-ref-arrow">&#8599;</div>
+        </a>`;
+    }
+  }
+
+  $('#advList').innerHTML = listHtml;
 }
 
 function openFromAdvisor(idx) {
