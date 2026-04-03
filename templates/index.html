@@ -72,6 +72,9 @@
   --purple-muted: rgba(124,58,237,0.15);
   --glass: #1a1d27;
   --glass-border: rgba(255,255,255,0.06);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
+  --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
+  --shadow-lg: 0 2px 8px rgba(0,0,0,0.3), 0 12px 40px rgba(0,0,0,0.3);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -88,17 +91,17 @@ body {
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+::-webkit-scrollbar-thumb { background: var(--text-muted); opacity: 0.3; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
 
 /* ===== Header ===== */
 .header {
-  background: rgba(255,255,255,0.92);
-  border-bottom: 1px solid rgba(0,0,0,0.06);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  box-shadow: var(--shadow-sm);
 }
 
 .header-top {
@@ -461,8 +464,7 @@ body {
   top: 100%;
   left: 0;
   min-width: 260px;
-  background: rgba(255,255,255,0.95);
-
+  background: var(--bg-surface);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   box-shadow: var(--shadow-lg);
@@ -632,8 +634,8 @@ body {
 .modal-overlay.visible { display: flex; }
 
 .modal {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.08);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: 32px;
   width: 420px;
@@ -1474,9 +1476,8 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 
 .toast {
   padding: 12px 20px;
-  background: rgba(255,255,255,0.92);
-
-  border: 1px solid var(--glass-border);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 13px;
