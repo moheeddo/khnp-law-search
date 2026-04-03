@@ -5,52 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>한수원 계약 법령 검색</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚖</text></svg>">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
 <style>
 /* ===== Design Tokens ===== */
 :root {
-  --bg-root: #0b0f1a;
-  --bg-surface: #111827;
-  --bg-elevated: #1a2236;
-  --bg-hover: #1e293b;
-  --bg-active: #243044;
-  --bg-input: #0f172a;
-  --border: #1e293b;
-  --border-light: #2a3650;
-  --border-focus: #3b82f6;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  --text-inverse: #0f172a;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-muted: rgba(59,130,246,0.15);
-  --accent-glow: rgba(59,130,246,0.25);
-  --success: #10b981;
-  --success-muted: rgba(16,185,129,0.15);
-  --warn: #f59e0b;
-  --warn-muted: rgba(245,158,11,0.15);
-  --danger: #ef4444;
-  --danger-muted: rgba(239,68,68,0.15);
-  --cyan: #06b6d4;
-  --cyan-muted: rgba(6,182,212,0.12);
-  --purple: #8b5cf6;
-  --purple-muted: rgba(139,92,246,0.12);
-  --bookmark: #f59e0b;
-  --radius-sm: 6px;
-  --radius: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
-  --shadow: 0 4px 12px rgba(0,0,0,0.25);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.35);
-  --shadow-glow: 0 0 20px rgba(59,130,246,0.15);
-  --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  --bg-root: #f5f4f0;
+  --bg-surface: #ffffff;
+  --bg-elevated: #fafaf8;
+  --bg-hover: #f0efeb;
+  --bg-active: #eae9e5;
+  --bg-input: #ffffff;
+  --border: rgba(0,0,0,0.08);
+  --border-light: rgba(0,0,0,0.05);
+  --border-focus: #2563eb;
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a5568;
+  --text-muted: #8a94a6;
+  --text-inverse: #fff;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-muted: rgba(37,99,235,0.08);
+  --accent-glow: rgba(37,99,235,0.15);
+  --success: #059669;
+  --success-muted: rgba(5,150,105,0.08);
+  --warn: #d97706;
+  --warn-muted: rgba(217,119,6,0.08);
+  --danger: #dc2626;
+  --danger-muted: rgba(220,38,38,0.08);
+  --cyan: #0891b2;
+  --cyan-muted: rgba(8,145,178,0.08);
+  --purple: #7c3aed;
+  --purple-muted: rgba(124,58,237,0.08);
+  --bookmark: #d97706;
+  --glass: rgba(255,255,255,0.85);
+  --glass-border: rgba(0,0,0,0.06);
+  --glass-blur: 16px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow-lg: 0 2px 8px rgba(0,0,0,0.06), 0 12px 40px rgba(0,0,0,0.1);
+  --shadow-glow: 0 0 0 3px rgba(37,99,235,0.15);
+  --transition: 0.2s cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg-root);
   color: var(--text-primary);
   line-height: 1.6;
@@ -61,24 +65,24 @@ body {
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 
 /* ===== Header ===== */
 .header {
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.92);
+  border-bottom: 1px solid rgba(0,0,0,0.06);
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(20px);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 .header-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 28px;
+  padding: 10px 28px;
   max-width: 1480px;
   margin: 0 auto;
 }
@@ -90,28 +94,29 @@ body {
 }
 
 .brand-icon {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   background: linear-gradient(135deg, var(--accent) 0%, var(--purple) 100%);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
-  box-shadow: 0 2px 8px rgba(59,130,246,0.3);
+  font-size: 17px;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.2);
 }
 
 .brand-text h1 {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.3px;
-  background: linear-gradient(135deg, #f1f5f9, #94a3b8);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary);
+  background: none;
+  -webkit-background-clip: unset;
 }
 
 .brand-text .sub {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-muted);
   letter-spacing: 1.5px;
   text-transform: uppercase;
@@ -144,12 +149,14 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 14px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-light);
+  padding: 5px 14px;
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   font-size: 13px;
   color: var(--text-secondary);
+  box-shadow: var(--shadow-sm);
 }
 
 .user-badge .avatar {
@@ -169,9 +176,10 @@ body {
 
 .btn {
   padding: 7px 16px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--bg-elevated);
+  background: var(--glass);
+
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
@@ -180,12 +188,13 @@ body {
   white-space: nowrap;
 }
 
-.btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--text-muted); }
+.btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: rgba(0,0,0,0.15); }
 
 .btn-accent {
   background: var(--accent);
   color: white;
   border-color: var(--accent);
+
 }
 
 .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
@@ -216,7 +225,7 @@ body {
 
 /* ===== Search Bar ===== */
 .search-section {
-  padding: 0 28px 16px;
+  padding: 0 28px 12px;
   max-width: 1480px;
   margin: 0 auto;
 }
@@ -242,45 +251,49 @@ body {
 
 .search-input {
   width: 100%;
-  padding: 11px 16px 11px 42px;
+  padding: 10px 16px 10px 42px;
   background: var(--bg-input);
+
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 14px;
+  font-family: inherit;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
 }
 
 .search-input:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-muted);
+  box-shadow: var(--shadow-glow);
 }
 
 .search-input::placeholder { color: var(--text-muted); }
 
 .search-filter {
-  padding: 11px 14px;
+  padding: 10px 14px;
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   color: var(--text-secondary);
   font-size: 13px;
+  font-family: inherit;
   cursor: pointer;
   min-width: 150px;
   outline: none;
 }
 
-.search-filter option { background: var(--bg-surface); }
+.search-filter option { background: #fff; }
 
 .search-btn {
-  padding: 11px 24px;
+  padding: 10px 24px;
   border: none;
   border-radius: var(--radius);
   background: var(--accent);
   color: white;
   font-size: 14px;
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
   transition: all var(--transition);
 }
@@ -292,14 +305,14 @@ body {
   display: flex;
   gap: 6px;
   flex-wrap: wrap;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .quick-tag {
   padding: 4px 12px;
   border-radius: var(--radius-xl);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
@@ -316,56 +329,78 @@ body {
 .main-wrap {
   max-width: 1480px;
   margin: 0 auto;
-  padding: 20px 28px;
+  padding: 16px 28px 28px;
   display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: 20px;
-  min-height: calc(100vh - 160px);
+  grid-template-columns: 1fr;
+  gap: 16px;
+  min-height: calc(100vh - 200px);
 }
 
-/* ===== Sidebar ===== */
-.sidebar { display: flex; flex-direction: column; gap: 8px; }
+/* ===== Sidebar (Horizontal Category Bar) ===== */
+.sidebar {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  max-width: 1480px;
+  margin: 0 auto;
+  padding: 8px 28px;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* hide the scrollbar for the horizontal sidebar */
+.sidebar::-webkit-scrollbar { height: 0; display: none; }
+.sidebar { -ms-overflow-style: none; scrollbar-width: none; }
 
 .nav-label {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1.5px;
   color: var(--text-muted);
-  padding: 8px 12px 4px;
+  padding: 4px 8px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .cat-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: visible;
   transition: all var(--transition);
+  flex-shrink: 0;
+  position: relative;
+  box-shadow: var(--shadow-sm);
 }
 
-.cat-card:hover { border-color: var(--border-light); }
-.cat-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent-muted); }
+.cat-card:hover { border-color: rgba(0,0,0,0.12); box-shadow: var(--shadow); }
+.cat-card.active { border-color: var(--accent); box-shadow: var(--shadow-glow); }
 
 .cat-head {
-  padding: 12px 14px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   cursor: pointer;
   transition: background var(--transition);
+  white-space: nowrap;
 }
 
 .cat-head:hover { background: var(--bg-hover); }
 
 .cat-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .cat-icon.contract { background: var(--accent-muted); color: var(--accent); }
@@ -375,10 +410,25 @@ body {
 .cat-icon.trade { background: var(--success-muted); color: var(--success); }
 .cat-icon.safety { background: var(--danger-muted); color: var(--danger); }
 
-.cat-info h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.cat-info p { font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+.cat-info h3 { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.cat-info p { font-size: 0; line-height: 0; height: 0; overflow: hidden; color: var(--text-muted); }
 
-.cat-laws { padding: 4px 8px 10px; display: none; }
+.cat-laws {
+  padding: 6px 8px 10px;
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 260px;
+  background: rgba(255,255,255,0.95);
+
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 50;
+  margin-top: 4px;
+}
+
 .cat-card.active .cat-laws { display: block; }
 
 .cat-law {
@@ -406,35 +456,39 @@ body {
 
 /* Bookmark nav in sidebar */
 .bookmark-nav {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid var(--border);
+  margin-top: 0;
+  margin-left: auto;
+  padding-top: 0;
+  border-top: none;
+  flex-shrink: 0;
 }
 
 .bm-nav-btn {
-  width: 100%;
-  padding: 10px 14px;
+  padding: 7px 14px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  gap: 8px;
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
 }
 
-.bm-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-light); }
+.bm-nav-btn:hover { background: var(--bg-hover); color: var(--text-primary); border-color: rgba(0,0,0,0.12); }
 .bm-nav-btn.active { background: var(--warn-muted); border-color: var(--bookmark); color: var(--bookmark); }
 
 .bm-nav-btn svg { flex-shrink: 0; }
 
 .bm-count {
-  margin-left: auto;
-  background: var(--bg-elevated);
+  margin-left: 4px;
+  background: var(--bg-active);
   padding: 1px 8px;
   border-radius: 10px;
   font-size: 11px;
@@ -444,11 +498,13 @@ body {
 /* ===== Content Area ===== */
 .content { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
-/* Card base */
+/* Card base - glassmorphism */
 .card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
 }
 
 /* Welcome */
@@ -458,9 +514,10 @@ body {
   font-size: 22px;
   font-weight: 700;
   margin-bottom: 4px;
-  background: linear-gradient(135deg, var(--text-primary), var(--accent));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary);
+  background: none;
+  -webkit-background-clip: unset;
 }
 
 .welcome .subtitle {
@@ -477,13 +534,15 @@ body {
 
 .wf-step {
   padding: 18px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   cursor: pointer;
   transition: all var(--transition);
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
 .wf-step::before {
@@ -498,7 +557,7 @@ body {
   transition: opacity var(--transition);
 }
 
-.wf-step:hover { border-color: var(--accent); background: var(--bg-active); }
+.wf-step:hover { border-color: var(--accent); background: rgba(37,99,235,0.03); box-shadow: var(--shadow); }
 .wf-step:hover::before { opacity: 1; }
 
 .wf-step .num {
@@ -522,8 +581,7 @@ body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.7);
-  backdrop-filter: blur(8px);
+  background: rgba(0,0,0,0.3);
   z-index: 1000;
   display: none;
   align-items: center;
@@ -533,8 +591,8 @@ body {
 .modal-overlay.visible { display: flex; }
 
 .modal {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-light);
+  background: #ffffff;
+  border: 1px solid rgba(0,0,0,0.08);
   border-radius: var(--radius-xl);
   padding: 32px;
   width: 420px;
@@ -577,11 +635,12 @@ body {
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 14px;
+  font-family: inherit;
   outline: none;
   transition: border-color var(--transition);
 }
 
-.form-group input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-muted); }
+.form-group input:focus { border-color: var(--accent); box-shadow: var(--shadow-glow); }
 
 .form-error {
   font-size: 12px;
@@ -656,7 +715,7 @@ body {
   display: inline-block;
   padding: 1px 8px;
   border-radius: 4px;
-  background: var(--bg-elevated);
+  background: var(--bg-active);
   border: 1px solid var(--border);
   color: var(--text-muted);
   font-size: 11px;
@@ -674,7 +733,7 @@ body {
 .res-art {
   padding: 8px 12px;
   margin-top: 5px;
-  background: var(--bg-elevated);
+  background: var(--bg-hover);
   border-radius: var(--radius-sm);
   border-left: 2px solid var(--accent);
 }
@@ -683,7 +742,7 @@ body {
 .res-art .art-title { color: var(--text-secondary); font-size: 12px; }
 .res-art .art-snip { font-size: 11px; color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
 
-mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 2px; border-radius: 2px; }
+mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; border-radius: 2px; }
 
 /* ===== Law Viewer ===== */
 .viewer { display: none; }
@@ -728,7 +787,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
   gap: 4px;
   padding: 10px 22px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: var(--bg-hover);
   flex-wrap: wrap;
 }
 
@@ -741,6 +800,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
   cursor: pointer;
   color: var(--text-secondary);
   transition: all var(--transition);
+  font-family: inherit;
 }
 
 .type-tab:hover { background: var(--bg-hover); }
@@ -764,15 +824,16 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 13px;
+  font-family: inherit;
   outline: none;
 }
 
-.viewer-filter input:focus { border-color: var(--accent); }
+.viewer-filter input:focus { border-color: var(--accent); box-shadow: var(--shadow-glow); }
 
 .viewer-toc {
   padding: 14px 22px;
   border-bottom: 1px solid var(--border);
-  background: rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.02);
   max-height: 220px;
   overflow-y: auto;
 }
@@ -817,8 +878,8 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 .ai-summary {
   margin: 16px 22px;
   padding: 20px;
-  background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(59,130,246,0.08));
-  border: 1px solid rgba(6,182,212,0.2);
+  background: linear-gradient(135deg, rgba(8,145,178,0.06), rgba(37,99,235,0.06));
+  border: 1px solid rgba(8,145,178,0.15);
   border-radius: var(--radius-lg);
 }
 
@@ -849,7 +910,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 
 .ai-kp {
   padding: 10px 14px;
-  background: var(--bg-surface);
+  background: rgba(255,255,255,0.6);
   border-radius: var(--radius);
   border-left: 3px solid var(--cyan);
 }
@@ -875,7 +936,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 .ai-tips {
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px solid rgba(6,182,212,0.15);
+  border-top: 1px solid rgba(8,145,178,0.1);
 }
 
 .ai-tips-title {
@@ -906,7 +967,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
   gap: 8px;
   padding: 10px 22px;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: var(--bg-hover);
 }
 
 .focus-toggle label {
@@ -921,7 +982,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 .focus-switch {
   width: 36px;
   height: 20px;
-  background: var(--border-light);
+  background: rgba(0,0,0,0.12);
   border-radius: 10px;
   position: relative;
   cursor: pointer;
@@ -939,6 +1000,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
   height: 16px;
   background: white;
   border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   transition: transform var(--transition);
 }
 
@@ -961,8 +1023,8 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 }
 
 .art-block.highlighted {
-  background: rgba(6,182,212,0.06);
-  border-color: rgba(6,182,212,0.2);
+  background: rgba(8,145,178,0.05);
+  border-color: rgba(8,145,178,0.15);
   box-shadow: inset 3px 0 0 var(--cyan);
 }
 
@@ -1003,7 +1065,7 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 .art-block:hover .art-bookmark-btn { opacity: 1; }
 .art-bookmark-btn.active { opacity: 1; }
 
-/* Structured body - visual hierarchy for 항/호/목 */
+/* Structured body - visual hierarchy */
 .art-body {
   font-size: 14px;
   line-height: 1.9;
@@ -1078,8 +1140,8 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 .bm-folder-tab {
   padding: 5px 14px;
   border-radius: var(--radius-xl);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   font-size: 12px;
   cursor: pointer;
   color: var(--text-secondary);
@@ -1163,8 +1225,9 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 
 .toast {
   padding: 12px 20px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-light);
+  background: rgba(255,255,255,0.92);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font-size: 13px;
@@ -1186,7 +1249,8 @@ mark { background: rgba(245,158,11,0.3); color: var(--text-primary); padding: 0 
 
 /* ===== Landing Layout ===== */
 body.landing .search-section,
-body.landing .header-stats { display: none; }
+body.landing .header-stats,
+body.landing .sidebar { display: none; }
 
 body.landing .landing-wrap { display: flex; }
 
@@ -1195,8 +1259,8 @@ body.landing .landing-wrap { display: flex; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - 60px);
-  padding: 0 20px;
+  min-height: calc(100vh - 140px);
+  padding: 40px 20px;
 }
 
 /* ===== Advisor Hero ===== */
@@ -1211,29 +1275,30 @@ body.landing .landing-wrap { display: flex; }
 
 .hero-glow {
   position: absolute;
-  top: -60px;
+  top: -80px;
   left: 50%;
   transform: translateX(-50%);
-  width: 500px;
-  height: 300px;
-  background: radial-gradient(ellipse, rgba(59,130,246,0.12) 0%, transparent 70%);
+  width: 600px;
+  height: 350px;
+  background: radial-gradient(ellipse, rgba(37,99,235,0.07) 0%, transparent 65%);
   pointer-events: none;
 }
 
 .advisor-hero h2 {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 800;
   letter-spacing: -0.5px;
   margin-bottom: 8px;
-  background: linear-gradient(135deg, #f1f5f9 30%, var(--accent) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
+  -webkit-text-fill-color: var(--text-primary);
+  background: none;
+  -webkit-background-clip: unset;
   position: relative;
 }
 
 .hero-sub {
   color: var(--text-muted);
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   margin-bottom: 28px;
   position: relative;
@@ -1247,21 +1312,25 @@ body.landing .landing-wrap { display: flex; }
   position: relative;
   border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: 0 0 0 1px var(--border-light), var(--shadow-lg);
+  background: var(--glass);
+
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--glass-border);
 }
 
 .advisor-input {
   flex: 1;
   padding: 16px 20px;
-  background: var(--bg-elevated);
+  background: transparent;
   border: none;
   color: var(--text-primary);
   font-size: 15px;
+  font-family: inherit;
   outline: none;
 }
 
 .advisor-input::placeholder { color: var(--text-muted); }
-.advisor-input:focus { background: var(--bg-active); }
+.advisor-input:focus { background: rgba(37,99,235,0.02); }
 
 .advisor-btn {
   padding: 16px 28px;
@@ -1270,12 +1339,13 @@ body.landing .landing-wrap { display: flex; }
   color: white;
   font-size: 14px;
   font-weight: 700;
+  font-family: inherit;
   cursor: pointer;
   white-space: nowrap;
   transition: all var(--transition);
 }
 
-.advisor-btn:hover { filter: brightness(1.15); }
+.advisor-btn:hover { filter: brightness(1.1); }
 
 .advisor-examples {
   display: flex;
@@ -1289,12 +1359,13 @@ body.landing .landing-wrap { display: flex; }
 .adv-example {
   padding: 5px 14px;
   border-radius: var(--radius-xl);
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
   color: var(--text-muted);
   font-size: 12px;
   cursor: pointer;
   transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
 .adv-example:hover {
@@ -1328,8 +1399,9 @@ body.landing .landing-wrap { display: flex; }
 
 .sc-chip {
   padding: 8px 18px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   cursor: pointer;
   transition: all var(--transition);
@@ -1339,9 +1411,10 @@ body.landing .landing-wrap { display: flex; }
   display: flex;
   align-items: center;
   gap: 6px;
+  box-shadow: var(--shadow-sm);
 }
 
-.sc-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); }
+.sc-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); box-shadow: var(--shadow); }
 
 .sc-chip .chip-icon { font-size: 15px; }
 
@@ -1390,7 +1463,7 @@ body.landing .landing-wrap { display: flex; }
 .adv-priority.p-필수 { background: var(--danger-muted); color: var(--danger); }
 .adv-priority.p-권장 { background: var(--warn-muted); color: var(--warn); }
 .adv-priority.p-해당시 { background: var(--accent-muted); color: var(--accent); }
-.adv-priority.p-참고 { background: var(--bg-elevated); color: var(--text-muted); }
+.adv-priority.p-참고 { background: var(--bg-active); color: var(--text-muted); }
 
 .adv-item-body { flex: 1; min-width: 0; }
 
@@ -1405,7 +1478,7 @@ body.landing .landing-wrap { display: flex; }
   display: inline-block;
   padding: 1px 8px;
   border-radius: 4px;
-  background: var(--bg-elevated);
+  background: var(--bg-active);
   border: 1px solid var(--border);
   font-size: 10px;
   color: var(--text-muted);
@@ -1431,6 +1504,7 @@ body.landing .landing-wrap { display: flex; }
 /* ===== Responsive ===== */
 @media (max-width: 960px) {
   .main-wrap { grid-template-columns: 1fr; padding: 12px; }
+  .sidebar { padding: 8px 12px; }
   .header-top { padding: 10px 14px; }
   .search-section { padding: 0 14px 12px; }
   .header-stats { display: none; }
@@ -1446,6 +1520,280 @@ body.landing .landing-wrap { display: flex; }
   .toc-grid { grid-template-columns: 1fr; }
   .flow-steps { flex-wrap: wrap; }
   .flow-arrow { display: none; }
+  .sidebar { flex-wrap: wrap; }
+}
+
+/* ===== Smart Search Results ===== */
+.smart-results { display: flex; flex-direction: column; gap: 0; }
+
+.smart-banner {
+  background: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(37,99,235,0.06) 100%);
+
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  padding: 24px 28px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.smart-banner::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--cyan), var(--purple));
+}
+.smart-banner-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+.smart-banner-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.smart-banner-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.smart-banner-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+.smart-tag {
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.smart-section {
+  margin-bottom: 16px;
+}
+.smart-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.smart-section-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.smart-section-icon.essential { background: var(--danger-muted); }
+.smart-section-icon.recommended { background: var(--accent-muted); }
+.smart-section-icon.conditional { background: var(--warn-muted); }
+.smart-section-icon.reference { background: var(--purple-muted); }
+.smart-section-icon.articles { background: var(--cyan-muted); }
+.smart-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.smart-section-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.smart-law-card {
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+.smart-law-card:hover {
+  border-color: var(--accent);
+  background: rgba(37,99,235,0.03);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.smart-law-num {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.smart-law-body { flex: 1; min-width: 0; }
+.smart-law-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.smart-law-type {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.smart-law-reason {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.smart-law-articles {
+  font-size: 11px;
+  color: var(--cyan);
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.smart-law-arrow {
+  font-size: 16px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: color var(--transition);
+}
+.smart-law-card:hover .smart-law-arrow { color: var(--accent); }
+
+.smart-priority-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.smart-priority-badge.p-필수 { background: var(--danger-muted); color: var(--danger); }
+.smart-priority-badge.p-권장 { background: var(--accent-muted); color: var(--accent); }
+.smart-priority-badge.p-해당시 { background: var(--warn-muted); color: var(--warn); }
+.smart-priority-badge.p-참고 { background: var(--purple-muted); color: var(--purple); }
+
+/* Smart search article results */
+.smart-article-card {
+  background: var(--glass);
+
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: all var(--transition);
+  box-shadow: var(--shadow-sm);
+}
+.smart-article-card:hover {
+  border-color: var(--cyan);
+  background: rgba(8,145,178,0.03);
+}
+.smart-article-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.smart-article-law {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.smart-article-type {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-active);
+  color: var(--text-muted);
+}
+.smart-article-num {
+  font-size: 12px;
+  color: var(--cyan);
+  font-weight: 600;
+}
+.smart-article-title {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.smart-article-snip {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+}
+.smart-article-snip mark {
+  background: rgba(37,99,235,0.12);
+  color: var(--accent);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Solar AI analysis box in smart results */
+.smart-ai-box {
+  background: var(--cyan-muted);
+  border: 1px solid rgba(8,145,178,0.15);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.smart-ai-label {
+  font-size: 11px;
+  color: var(--cyan);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.smart-ai-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Divider between advisor and search sections */
+.smart-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.smart-divider::before,
+.smart-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 </style>
 </head>
@@ -1488,13 +1836,14 @@ body.landing .landing-wrap { display: flex; }
       <span class="quick-tag" data-q="계약보증금">계약보증금</span>
       <span class="quick-tag" data-q="하자보수">하자보수</span>
       <span class="quick-tag" data-q="수의계약">수의계약</span>
+      <span class="quick-tag" data-q="단가계약">단가계약</span>
       <span class="quick-tag" data-q="하도급">하도급</span>
       <span class="quick-tag" data-q="청렴계약">청렴계약</span>
       <span class="quick-tag" data-q="지체상금">지체상금</span>
       <span class="quick-tag" data-q="물가변동">물가변동</span>
       <span class="quick-tag" data-q="설계변경">설계변경</span>
       <span class="quick-tag" data-q="원자력 안전">원자력 안전</span>
-      <span class="quick-tag" data-q="방사성폐기물">방사성폐기물</span>
+      <span class="quick-tag" data-q="수산물 단가계약">수산물 단가계약</span>
       <span class="quick-tag" data-q="환경영향평가">환경영향평가</span>
     </div>
   </div>
@@ -1605,8 +1954,8 @@ body.landing .landing-wrap { display: flex; }
   </div>
 </div>
 
+<aside class="sidebar" id="sidebar"></aside>
 <div class="main-wrap" id="mainWrap" style="display:none">
-  <aside class="sidebar" id="sidebar"></aside>
   <main class="content" id="contentArea">
     <!-- Welcome / Advisor Landing -->
     <div id="welcomeView"></div>
@@ -2062,7 +2411,27 @@ async function loadStats() {
   $('#statArticles').textContent = s.total_articles.toLocaleString();
 }
 
-// ===== Search =====
+// ===== Smart Search =====
+function inferContext(query) {
+  const q = query.trim();
+  const actionWords = ['계약','구매','입찰','조달','공사','시공','건설','납품','발주','수주','용역','설계','감리','해체','공급','매입','수입','발전','운영','관리','검사','시험','인허가','등록','변경','해지','해제'];
+  const topicWords = ['보증금','하자','지체상금','하도급','설계변경','물가변동','부정당','안전','환경','청렴','대금','선급금','기성','준공','낙찰','적격심사','담합','비리','손해배상','위약금','면제','감면','감사','평가','공시'];
+  const hasAction = actionWords.some(w => q.includes(w));
+  const hasTopic = topicWords.some(w => q.includes(w));
+  if (hasAction && hasTopic) return `${q} 시 확인해야 하는 법령`;
+  if (hasAction) return `${q} 시 참고해야 하는 법령`;
+  if (hasTopic) return `${q} 관련 확인 법령`;
+  return `${q} 관련 참고 법령`;
+}
+
+function inferSubtitle(query, categories) {
+  const cats = categories || [];
+  if (cats.length > 0 && cats[0] !== '일반검색') {
+    return `${cats.join(', ')} 분야와 관련된 법령을 분석했습니다`;
+  }
+  return `검색어를 분석하여 관련 법령을 추천합니다`;
+}
+
 async function doSearch(q) {
   const input = $('#searchInput');
   if (q) input.value = q;
@@ -2070,41 +2439,202 @@ async function doSearch(q) {
   if (!query) return;
   showView('results');
   $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  $('#resultsTitle').textContent = '';
+  $('#resultsCount').textContent = '';
   const cat = $('#categoryFilter').value;
   const params = new URLSearchParams({ q: query });
   if (cat) params.set('category', cat);
-  const results = await api(`/api/search?${params}`);
-  renderResults(results, query);
+
+  // 검색 + 어드바이저 병렬 호출
+  const [searchResults, advisorData] = await Promise.all([
+    api(`/api/search?${params}`),
+    api(`/api/advisor?q=${encodeURIComponent(query)}`).catch(() => null)
+  ]);
+
+  renderSmartResults(searchResults, advisorData, query);
 }
 
-function renderResults(results, query) {
+function renderSmartResults(searchResults, advisorData, query) {
+  const hasAdvisor = advisorData && advisorData.recommendations && advisorData.recommendations.length > 0;
+  const hasSearch = searchResults && searchResults.length > 0;
+  const totalCount = (hasAdvisor ? advisorData.recommendations.length : 0) + (hasSearch ? searchResults.length : 0);
+
   $('#resultsTitle').textContent = `"${query}" 검색 결과`;
-  $('#resultsCount').textContent = `${results.length}건`;
-  if (!results.length) {
+  $('#resultsCount').textContent = `${totalCount}건`;
+
+  if (!hasAdvisor && !hasSearch) {
     $('#resultsList').innerHTML = `<div class="empty"><div style="font-size:40px;opacity:0.4">&#x1F50D;</div><h3>검색 결과가 없습니다</h3><p>다른 키워드로 검색하거나 카테고리에서 직접 찾아보세요.</p></div>`;
     return;
   }
-  const kw = query.toLowerCase().split(/\s+/);
-  $('#resultsList').innerHTML = results.map(r => {
-    const meta = r.meta || {};
-    const arts = (r.matching_articles || []).slice(0, 3).map(a => `
-      <div class="res-art" onclick="event.stopPropagation();openLawArticle('${r.law_name}','${r.file_type}','${a.number}')">
-        <span class="art-num">${a.number}</span>
-        <span class="art-title">${a.title ? '(' + a.title + ')' : ''}</span>
-        <div class="art-snip">${highlight(escHtml(a.snippet), kw)}</div>
-      </div>
-    `).join('');
-    return `
-      <div class="res-item" onclick="openLaw('${r.law_name}','${r.file_type}')">
-        <div class="res-name">${highlight(escHtml(r.title || r.law_name), kw)} <span class="res-type">${r.file_type}</span></div>
-        <div class="res-meta">
-          ${(meta['소관부처']||[]).length ? `<span>소관: ${(meta['소관부처']).join(', ')}</span>` : ''}
-          ${meta['공포일자'] ? `<span>공포: ${meta['공포일자']}</span>` : ''}
+
+  let html = '<div class="smart-results">';
+
+  // 1. 추론 배너
+  const inferredTitle = inferContext(query);
+  const inferredSub = hasAdvisor ? inferSubtitle(query, advisorData.categories) : '키워드 매칭으로 관련 법령을 검색했습니다';
+  const isSolar = advisorData?.source === 'solar';
+
+  html += `
+    <div class="smart-banner">
+      <div class="smart-banner-icon">&#x1F4CB;</div>
+      <div class="smart-banner-title">${escHtml(inferredTitle)}</div>
+      <div class="smart-banner-sub">${escHtml(inferredSub)}</div>
+      ${hasAdvisor && advisorData.categories?.length ? `
+        <div class="smart-banner-tags">
+          ${advisorData.categories.filter(c=>c!=='일반검색').map(c => `<span class="smart-tag">${escHtml(c)}</span>`).join('')}
+          ${isSolar ? '<span class="smart-tag" style="background:var(--cyan-muted);color:var(--cyan)">&#9889; AI 분석</span>' : ''}
         </div>
-        ${arts}
+      ` : ''}
+    </div>
+  `;
+
+  // 2. AI 분석 (Solar)
+  if (advisorData?.analysis) {
+    html += `
+      <div class="smart-ai-box">
+        <div class="smart-ai-label">&#9889; AI 분석</div>
+        <div class="smart-ai-text">${escHtml(advisorData.analysis)}</div>
       </div>
     `;
-  }).join('');
+  }
+
+  // 3. 어드바이저 추천 법령 (우선순위별 그룹)
+  if (hasAdvisor) {
+    // Store advisor data for openFromSmartAdvisor
+    lastAdvisorData = advisorData;
+
+    const priorityGroups = {
+      '필수': { icon: '&#x1F534;', label: '필수 확인 법령', css: 'essential', items: [] },
+      '권장': { icon: '&#x1F535;', label: '권장 확인 법령', css: 'recommended', items: [] },
+      '해당시': { icon: '&#x1F7E1;', label: '해당 시 확인 법령', css: 'conditional', items: [] },
+      '참고': { icon: '&#x1F7E3;', label: '참고 법령', css: 'reference', items: [] },
+    };
+
+    advisorData.recommendations.forEach((r, idx) => {
+      const group = priorityGroups[r.priority] || priorityGroups['참고'];
+      group.items.push({ ...r, idx });
+    });
+
+    let globalNum = 1;
+    for (const [priority, group] of Object.entries(priorityGroups)) {
+      if (group.items.length === 0) continue;
+      html += `
+        <div class="smart-section">
+          <div class="smart-section-head">
+            <div class="smart-section-icon ${group.css}">${group.icon}</div>
+            <div class="smart-section-title">${group.label}</div>
+            <div class="smart-section-count">${group.items.length}건</div>
+          </div>
+      `;
+      for (const r of group.items) {
+        html += `
+          <div class="smart-law-card" onclick="openFromSmartAdvisor(${r.idx})">
+            <div class="smart-law-num">${globalNum}</div>
+            <div class="smart-law-body">
+              <div class="smart-law-name">
+                ${escHtml(r.law)}
+                <span class="smart-law-type">${escHtml(r.type)}</span>
+                <span class="smart-priority-badge p-${r.priority}">${r.priority}</span>
+              </div>
+              <div class="smart-law-reason">${escHtml(r.reason)}</div>
+              ${r.key_articles ? `<div class="smart-law-articles">&#x1F4CC; ${escHtml(r.key_articles)}</div>` : ''}
+            </div>
+            <div class="smart-law-arrow">&#8594;</div>
+          </div>
+        `;
+        globalNum++;
+      }
+      html += '</div>';
+    }
+  }
+
+  // 4. 조문 검색 결과 (키워드 매칭)
+  if (hasSearch) {
+    // 어드바이저 추천에 이미 있는 법령은 중복 제거
+    const advisorLaws = new Set();
+    if (hasAdvisor) {
+      advisorData.recommendations.forEach(r => advisorLaws.add(r.law));
+    }
+    const filteredSearch = searchResults.filter(r => !advisorLaws.has(r.law_name));
+    const articlesFromSearch = [];
+    // 어드바이저 추천 법령의 매칭 조문도 수집
+    searchResults.forEach(r => {
+      (r.matching_articles || []).slice(0, 3).forEach(a => {
+        articlesFromSearch.push({ ...a, law_name: r.law_name, file_type: r.file_type, title: r.title || r.law_name });
+      });
+    });
+
+    if (articlesFromSearch.length > 0) {
+      html += `
+        <div class="smart-divider">조문 검색 결과</div>
+        <div class="smart-section">
+          <div class="smart-section-head">
+            <div class="smart-section-icon articles">&#x1F50D;</div>
+            <div class="smart-section-title">키워드 매칭 조문</div>
+            <div class="smart-section-count">${articlesFromSearch.length}건</div>
+          </div>
+      `;
+      const kw = query.toLowerCase().split(/\s+/);
+      for (const a of articlesFromSearch.slice(0, 15)) {
+        html += `
+          <div class="smart-article-card" onclick="openLawArticle('${escHtml(a.law_name)}','${escHtml(a.file_type)}','${escHtml(a.number)}')">
+            <div class="smart-article-head">
+              <span class="smart-article-law">${escHtml(a.law_name)}</span>
+              <span class="smart-article-type">${escHtml(a.file_type)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span class="smart-article-num">${escHtml(a.number)}</span>
+              <span class="smart-article-title">${a.title ? '(' + escHtml(a.title) + ')' : ''}</span>
+            </div>
+            <div class="smart-article-snip">${highlight(escHtml(a.snippet), kw)}</div>
+          </div>
+        `;
+      }
+      html += '</div>';
+    }
+
+    // 추가 법령 (어드바이저에 없는 것)
+    if (filteredSearch.length > 0) {
+      html += `
+        <div class="smart-divider">추가 관련 법령</div>
+        <div class="smart-section">
+          <div class="smart-section-head">
+            <div class="smart-section-icon reference">&#x1F4DA;</div>
+            <div class="smart-section-title">추가 관련 법령</div>
+            <div class="smart-section-count">${filteredSearch.length}건</div>
+          </div>
+      `;
+      for (const r of filteredSearch.slice(0, 10)) {
+        html += `
+          <div class="smart-law-card" onclick="openLaw('${escHtml(r.law_name)}','${escHtml(r.file_type)}')">
+            <div class="smart-law-num" style="background:var(--purple-muted);color:var(--purple)">+</div>
+            <div class="smart-law-body">
+              <div class="smart-law-name">
+                ${escHtml(r.title || r.law_name)}
+                <span class="smart-law-type">${escHtml(r.file_type)}</span>
+              </div>
+              ${r.matching_articles?.length ? `<div class="smart-law-reason">매칭 조문: ${r.matching_articles.slice(0,3).map(a=>a.number+' '+(a.title||'')).join(', ')}</div>` : ''}
+            </div>
+            <div class="smart-law-arrow">&#8594;</div>
+          </div>
+        `;
+      }
+      html += '</div>';
+    }
+  }
+
+  html += '</div>';
+  $('#resultsList').innerHTML = html;
+}
+
+function openFromSmartAdvisor(idx) {
+  if (!lastAdvisorData) return;
+  const r = lastAdvisorData.recommendations[idx];
+  openLaw(r.law, r.type, {
+    key_articles: r.key_articles || '',
+    reason: r.reason || '',
+    context: lastAdvisorData.query || '',
+  });
 }
 
 // ===== Law Viewer (Enhanced) =====
@@ -2404,14 +2934,17 @@ function openFromAdvisor(idx) {
 }
 
 // ===== View Management =====
+let previousView = 'welcome';
+
 function showView(view) {
+  if (currentView !== view && currentView !== 'viewer') {
+    previousView = currentView;
+  }
   currentView = view;
   const isLanding = view === 'welcome';
-  // Landing: full-screen hero, hide sidebar+main
   document.body.classList.toggle('landing', isLanding);
   $('#landingWrap').style.display = isLanding ? 'flex' : 'none';
   $('#mainWrap').style.display = isLanding ? 'none' : '';
-  // Inner views
   $('#advisorView').className = `card advisor-results ${view === 'advisor' ? 'visible' : ''}`;
   $('#resultsView').className = `card results ${view === 'results' ? 'visible' : ''}`;
   $('#viewerView').className = `card viewer ${view === 'viewer' ? 'visible' : ''}`;
@@ -2421,8 +2954,11 @@ function showView(view) {
 }
 
 function goBack() {
-  if (currentView === 'viewer') showView('advisor');
-  else showView('welcome');
+  if (currentView === 'viewer') {
+    showView(previousView === 'results' ? 'results' : previousView === 'advisor' ? 'advisor' : 'welcome');
+  } else {
+    showView('welcome');
+  }
 }
 </script>
 </body>

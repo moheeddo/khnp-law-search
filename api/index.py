@@ -43,6 +43,9 @@ ADVISOR_SCENARIOS = [
     {"keywords":["독점","공정거래","담합","입찰담합"],"category":"공정거래","recommendations":[{"law":"독점규제및공정거래에관한법률","type":"법률","reason":"입찰담합 금지, 불공정거래행위","priority":"필수"}]},
     {"keywords":["민법","계약해제","손해배상","채무불이행","위약금"],"category":"민사일반","recommendations":[{"law":"민법","type":"법률","reason":"계약 총칙, 해제·해지, 손해배상","priority":"필수"}]},
     {"keywords":["방폐물","방사성폐기물","해체","원전해체"],"category":"방사성폐기물·해체","recommendations":[{"law":"방사성폐기물관리법","type":"법률","reason":"방사성폐기물 관리·처분 전반","priority":"필수"},{"law":"원자력안전법","type":"법률","reason":"원자력시설 해체 승인 절차","priority":"필수"},{"law":"환경영향평가법","type":"법률","reason":"해체 시 환경영향평가","priority":"해당시"}]},
+    {"keywords":["단가","단가계약","MAS","다수공급자","수산물","식품","농산물","식자재","급식"],"category":"단가계약·물품조달","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"물품 구매·단가계약 체결 절차 규율","priority":"필수"},{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"단가계약 체결 방법, 이행 기준 (제22조 등)","priority":"필수"},{"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 단가계약 특례 규정","priority":"필수"},{"law":"조달사업에관한법률","type":"법률","reason":"조달청 다수공급자계약(MAS), 단가계약 근거","priority":"필수"},{"law":"전자조달의이용및촉진에관한법률","type":"법률","reason":"나라장터 전자입찰·단가계약 절차","priority":"권장"}]},
+    {"keywords":["낙찰","적격심사","종합심사","최저가","2단계"],"category":"낙찰·심사","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"낙찰자 결정 방법 (제10조)","priority":"필수"},{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"적격심사, 종합심사낙찰제 세부 기준","priority":"필수"},{"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 낙찰자 결정 특례","priority":"필수"}]},
+    {"keywords":["대가지급","기성","선급금","대금","준공금"],"category":"대가지급","recommendations":[{"law":"국가를당사자로하는계약에관한법률","type":"법률","reason":"대가 지급 시기·방법 (제15조)","priority":"필수"},{"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"선급금, 기성금 지급 절차","priority":"필수"},{"law":"하도급거래공정화에관한법률","type":"법률","reason":"하도급 대금 직접 지급 의무","priority":"해당시"}]},
 ]
 
 # ===== Load Data =====
