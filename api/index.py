@@ -775,6 +775,35 @@ def get_reference_data(query, recommendations):
         templates = [CONTRACT_TEMPLATES[1]]  # 기본: 물품 계약서
     ref["templates"] = templates[:3]
 
+    # ── 위험도 점수 계산 ──
+    risk_score = 0
+    risk_factors = []
+
+    # 리스크 기반 (최대 40점)
+    high_risks = len([r for r in ref.get("risks",[]) if r["level"]=="high"])
+    med_risks = len([r for r in ref.get("risks",[]) if r["level"]=="medium"])
+    risk_score += min(40, high_risks * 15 + med_risks * 5)
+    if high_risks: risk_factors.append(f"고위험 항목 {high_risks}건")
+
+    # 감사 지적 기반 (최대 20점)
+    audit_count = len(ref.get("audit_cases",[]))
+    risk_score += min(20, audit_count * 8)
+    if audit_count: risk_factors.append(f"감사 지적 유의 {audit_count}건")
+
+    # 금액 기반 (최대 20점)
+    amt = ref.get("contract_method",{}).get("amount",0) or 0
+    if amt >= 1000000000: risk_score += 20; risk_factors.append("10억 이상 고액 계약")
+    elif amt >= 300000000: risk_score += 15; risk_factors.append("3억 이상 계약")
+    elif amt >= 100000000: risk_score += 10; risk_factors.append("1억 이상 계약")
+
+    # 원전 관련 (최대 20점)
+    if any(kw in q for kw in ["원전","원자력","핵","방사선"]):
+        risk_score += 20; risk_factors.append("원자력 관련 계약 (QA/비리방지법)")
+
+    risk_score = min(100, risk_score)
+    grade = "안전" if risk_score < 30 else "주의" if risk_score < 60 else "위험"
+    ref["risk_score"] = {"score": risk_score, "grade": grade, "factors": risk_factors}
+
     return ref
 
 def get_related_queries(query):

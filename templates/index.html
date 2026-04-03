@@ -3898,6 +3898,73 @@ kbd {
   padding: 4px;
 }
 
+/* ===== Risk Score Card ===== */
+.risk-score-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.rs-gauge {
+  position: relative;
+  width: 100px;
+  flex-shrink: 0;
+  text-align: center;
+}
+.rs-svg { width: 100px; height: 50px; }
+.rs-number {
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: -8px;
+}
+.rs-grade {
+  font-size: 12px;
+  font-weight: 700;
+}
+.rs-factors { flex: 1; }
+.rs-factor {
+  font-size: 12px;
+  padding: 2px 0;
+  line-height: 1.4;
+}
+
+/* ===== Law Note ===== */
+.law-note-area {
+  border-bottom: 1px solid var(--border);
+}
+.law-note-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 22px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: background var(--transition);
+}
+.law-note-toggle:hover { background: var(--bg-hover); }
+.law-note-count { font-size: 10px; }
+.law-note-content { padding: 0 22px 12px; }
+.law-note-content textarea {
+  width: 100%;
+  min-height: 80px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  outline: none;
+  font-family: inherit;
+}
+.law-note-content textarea:focus { border-color: var(--accent); }
+
 </style>
 </head>
 <body class="landing">
@@ -4150,6 +4217,7 @@ kbd {
         </div>
       </div>
       <div class="type-tabs" id="typeTabs"></div>
+      <div id="lawNoteArea" class="law-note-area" style="display:none"></div>
       <button class="btn btn-sm" id="compareBtn" onclick="toggleCompareView()" style="display:none">&#x2194; 비교 보기</button>
       <div id="aiSummaryArea"></div>
       <div id="relatedLaws" class="related-laws" style="display:none"></div>
@@ -5369,6 +5437,28 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>`;
   }
 
+  // 2.6. 위험도 게이지
+  if (refDataPre?.risk_score) {
+    const rs = refDataPre.risk_score;
+    const color = rs.score < 30 ? 'var(--success)' : rs.score < 60 ? 'var(--warn)' : 'var(--danger)';
+    const bgColor = rs.score < 30 ? 'var(--success-muted)' : rs.score < 60 ? 'var(--warn-muted)' : 'var(--danger-muted)';
+
+    html += `<div class="risk-score-card">
+      <div class="rs-gauge">
+        <svg viewBox="0 0 120 60" class="rs-svg">
+          <path d="M 10 55 A 50 50 0 0 1 110 55" fill="none" stroke="var(--border)" stroke-width="8" stroke-linecap="round"/>
+          <path d="M 10 55 A 50 50 0 0 1 110 55" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
+                stroke-dasharray="${rs.score * 1.57} 157" style="transition:stroke-dasharray 1s ease"/>
+        </svg>
+        <div class="rs-number" style="color:${color}">${rs.score}</div>
+        <div class="rs-grade" style="color:${color}">${rs.grade}</div>
+      </div>
+      <div class="rs-factors">
+        ${rs.factors.map(f => `<div class="rs-factor" style="color:${color}">&#x2022; ${escHtml(f)}</div>`).join('')}
+      </div>
+    </div>`;
+  }
+
   // 3. 어드바이저 추천 법령 (우선순위별 그룹)
   if (hasAdvisor) {
     // Store advisor data for openFromSmartAdvisor
@@ -6367,6 +6457,49 @@ async function openLaw(lawName, fileType, advInfo) {
   if (offlineIndicator) {
     offlineIndicator.textContent = cachedCheck ? '\u{1F4E5} 오프라인 저장됨' : '';
     offlineIndicator.style.display = cachedCheck ? '' : 'none';
+  }
+
+  renderLawNote();
+}
+
+function renderLawNote() {
+  const area = document.getElementById('lawNoteArea');
+  if (!area || !currentLaw) { if(area) area.style.display='none'; return; }
+
+  const key = `lawnote_${currentLaw}_${currentFileType}`;
+  const saved = localStorage.getItem(key) || '';
+
+  area.style.display = '';
+  area.innerHTML = `
+    <div class="law-note-toggle" onclick="toggleLawNote()">
+      <span>&#x1F4DD; 법령 노트</span>
+      <span class="law-note-count">${saved ? saved.split('\n').length + '줄' : '비어있음'}</span>
+    </div>
+    <div id="lawNoteContent" class="law-note-content" style="display:none">
+      <textarea id="lawNoteText" placeholder="이 법령에 대한 메모를 남겨보세요 (자동 저장)"
+                oninput="saveLawNote()">${escHtml(saved)}</textarea>
+    </div>
+  `;
+}
+
+function toggleLawNote() {
+  const el = document.getElementById('lawNoteContent');
+  if (el) {
+    el.style.display = el.style.display === 'none' ? '' : 'none';
+    if (el.style.display !== 'none') {
+      document.getElementById('lawNoteText')?.focus();
+    }
+  }
+}
+
+function saveLawNote() {
+  if (!currentLaw) return;
+  const key = `lawnote_${currentLaw}_${currentFileType}`;
+  const text = document.getElementById('lawNoteText')?.value || '';
+  if (text.trim()) {
+    localStorage.setItem(key, text);
+  } else {
+    localStorage.removeItem(key);
   }
 }
 
