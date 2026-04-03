@@ -2946,6 +2946,47 @@ kbd {
   padding: 0 2px;
 }
 
+/* 계약서 특약 조항 */
+.clause-examples {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.spec-clause-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--purple);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.spec-clause-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.spec-clause-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple);
+}
+.spec-clause-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  word-break: keep-all;
+  background: var(--bg-elevated);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+}
+.spec-clause-law {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
 </style>
 </head>
 <body class="landing">
@@ -4283,6 +4324,23 @@ function renderSmartResults(searchResults, advisorData, query) {
       }
     }
 
+    // 5b2. 계약서 특약 조항 예시
+    if (refData.special_clauses?.length) {
+      html += '<div class="smart-divider">계약서 특약 조항 예시</div>';
+      html += '<div class="clause-examples">';
+      for (const sc of refData.special_clauses) {
+        html += `<div class="spec-clause-card">
+          <div class="spec-clause-head">
+            <span class="spec-clause-title">${escHtml(sc.title)}</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation();copyClause(this)" data-text="${escHtml(sc.text)}" title="복사">&#x1F4CB; 복사</button>
+          </div>
+          <div class="spec-clause-text">${escHtml(sc.text)}</div>
+          ${sc.law ? `<div class="spec-clause-law">${escHtml(sc.law)}</div>` : ''}
+        </div>`;
+      }
+      html += '</div>';
+    }
+
     // 5c. 나라장터 실시간 입찰공고 (비동기 로드)
     html += '<div id="bidResults"></div>';
 
@@ -4967,6 +5025,15 @@ function copyArticle(btn, lawName, number, title) {
   });
 }
 
+function copyClause(btn) {
+  const text = btn.dataset.text;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '\u2713 \uBCF5\uC0AC\uB428';
+    setTimeout(() => { btn.innerHTML = '&#x1F4CB; \uBCF5\uC0AC'; }, 1500);
+    toast('\uD2B9\uC57D \uC870\uD56D\uC774 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success');
+  });
+}
+
 // ===== TOC Toggle =====
 function toggleToc() {
   const grid = document.getElementById('tocGrid');
@@ -5031,29 +5098,41 @@ function loadFromHash() {
   }
 }
 
-function exportBookmarks() {
+async function exportBookmarks() {
   if (!bookmarks.length) { toast('북마크가 없습니다', 'info'); return; }
-  let text = '=== 한수원 법령 북마크 ===\n';
-  text += `내보내기: ${new Date().toLocaleDateString('ko-KR')}\n\n`;
+
+  let text = '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n';
+  text += '  \uD55C\uC218\uC6D0 \uBC95\uB839 \uBD81\uB9C8\uD06C \uBCF4\uACE0\uC11C\n';
+  text += '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n';
+  text += `\uC791\uC131\uC77C: ${new Date().toLocaleDateString('ko-KR')}\n`;
+  text += `\uCD1D ${bookmarks.length}\uAC74\n\n`;
 
   const folders = [...new Set(bookmarks.map(b => b.folder))];
   for (const folder of folders) {
-    text += `[${folder}]\n`;
     const items = bookmarks.filter(b => b.folder === folder);
+    text += `\u2501\u2501\u2501 [${folder}] (${items.length}\uAC74) \u2501\u2501\u2501\n\n`;
+
     for (const b of items) {
-      text += `  - ${b.law_name} ${b.article_num || ''} ${b.article_title ? '('+b.article_title+')' : ''}\n`;
-      if (b.memo) text += `    메모: ${b.memo}\n`;
+      text += `\u25A0 ${b.law_name}`;
+      if (b.article_num) text += ` ${b.article_num}`;
+      if (b.article_title) text += ` (${b.article_title})`;
+      text += '\n';
+      if (b.file_type) text += `  \uC720\uD615: ${b.file_type}\n`;
+      if (b.memo) text += `  \uBA54\uBAA8: ${b.memo}\n`;
+      text += '\n';
     }
-    text += '\n';
   }
+
+  text += '\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\n';
+  text += '\uD55C\uC218\uC6D0 \uACC4\uC57D \uBC95\uB839 \uAC80\uC0C9 \uC2DC\uC2A4\uD15C\n';
 
   const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `법령북마크_${new Date().toISOString().split('T')[0]}.txt`;
+  a.download = `\uBC95\uB839\uBD81\uB9C8\uD06C_${new Date().toISOString().split('T')[0]}.txt`;
   a.click();
   URL.revokeObjectURL(a.href);
-  toast('북마크를 내보냈습니다', 'success');
+  toast('\uBD81\uB9C8\uD06C \uBCF4\uACE0\uC11C\uB97C \uB0B4\uBCF4\uB0C8\uC2B5\uB2C8\uB2E4', 'success');
 }
 
 function scrollToArticleByNum(artNum) {
