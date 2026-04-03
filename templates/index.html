@@ -1916,6 +1916,79 @@ body.landing .landing-wrap { display: flex; }
   color: var(--accent);
 }
 
+/* Quick Reference Cards */
+.quick-ref {
+  width: 100%;
+  max-width: 680px;
+  margin: 20px auto 0;
+}
+.qr-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.qr-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.qr-card {
+  padding: 10px 12px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.qr-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+.qr-q {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.qr-a {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* Key Summary Card */
+.key-summary {
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+}
+.ks-main {
+  font-size: 14px;
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.ks-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.ks-badge {
+  font-size: 11px;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.ks-method { background: var(--accent-muted); color: var(--accent); border-color: var(--accent); }
+.ks-amount { background: var(--warn-muted); color: var(--warn); border-color: var(--warn); }
+
 /* Scenario Section */
 .scenario-section {
   padding: 0 32px 28px;
@@ -3961,6 +4034,7 @@ kbd {
   .scenario-chips { gap: 4px; }
   .sc-chip { padding: 6px 12px; font-size: 12px; }
   .shortcuts-hint { display: none; }
+  .qr-grid { grid-template-columns: repeat(2, 1fr); }
 
   /* 나의 계약 */
   .my-contracts { max-width: 100%; }
@@ -4024,6 +4098,7 @@ kbd {
   .adv-example { font-size: 11px; padding: 3px 10px; }
   .btn { padding: 6px 12px; font-size: 12px; }
   .viewer-title-area h2 { font-size: 15px; }
+  .qr-grid { grid-template-columns: 1fr 1fr; }
 }
 
 /* 모바일 터치 최적화 */
@@ -4398,6 +4473,35 @@ kbd {
       <span class="adv-example" data-q="수의계약 긴급 조달">수의계약</span>
       <span class="adv-example" data-q="계약보증금 하자보수">보증금·하자</span>
       <span class="adv-example" data-q="원자력 안전">원자력 안전</span>
+    </div>
+    <div class="quick-ref" id="quickRef">
+      <div class="qr-title">자주 찾는 정보</div>
+      <div class="qr-grid">
+        <div class="qr-card" onclick="doAdvisor('수의계약 한도')">
+          <div class="qr-q">수의계약 한도?</div>
+          <div class="qr-a">물품·용역 5천만원, 공사 1억 미만</div>
+        </div>
+        <div class="qr-card" onclick="doAdvisor('계약보증금 비율')">
+          <div class="qr-q">보증금 비율?</div>
+          <div class="qr-a">물품 10%, 공사 15%</div>
+        </div>
+        <div class="qr-card" onclick="doAdvisor('지체상금률')">
+          <div class="qr-q">지체상금률?</div>
+          <div class="qr-a">공사 1/1000, 물품 0.75/1000</div>
+        </div>
+        <div class="qr-card" onclick="doAdvisor('입찰공고 기간')">
+          <div class="qr-q">입찰공고 기간?</div>
+          <div class="qr-a">일반 7일, 긴급 5일 이상</div>
+        </div>
+        <div class="qr-card" onclick="doAdvisor('선급금 한도')">
+          <div class="qr-q">선급금 한도?</div>
+          <div class="qr-a">계약금액의 70% 이내</div>
+        </div>
+        <div class="qr-card" onclick="doAdvisor('하자담보 기간')">
+          <div class="qr-q">하자담보 기간?</div>
+          <div class="qr-a">건축 2년, 토목 3년</div>
+        </div>
+      </div>
     </div>
     <div class="scenario-chips">
       <div class="sc-chip" onclick="doAdvisor('공사계약 건설 시공')"><span class="chip-icon">&#x1F3D7;</span>공사</div>
@@ -5908,6 +6012,23 @@ function renderSmartResults(searchResults, advisorData, query) {
       ` : ''}
     </div>
   `;
+
+  // ── 1.5. 핵심 한줄 요약 ──
+  if (hasAdvisor) {
+    const oneLineSummary = advisorData.analysis || inferredTitle;
+    const cm = refData?.contract_method || {};
+    const rs = refData?.risk_score || {};
+
+    html += `<div class="key-summary">
+      <div class="ks-main">${escHtml(oneLineSummary)}</div>
+      <div class="ks-badges">
+        ${cm.method ? `<span class="ks-badge ks-method">${escHtml(cm.method)}</span>` : ''}
+        ${cm.amount_display ? `<span class="ks-badge ks-amount">${escHtml(cm.amount_display)}</span>` : ''}
+        ${rs.score !== undefined ? `<span class="ks-badge ks-risk" style="color:${rs.score<30?'var(--success)':rs.score<60?'var(--warn)':'var(--danger)'}">위험도 ${rs.score}점</span>` : ''}
+        <span class="ks-badge">법령 ${advisorData.recommendations?.length || 0}건</span>
+      </div>
+    </div>`;
+  }
 
   // ── 2. 요약 대시보드 + 위험도 점수 ──
   const summaryStats = {
