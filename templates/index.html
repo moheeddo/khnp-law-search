@@ -1166,6 +1166,91 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
   font-style: italic;
 }
 
+/* ===== Amendment Tags (Inline) ===== */
+.amend-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+.amend-revised {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+.amend-new {
+  background: var(--success-muted);
+  color: var(--success);
+}
+.amend-deleted {
+  background: var(--danger-muted);
+  color: var(--danger);
+  text-decoration: line-through;
+}
+
+/* ===== Wizard ===== */
+.wizard-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-top: 20px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+}
+.wizard-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 20px;
+}
+.wz-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: all var(--transition);
+}
+.wz-dot.active { background: var(--accent); }
+.wz-line {
+  width: 30px;
+  height: 2px;
+  background: var(--border);
+}
+.wizard-q {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+.wizard-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+.wizard-opt {
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition);
+}
+.wizard-opt:hover {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  color: var(--accent);
+  transform: translateX(4px);
+}
+
 /* ===== Bookmarks View ===== */
 .bookmarks-view { display: none; }
 .bookmarks-view.visible { display: block; }
@@ -2978,6 +3063,9 @@ kbd {
     <div style="margin-top:8px">
       <button class="btn" onclick="doAdvisor('계약보증금')" style="font-size:12px;padding:6px 14px;border-radius:var(--radius-xl);background:var(--accent-muted);color:var(--accent);border-color:var(--accent);font-weight:600">&#x1F4CB; 계약서 조항 ↔ 법령 매핑</button>
     </div>
+    <div style="margin-top:20px">
+      <button class="btn btn-accent" onclick="startWizard()" style="padding:10px 24px;font-size:14px">&#x1F9ED; 계약유형 가이드</button>
+    </div>
     <div class="shortcuts-hint">
       <span><kbd>/</kbd> 검색</span>
       <span><kbd>Esc</kbd> 뒤로</span>
@@ -3069,6 +3157,7 @@ kbd {
           내 북마크
         </h3>
         <span class="count" id="bmCount"></span>
+        <button class="btn btn-sm" onclick="viewAllBookmarkedArticles()">&#x1F4D6; 조문 모아보기</button>
         <button class="btn btn-sm" onclick="exportBookmarks()">&#x1F4E5; 내보내기</button>
       </div>
       <div class="bm-folders" id="bmFolders"></div>
@@ -4303,6 +4392,10 @@ function structureBody(raw) {
     }
     html += `<div class="para">${escHtml(trimmed)}</div>`;
   }
+  // 개정·신설·삭제 인라인 하이라이트
+  html = html.replace(/&lt;(개정)\s+([\d.]+)&gt;/g, '<span class="amend-tag amend-revised">개정 $2</span>');
+  html = html.replace(/&lt;(신설)\s+([\d.]+)&gt;/g, '<span class="amend-tag amend-new">신설 $2</span>');
+  html = html.replace(/&lt;(삭제)\s+([\d.]+)&gt;/g, '<span class="amend-tag amend-deleted">삭제 $2</span>');
   // 조문 참조 링크화: "제7조" → 클릭 가능 링크
   html = html.replace(/제(\d+)조(?:의(\d+))?/g, (match) => {
     return `<a class="art-ref-link" onclick="event.stopPropagation();scrollToArticleByNum('${match}')" title="${match}으로 이동">${match}</a>`;
@@ -4892,6 +4985,135 @@ function scrollToArticleByNum(artNum) {
       return;
     }
   }
+}
+
+// ===== Contract Type Wizard =====
+const WIZARD_STEPS = [
+  {
+    question: "어떤 종류의 계약인가요?",
+    options: [
+      {label: "물품 구매·납품", value: "물품", next: 1},
+      {label: "공사·건설·시공", value: "공사", next: 1},
+      {label: "용역·설계·컨설팅", value: "용역", next: 1},
+      {label: "단가계약·반복구매", value: "단가계약", next: 1},
+      {label: "잘 모르겠어요", value: "계약", next: 1},
+    ]
+  },
+  {
+    question: "추정 금액은?",
+    options: [
+      {label: "2천만원 미만", value: " 1천만원", next: 2},
+      {label: "2천만원 ~ 5천만원", value: " 3천만원", next: 2},
+      {label: "5천만원 ~ 2억원", value: " 1억", next: 2},
+      {label: "2억원 ~ 10억원", value: " 5억", next: 2},
+      {label: "10억원 이상", value: " 20억", next: 2},
+      {label: "금액 미정", value: "", next: 2},
+    ]
+  },
+  {
+    question: "특수 사항이 있나요?",
+    options: [
+      {label: "원자력·원전 관련", value: " 원전", next: -1},
+      {label: "긴급·수의계약", value: " 수의계약 긴급", next: -1},
+      {label: "해외·국제입찰", value: " 국제입찰", next: -1},
+      {label: "하도급 포함", value: " 하도급", next: -1},
+      {label: "특수사항 없음", value: "", next: -1},
+    ]
+  }
+];
+
+let wizardState = {step: 0, query: ""};
+
+function startWizard() {
+  wizardState = {step: 0, query: ""};
+  renderWizard();
+}
+
+function renderWizard() {
+  const step = WIZARD_STEPS[wizardState.step];
+  const heroEl = document.getElementById('advisorHeroSection');
+  let existing = document.getElementById('wizardArea');
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'wizardArea';
+    heroEl.appendChild(existing);
+  }
+
+  existing.innerHTML = `
+    <div class="wizard-card">
+      <div class="wizard-progress">
+        ${WIZARD_STEPS.map((_, i) => `<div class="wz-dot ${i <= wizardState.step ? 'active' : ''}"></div>`).join('<div class="wz-line"></div>')}
+      </div>
+      <div class="wizard-q">${step.question}</div>
+      <div class="wizard-options">
+        ${step.options.map((opt, i) => `
+          <button class="wizard-opt" onclick="selectWizardOption(${i})">${escHtml(opt.label)}</button>
+        `).join('')}
+      </div>
+      <button class="btn btn-sm" onclick="document.getElementById('wizardArea').remove()" style="margin-top:12px">닫기</button>
+    </div>
+  `;
+}
+
+function selectWizardOption(optIdx) {
+  const step = WIZARD_STEPS[wizardState.step];
+  const opt = step.options[optIdx];
+  wizardState.query += opt.value;
+
+  if (opt.next === -1 || wizardState.step >= WIZARD_STEPS.length - 1) {
+    document.getElementById('wizardArea')?.remove();
+    const finalQuery = wizardState.query.trim();
+    if (finalQuery) doAdvisor(finalQuery);
+  } else {
+    wizardState.step = opt.next;
+    renderWizard();
+  }
+}
+
+// ===== View All Bookmarked Articles =====
+async function viewAllBookmarkedArticles() {
+  if (!bookmarks.length) { toast('북마크가 없습니다', 'info'); return; }
+
+  const articleBms = bookmarks.filter(b => b.article_num);
+  if (!articleBms.length) { toast('조문 북마크가 없습니다', 'info'); return; }
+
+  showView('viewer');
+  document.getElementById('viewerTitle').textContent = '북마크 조문 모아보기';
+  document.getElementById('viewerMeta').innerHTML = `<span>${articleBms.length}개 조문</span>`;
+  document.getElementById('typeTabs').innerHTML = '';
+  document.getElementById('lawBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  document.getElementById('focusToggle').style.display = 'none';
+  document.getElementById('relatedLaws').style.display = 'none';
+
+  let html = '';
+  const lawCache = {};
+
+  for (const bm of articleBms) {
+    const cacheKey = `${bm.law_name}|${bm.file_type}`;
+    if (!lawCache[cacheKey]) {
+      const params = new URLSearchParams({name: bm.law_name, type: bm.file_type});
+      lawCache[cacheKey] = await api('/api/law?' + params);
+    }
+    const lawData = lawCache[cacheKey];
+    if (!lawData || lawData.error) continue;
+
+    const art = (lawData.articles || []).find(a => a.number === bm.article_num);
+    if (!art) continue;
+
+    html += `
+      <div class="art-block highlighted" style="margin-bottom:12px">
+        <div class="art-head">
+          <span class="art-num" style="cursor:pointer" onclick="openLawArticle('${escHtml(bm.law_name)}','${escHtml(bm.file_type)}','${escHtml(bm.article_num)}')">${escHtml(bm.law_name)}</span>
+          <span class="art-title-text">${art.number} (${escHtml(art.title)})</span>
+          ${bm.memo ? `<span style="font-size:11px;color:var(--warn);margin-left:8px">&#x1F4DD; ${escHtml(bm.memo)}</span>` : ''}
+        </div>
+        <div class="art-body">${structureBody(art.content)}</div>
+      </div>
+    `;
+  }
+
+  document.getElementById('lawBody').innerHTML = html || '<div class="empty"><h3>조문 데이터를 불러올 수 없습니다</h3></div>';
+  document.getElementById('tocGrid').innerHTML = '';
 }
 </script>
 </body>
