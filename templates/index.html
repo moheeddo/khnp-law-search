@@ -1064,6 +1064,20 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
 .art-block:hover .art-bookmark-btn { opacity: 1; }
 .art-bookmark-btn.active { opacity: 1; }
 
+.btn-copy {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 14px;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition);
+  opacity: 0;
+}
+.art-block:hover .btn-copy { opacity: 1; }
+.btn-copy:hover { color: var(--accent); background: var(--accent-muted); }
+
 /* Structured body - visual hierarchy */
 .art-body {
   font-size: 14px;
@@ -1455,6 +1469,26 @@ body.landing .landing-wrap { display: flex; }
 .sc-chip:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-muted); box-shadow: var(--shadow); }
 
 .sc-chip .chip-icon { font-size: 15px; }
+
+.shortcuts-hint {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 24px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 11px;
+  margin-right: 3px;
+  box-shadow: 0 1px 0 var(--border);
+}
 
 /* Advisor Results */
 .advisor-results { display: none; }
@@ -2522,6 +2556,11 @@ body.landing .landing-wrap { display: flex; }
       <div class="sc-chip" onclick="doAdvisor('발전 전력거래 송전')"><span class="chip-icon">&#9889;</span>전력</div>
       <div class="sc-chip" onclick="doAdvisor('안전 산업재해')"><span class="chip-icon">&#x1F6E1;</span>안전</div>
     </div>
+    <div class="shortcuts-hint">
+      <span><kbd>/</kbd> 검색</span>
+      <span><kbd>Esc</kbd> 뒤로</span>
+      <span><kbd>Ctrl+H</kbd> 홈</span>
+    </div>
   </div>
 </div>
 
@@ -2588,7 +2627,9 @@ body.landing .landing-wrap { display: flex; }
         <input type="text" id="viewerFilter" placeholder="조문 내 검색 (예: 보증금, 입찰)">
       </div>
       <div class="viewer-toc" id="viewerToc">
-        <h4>목차</h4>
+        <h4 onclick="toggleToc()" style="cursor:pointer;user-select:none">
+          <span id="tocToggle">&#x25BC;</span> 목차 (<span id="tocCount">0</span>개 조문)
+        </h4>
         <div class="toc-grid" id="tocGrid"></div>
       </div>
       <div class="law-body" id="lawBody"></div>
@@ -2727,6 +2768,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCategories(), loadStats()]);
   setupEvents();
   renderSearchHistory();
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // 입력 중이면 무시
+    if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+
+    switch(e.key) {
+      case '/':  // 검색 포커스
+        e.preventDefault();
+        const searchInput = document.getElementById('searchInput');
+        const advisorInput = document.getElementById('advisorInput');
+        if (currentView === 'welcome' && advisorInput) advisorInput.focus();
+        else if (searchInput) searchInput.focus();
+        break;
+      case 'Escape':  // 뒤로가기
+        if (currentView === 'viewer') goBack();
+        else if (currentView !== 'welcome') showView('welcome');
+        break;
+      case 'h':  // 홈
+        if (e.ctrlKey || e.metaKey) { e.preventDefault(); showView('welcome'); }
+        break;
+      case 'p':  // 인쇄
+        if (e.ctrlKey || e.metaKey) { /* 기본 동작 허용 */ }
+        break;
+    }
+  });
 });
 
 // ===== Search History =====
@@ -3611,6 +3678,16 @@ async function openLaw(lawName, fileType, advInfo) {
     return `<div class="toc-item ${isHL ? 'active' : ''}" data-idx="${i}" onclick="scrollToArt(${i})">${isHL ? '&#x1F4CC; ' : ''}${a.number}${a.title ? ' (' + a.title + ')' : ''}</div>`;
   }).join('');
 
+  // TOC count and auto-collapse
+  document.getElementById('tocCount').textContent = arts.length;
+  if (arts.length > 20) {
+    document.getElementById('tocGrid').style.display = 'none';
+    document.getElementById('tocToggle').textContent = '\u25B6';
+  } else {
+    document.getElementById('tocGrid').style.display = '';
+    document.getElementById('tocToggle').textContent = '\u25BC';
+  }
+
   // Focus toggle
   if (highlightedArticles.length > 0) {
     $('#focusToggle').style.display = '';
@@ -3700,6 +3777,9 @@ function renderArticles(articles) {
                   onclick="event.stopPropagation();openMemoModal('${escHtml(currentLaw)}','${escHtml(currentFileType)}','${a.number}','${escHtml(a.title)}')">
             <span class="bm-icon ${bmActive ? 'filled' : ''}">${bmActive ? '\u2605' : '\u2606'}</span>
           </button>
+          <button class="btn-copy" data-num="${a.number}" data-title="${escHtml(a.title)}"
+                  onclick="event.stopPropagation();copyArticle(this, '${escHtml(currentLaw)}', '${a.number}', '${escHtml(a.title)}')"
+                  title="조문 복사">&#x1F4CB;</button>
         </div>
         <div class="art-body">${bodyHtml}</div>
       </div>
@@ -3895,6 +3975,32 @@ function openFromAdvisor(idx) {
     reason: r.reason || '',
     context: lastAdvisorData.query || '',
   });
+}
+
+// ===== Copy Article =====
+function copyArticle(btn, lawName, number, title) {
+  const block = btn.closest('.art-block');
+  const body = block.querySelector('.art-body');
+  const text = `${lawName} ${number} (${title})\n\n${body.innerText}`;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = '\u2713';
+    btn.style.color = 'var(--success)';
+    setTimeout(() => { btn.textContent = '\uD83D\uDCCB'; btn.style.color = ''; }, 1500);
+    toast('\uC870\uBB38\uC774 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success');
+  });
+}
+
+// ===== TOC Toggle =====
+function toggleToc() {
+  const grid = document.getElementById('tocGrid');
+  const toggle = document.getElementById('tocToggle');
+  if (grid.style.display === 'none') {
+    grid.style.display = '';
+    toggle.textContent = '\u25BC';
+  } else {
+    grid.style.display = 'none';
+    toggle.textContent = '\u25B6';
+  }
 }
 
 // ===== View Management =====
