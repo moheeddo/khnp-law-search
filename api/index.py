@@ -219,6 +219,10 @@ def summarize(context, law_name, articles_text):
 def home():
     return send_from_directory(str(BASE / "templates"), "index.html")
 
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    return send_from_directory(str(BASE / "static"), filename)
+
 @app.route("/api/categories")
 def api_categories():
     return jsonify(KHNP_CATEGORIES)
