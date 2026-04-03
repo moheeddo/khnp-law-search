@@ -3094,6 +3094,69 @@ kbd {
   font-weight: 600;
 }
 
+/* 필수 제출 서류 */
+.docs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 6px;
+}
+.doc-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+.doc-item.doc-required { border-left: 3px solid var(--danger); }
+.doc-item.doc-optional { border-left: 3px solid var(--text-muted); }
+.doc-check { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.doc-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.doc-when { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+/* 감사 지적 사례 */
+.audit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.audit-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+.audit-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 6px;
+}
+.audit-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+.audit-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+.audit-impact {
+  color: var(--danger);
+  background: var(--danger-muted);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1.5;
+}
+.audit-prevent {
+  color: var(--success);
+  background: var(--success-muted);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  line-height: 1.5;
+}
+
 /* 법령 간 상호참조 링크 */
 .ext-law-ref {
   color: var(--purple);
@@ -4436,6 +4499,28 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>`;
   }
 
+  // 3.4.6. 필수 제출 서류
+  if (refData0?.required_docs?.length) {
+    html += `<div class="smart-section">
+      <div class="smart-section-head">
+        <div class="smart-section-icon" style="background:var(--danger-muted)">&#x1F4C3;</div>
+        <div class="smart-section-title">필수 제출 서류</div>
+        <div class="smart-section-count">${refData0.required_docs.length}건</div>
+      </div>
+      <div class="docs-grid">
+        ${refData0.required_docs.map(d => `
+          <div class="doc-item ${d.required ? 'doc-required' : 'doc-optional'}">
+            <div class="doc-check">${d.required ? '&#x2757;' : '&#x25CB;'}</div>
+            <div class="doc-info">
+              <div class="doc-name">${escHtml(d.name)}</div>
+              <div class="doc-when">${escHtml(d.when)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
+
   // 3.5. 계약 프로세스 플로우
   if (refData0?.process?.length) {
     html += '<div class="smart-divider">계약 프로세스</div>';
@@ -4598,6 +4683,23 @@ function renderSmartResults(searchResults, advisorData, query) {
           </div>
           <div class="risk-desc">${escHtml(r.desc)}</div>
           <div class="risk-law">${escHtml(r.law)}</div>
+        </div>`;
+      }
+      html += '</div>';
+    }
+
+    // 5-pre4. 감사 지적 사례
+    if (refData.audit_cases?.length) {
+      html += '<div class="smart-divider">감사 지적 사례</div>';
+      html += '<div class="audit-list">';
+      for (const ac of refData.audit_cases) {
+        html += `<div class="audit-card">
+          <div class="audit-title">&#x26D4; ${escHtml(ac.title)}</div>
+          <div class="audit-desc">${escHtml(ac.desc)}</div>
+          <div class="audit-detail">
+            <div class="audit-impact"><strong>결과:</strong> ${escHtml(ac.impact)}</div>
+            <div class="audit-prevent"><strong>예방:</strong> ${escHtml(ac.prevention)}</div>
+          </div>
         </div>`;
       }
       html += '</div>';
@@ -5711,7 +5813,24 @@ function printChecklist() {
     });
   }
 
-  // 6. 관련 법령
+  // 6. 필수 제출 서류
+  if (refData.required_docs?.length) {
+    html += '<h2>필수 제출 서류</h2>';
+    refData.required_docs.forEach(d => {
+      html += `<div class="check-item"><div class="check-box"></div>${d.required ? '<strong>[필수]</strong>' : '[선택]'} ${escHtml(d.name)} (${escHtml(d.when)})</div>`;
+    });
+  }
+
+  // 7. 감사 지적 주의사항
+  if (refData.audit_cases?.length) {
+    html += '<h2>감사 지적 주의사항</h2>';
+    refData.audit_cases.forEach(ac => {
+      html += `<div class="check-item"><div class="check-box"></div><strong>${escHtml(ac.title)}</strong>: ${escHtml(ac.desc)}</div>`;
+      html += `<div class="clause-item">결과: ${escHtml(ac.impact)} | 예방: ${escHtml(ac.prevention)}</div>`;
+    });
+  }
+
+  // 8. 관련 법령
   if (data.recommendations?.length) {
     html += '<h2>관련 법령 확인</h2>';
     data.recommendations.forEach(r => {

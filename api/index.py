@@ -412,6 +412,103 @@ def get_method_comparison(query):
             ]
         }
 
+def get_required_docs(query, amount=None):
+    """계약 유형·금액별 필수 서류 안내"""
+    q = query.lower()
+    docs = []
+
+    # 공통 서류
+    common = [
+        {"name":"사업자등록증 사본","when":"모든 계약","required":True},
+        {"name":"인감증명서","when":"모든 계약","required":True},
+        {"name":"사용인감계","when":"대리인 계약 시","required":False},
+    ]
+    docs.extend(common)
+
+    # 입찰 관련
+    if any(kw in q for kw in ["입찰","공고","경쟁","참가자격","PQ"]):
+        docs.extend([
+            {"name":"입찰참가신청서","when":"경쟁입찰","required":True},
+            {"name":"입찰보증금 납부 또는 보증서","when":"입찰금액의 5% 이상","required":True},
+            {"name":"실적증명서","when":"제한경쟁·PQ","required":False},
+            {"name":"기술능력 평가서류","when":"협상에 의한 계약","required":False},
+            {"name":"청렴서약서","when":"모든 입찰","required":True},
+        ])
+
+    # 계약 체결
+    if any(kw in q for kw in ["계약","체결","단가","수의","공사","용역","구매","물품"]):
+        docs.extend([
+            {"name":"계약보증금 납부 또는 보증서","when":"계약금액의 10~15%","required":True},
+            {"name":"착공신고서 (공사)","when":"공사 계약","required":any(kw in q for kw in ["공사","건설","시공"])},
+            {"name":"안전관리계획서 (공사)","when":"공사금액 1억 이상","required":any(kw in q for kw in ["공사","건설","시공"])},
+            {"name":"산재보험 가입증명","when":"공사·용역","required":False},
+        ])
+
+    # 금액별 추가
+    if amount:
+        if amount >= 200000000:  # 2억 이상
+            docs.append({"name":"계약심사위원회 심의조서","when":"추정가격 2억원 이상","required":True})
+        if amount >= 100000000:  # 1억 이상
+            docs.append({"name":"계약보증보험증권","when":"계약금액 1억원 이상","required":True})
+        if amount >= 50000000:  # 5천만원 이상
+            docs.append({"name":"예정가격 조서","when":"추정가격 5천만원 이상","required":True})
+        if amount < 50000000:
+            docs.append({"name":"견적서 (2인 이상)","when":"수의계약","required":True})
+
+    # 선급금
+    if any(kw in q for kw in ["선급","대가","기성"]):
+        docs.extend([
+            {"name":"선급금보증서","when":"선급금 지급 시","required":True},
+            {"name":"기성검사조서","when":"기성금 지급 시","required":True},
+        ])
+
+    # 준공
+    if any(kw in q for kw in ["준공","검수","검사","하자"]):
+        docs.extend([
+            {"name":"준공검사조서","when":"계약 완료 시","required":True},
+            {"name":"하자보수보증금 납부 또는 보증서","when":"준공 시","required":True},
+            {"name":"성과품 인수인계서","when":"용역 완료 시","required":any(kw in q for kw in ["용역","설계"])},
+        ])
+
+    # 원전
+    if any(kw in q for kw in ["원전","원자력","핵"]):
+        docs.extend([
+            {"name":"품질보증계획서 (QA Plan)","when":"안전등급 기기","required":True},
+            {"name":"시험성적서 (원본)","when":"원전 납품 물품","required":True},
+            {"name":"원전비리방지 준수 서약서","when":"원전 관련 모든 계약","required":True},
+        ])
+
+    # 수의계약
+    if any(kw in q for kw in ["수의계약","수의","긴급"]):
+        docs.extend([
+            {"name":"수의계약 사유서","when":"수의계약 체결 시","required":True},
+            {"name":"긴급성 입증 자료","when":"긴급 수의계약","required":any(kw in q for kw in ["긴급"])},
+        ])
+
+    # 중복 제거
+    seen = set()
+    unique = []
+    for d in docs:
+        if d["name"] not in seen:
+            seen.add(d["name"])
+            unique.append(d)
+
+    return unique
+
+AUDIT_CASES = [
+    {"keywords":["수의계약","수의"],"title":"수의계약 사유 부적합","desc":"추정가격 초과 또는 시행령 제26조 사유 미해당 상태에서 수의계약 체결","impact":"계약 무효·담당자 징계","prevention":"수의계약 사유서 사전 작성, 법무 검토 필수"},
+    {"keywords":["수의계약","수의","견적"],"title":"견적서 미징수","desc":"2인 이상 견적서 징수 의무 미이행 (1인 견적으로 수의계약)","impact":"부당 특혜 의혹, 감사 지적","prevention":"반드시 2인 이상 견적서 징수, 견적 비교표 작성"},
+    {"keywords":["입찰","공고","참가자격"],"title":"입찰참가자격 제한 부적정","desc":"합리적 사유 없이 특정 업체에 유리한 자격 제한 설정","impact":"입찰 취소·재입찰, 담당자 문책","prevention":"자격 제한 사유 명확화, 유사 발주 사례 참조"},
+    {"keywords":["예정가격","가격"],"title":"예정가격 작성 부실","desc":"시장가격 조사 미흡으로 예정가격 과다 또는 과소 책정","impact":"예산 낭비 또는 유찰, 감사 지적","prevention":"3건 이상 거래실례가격 조사, 원가계산 근거 확보"},
+    {"keywords":["보증금","계약보증","면제"],"title":"보증금 면제 사유 불인정","desc":"시행령 제37조·제50조 면제 사유에 해당하지 않는데 보증금 면제","impact":"채권 미확보, 손실 발생 시 배상 책임","prevention":"면제 사유 근거 서류 반드시 보관, 법무 확인"},
+    {"keywords":["공사","건설","설계변경"],"title":"설계변경 미승인 시공","desc":"발주자 승인 없이 설계변경 시행 후 사후 정산 요구","impact":"추가 대가 불인정, 분쟁 발생","prevention":"반드시 사전 서면 승인, 변경 도면·내역 첨부"},
+    {"keywords":["지체상금","지체","납기"],"title":"지체상금 미부과","desc":"납품·준공 지연에도 지체상금을 부과하지 않거나 감면","impact":"국가 재정 손실, 담당자 변상 책임","prevention":"지체일수 자동 산정 시스템 확인, 면제 사유 서면 확보"},
+    {"keywords":["하도급","하청"],"title":"하도급대금 지연지급","desc":"원도급자에게 대금 지급 후 하도급대금 60일 초과 미지급","impact":"과징금 부과, 입찰참가자격 제한","prevention":"하도급대금 지급 확인서 징구, 직접지급 사유 모니터링"},
+    {"keywords":["부정당","비리","담합"],"title":"담합 미적발","desc":"입찰 참가업체 간 담합 징후가 있었으나 발주자가 인지 못함","impact":"계약 무효, 과징금, 담당자 문책","prevention":"낙찰률·투찰패턴 분석, 공정위 협조 체계 구축"},
+    {"keywords":["납품","검수","검사"],"title":"검수 부실","desc":"납품 물품의 규격·수량·품질 검사를 형식적으로 수행","impact":"부적합 물품 수령, 사고 위험, 배상 책임","prevention":"검수 체크리스트 활용, 전문검사관 참여"},
+    {"keywords":["원전","원자력","QA"],"title":"품질보증 서류 미비","desc":"원전 납품 물품의 QA 서류(시험성적서 등) 확인 소홀","impact":"원전비리방지법 위반, 최대 2년 입찰제한","prevention":"QA 등급 확인 → 시험성적서 원본 대조 → 품질검사 입회"},
+]
+
 def get_reference_data(query, recommendations):
     """검색어 + 추천 법령 기반 참고 조문·계약 사례 생성"""
     index = get_index()
@@ -619,6 +716,16 @@ def get_reference_data(query, recommendations):
 
     # ── 계약방식 비교표 ──
     ref["method_comparison"] = get_method_comparison(query)
+
+    # ── 필수 제출 서류 ──
+    ref["required_docs"] = get_required_docs(query, ref.get("contract_method", {}).get("amount"))
+
+    # ── 감사 지적 사례 ──
+    audit = []
+    for ac in AUDIT_CASES:
+        if any(kw in q for kw in ac["keywords"]):
+            audit.append(ac)
+    ref["audit_cases"] = audit[:5]
 
     return ref
 
