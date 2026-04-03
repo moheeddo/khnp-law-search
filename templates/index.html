@@ -3821,6 +3821,83 @@ kbd {
   .mc-del { opacity: 0.5; }
 }
 
+/* ===== Voice Search Button ===== */
+.voice-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.voice-btn:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+}
+.voice-btn.voice-active {
+  background: var(--danger);
+  border-color: var(--danger);
+  animation: voicePulse 1s infinite;
+}
+@keyframes voicePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(220,38,38,0); }
+}
+
+/* ===== Activity Timeline ===== */
+.activity-timeline {
+  max-width: 500px;
+  margin: 0 auto 16px;
+  text-align: left;
+}
+.at-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-bottom: 6px;
+}
+.at-list {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.at-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.at-item:last-child { border-bottom: none; }
+.at-time {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  width: 36px;
+  flex-shrink: 0;
+}
+.at-icon { font-size: 12px; flex-shrink: 0; }
+.at-detail {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.at-more {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 4px;
+}
+
 </style>
 </head>
 <body class="landing">
@@ -3857,6 +3934,7 @@ kbd {
       <select class="search-filter" id="categoryFilter">
         <option value="">전체 법령</option>
       </select>
+      <button class="voice-btn" onclick="startVoiceSearch('searchInput')" title="음성 검색">&#x1F3A4;</button>
       <button class="search-btn" id="searchBtn">검색</button>
     </div>
     <div class="quick-tags" id="quickTags">
@@ -3970,9 +4048,11 @@ kbd {
     <h2>어떤 법령을 확인해야 할까요?</h2>
     <p class="hero-sub">상황을 입력하면 확인해야 할 법령을 안내합니다</p>
     <div id="userStats"></div>
+    <div id="activityTimeline"></div>
     <div class="advisor-search">
       <input type="text" id="advisorInput" class="advisor-input"
              placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경...">
+      <button class="voice-btn" onclick="startVoiceSearch('advisorInput')" title="음성 검색">&#x1F3A4;</button>
       <button class="advisor-btn" id="advisorBtn">검색</button>
     </div>
     <div id="myContracts" class="my-contracts"></div>
@@ -4729,6 +4809,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderSearchHistory();
   renderSubscriptions();
   renderStats();
+  renderActivityTimeline();
 
   // 체크리스트 localStorage 저장 (이벤트 위임)
   document.addEventListener('change', (e) => {
@@ -5092,6 +5173,7 @@ async function saveMemo() {
   closeMemoModal();
   await loadBookmarks();
   updateBookmarkButtons();
+  logActivity('bookmark', data.law_name + (data.article_num ? ' ' + data.article_num : ''));
   toast('북마크에 추가되었습니다', 'success');
 }
 
@@ -5206,6 +5288,7 @@ async function doSearch(q) {
   if (!query) return;
   saveSearchHistory(query);
   saveSearchStats(query);
+  logActivity('search', query);
   showView('results');
   $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   $('#resultsTitle').textContent = '';
@@ -6137,6 +6220,7 @@ function showCacheStatus() {
 
 async function openLaw(lawName, fileType, advInfo) {
   showView('viewer');
+  logActivity('view', lawName + ' (' + fileType + ')');
   $('#lawBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   $('#aiSummaryArea').innerHTML = '';
   focusMode = false;
@@ -6547,6 +6631,7 @@ async function doAdvisor(q) {
   if (!query) return;
   saveSearchHistory(query);
   saveSearchStats(query);
+  logActivity('search', query);
   showView('advisor');
   $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);
@@ -6964,6 +7049,7 @@ function copyTemplate(name, fields) {
 // ===== 종합 계약 리포트 생성 =====
 function generateFullReport() {
   if (!lastAdvisorData) { toast('검색을 먼저 수행해주세요', 'info'); return; }
+  logActivity('download', 'report');
   const data = lastAdvisorData;
   const rd = data.ref_data || {};
   const cm = rd.contract_method || {};
@@ -7634,6 +7720,104 @@ function importBookmarks() {
   } catch(e) {
     toast('유효하지 않은 코드입니다', 'error');
   }
+}
+
+// ===== Voice Search =====
+function startVoiceSearch(inputId) {
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    toast('이 브라우저는 음성 검색을 지원하지 않습니다', 'info');
+    return;
+  }
+
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'ko-KR';
+  recognition.interimResults = true;
+  recognition.maxAlternatives = 1;
+
+  const input = document.getElementById(inputId);
+  const btn = event.currentTarget;
+
+  btn.classList.add('voice-active');
+  btn.textContent = '\u23FA';
+  toast('말씀하세요...', 'info');
+
+  recognition.onresult = (e) => {
+    const transcript = e.results[0][0].transcript;
+    input.value = transcript;
+    if (e.results[0].isFinal) {
+      btn.classList.remove('voice-active');
+      btn.textContent = '\uD83C\uDFA4';
+      if (inputId === 'advisorInput') doAdvisor();
+      else doSearch();
+    }
+  };
+
+  recognition.onerror = (e) => {
+    btn.classList.remove('voice-active');
+    btn.textContent = '\uD83C\uDFA4';
+    if (e.error !== 'no-speech') toast('음성 인식 실패: ' + e.error, 'error');
+  };
+
+  recognition.onend = () => {
+    btn.classList.remove('voice-active');
+    btn.textContent = '\uD83C\uDFA4';
+  };
+
+  recognition.start();
+}
+
+// ===== Activity Log & Timeline =====
+function logActivity(type, detail) {
+  const logs = JSON.parse(localStorage.getItem('activityLog') || '[]');
+  logs.push({
+    type: type,
+    detail: detail,
+    time: new Date().toISOString(),
+  });
+  if (logs.length > 50) logs.splice(0, logs.length - 50);
+  localStorage.setItem('activityLog', JSON.stringify(logs));
+  renderActivityTimeline();
+}
+
+function renderActivityTimeline() {
+  const el = document.getElementById('activityTimeline');
+  if (!el) return;
+  const logs = JSON.parse(localStorage.getItem('activityLog') || '[]');
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayLogs = logs.filter(l => l.time.startsWith(today)).reverse();
+
+  if (!todayLogs.length) { el.innerHTML = ''; return; }
+
+  const icons = {search:'\uD83D\uDD0D', view:'\uD83D\uDCD6', bookmark:'\u2B50', download:'\uD83D\uDCE5'};
+  const labels = {search:'검색', view:'열람', bookmark:'북마크', download:'다운로드'};
+
+  let html = '<div class="activity-timeline">';
+  html += '<div class="at-title">오늘의 활동 (' + todayLogs.length + '건)</div>';
+  html += '<div class="at-list">';
+  todayLogs.slice(0, 8).forEach(log => {
+    const time = new Date(log.time);
+    const timeStr = `${String(time.getHours()).padStart(2,'0')}:${String(time.getMinutes()).padStart(2,'0')}`;
+    html += `<div class="at-item">
+      <span class="at-time">${timeStr}</span>
+      <span class="at-icon">${icons[log.type] || '\uD83D\uDCCC'}</span>
+      <span class="at-detail">${escHtml(log.detail)}</span>
+    </div>`;
+  });
+  if (todayLogs.length > 8) {
+    html += `<div class="at-more">+${todayLogs.length - 8}건 더</div>`;
+  }
+  html += '</div>';
+  html += '<button class="btn btn-sm" onclick="clearActivityLog()" style="margin-top:6px;font-size:10px">기록 삭제</button>';
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+function clearActivityLog() {
+  localStorage.removeItem('activityLog');
+  renderActivityTimeline();
+  toast('활동 기록이 삭제되었습니다', 'info');
 }
 </script>
 </body>
