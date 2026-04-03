@@ -766,6 +766,15 @@ def get_reference_data(query, recommendations):
     # ── 단계별 담당 부서·역할 ──
     ref["role_map"] = ROLE_MAP
 
+    # ── 계약 서식 템플릿 매칭 ──
+    templates = []
+    for t in CONTRACT_TEMPLATES:
+        if t["type"].lower() in q or any(kw in q for kw in t["type"].split("·")):
+            templates.append(t)
+    if not templates:
+        templates = [CONTRACT_TEMPLATES[1]]  # 기본: 물품 계약서
+    ref["templates"] = templates[:3]
+
     return ref
 
 def get_related_queries(query):
@@ -910,6 +919,17 @@ GLOSSARY = {
     "낙찰하한율": "예정가격 대비 최저 입찰 가능 비율. 이 비율 미만으로 입찰하면 무효 처리됩니다.",
 }
 
+# ===== 계약 서식 템플릿 =====
+CONTRACT_TEMPLATES = [
+    {"name":"입찰공고문","type":"입찰","fields":["공고번호","공고명","계약방식(일반경쟁/제한경쟁)","추정가격","입찰참가자격","공고기간","개찰일시","입찰보증금","납품(이행)기한","담당부서·연락처"],"law":"시행령 제33조","note":"공고기간 7일 이상, 긴급 시 5일"},
+    {"name":"계약서 (물품)","type":"물품","fields":["계약명","계약금액(부가세 별도/포함)","납품기한","납품장소","대가지급조건","계약보증금","하자보수보증금","지체상금","특약사항","계약상대자 정보"],"law":"국가계약법 제11조","note":"계약서 작성 후 쌍방 기명날인"},
+    {"name":"계약서 (공사)","type":"공사","fields":["공사명","공사장소","공사기간(착공~준공)","계약금액","도급내역서","계약보증금(15%)","선급금 조건","설계변경 조건","안전관리계획","하자담보책임기간"],"law":"국가계약법 제11조","note":"공사도급계약 일반조건 첨부"},
+    {"name":"계약서 (용역)","type":"용역","fields":["용역명","용역기간","계약금액","과업지시서","투입인력","성과물 목록","저작권 귀속","비밀유지 의무","기성금 지급조건","하자담보기간"],"law":"국가계약법 제11조","note":"과업지시서를 계약서의 일부로 첨부"},
+    {"name":"수의계약 사유서","type":"수의계약","fields":["계약명","추정가격","수의계약 사유(시행령 제26조 제_호)","사유 상세 설명","견적서 징수 현황(2인 이상)","비교 검토 의견","계약상대자 선정 사유"],"law":"시행령 제26조","note":"사유의 적정성·긴급성 입증 자료 첨부"},
+    {"name":"준공검사 조서","type":"준공","fields":["계약명","계약상대자","계약금액","계약기간","준공일","검사일","검사 결과(적합/부적합)","미시공 또는 하자 사항","하자보수보증금 산정","검사자 서명"],"law":"국가계약법 제14조","note":"검사 후 14일 이내 대가 지급"},
+    {"name":"계약변경 합의서","type":"변경","fields":["원계약명","원계약금액","변경 사유","변경 내역(증감)","변경 후 계약금액","변경 후 이행기한","변경보증금 조정","쌍방 합의 확인"],"law":"시행령 제64~65조","note":"설계변경·물가변동·기타 내용 변경"},
+]
+
 # ===== Routes =====
 @app.route("/")
 def home():
@@ -1018,3 +1038,10 @@ def api_law_diff():
     if name in LAW_DECREE_DIFF:
         return jsonify({"law": name, "diffs": LAW_DECREE_DIFF[name]})
     return jsonify({"law": name, "diffs": []})
+
+@app.route("/api/templates")
+def api_templates():
+    q = request.args.get("q","").strip().lower()
+    if q:
+        return jsonify([t for t in CONTRACT_TEMPLATES if q in t["name"].lower() or q in t["type"].lower()])
+    return jsonify(CONTRACT_TEMPLATES)

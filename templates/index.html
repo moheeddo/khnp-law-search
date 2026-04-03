@@ -3428,6 +3428,62 @@ kbd {
 .quiz-score { font-size: 24px; font-weight: 800; color: var(--accent); }
 .quiz-grade { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
 
+/* 계약 서식 템플릿 */
+.template-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+.template-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+.template-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.template-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.template-field {
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tf-num {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.template-footer {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+}
+.template-law { color: var(--accent); font-weight: 600; }
+.template-note { color: var(--text-muted); }
+
 </style>
 </head>
 <body class="landing">
@@ -5124,6 +5180,26 @@ function renderSmartResults(searchResults, advisorData, query) {
       html += '</div>';
     }
 
+    // 5b3. 계약 서식 템플릿
+    if (refData.templates?.length) {
+      html += '<div class="smart-divider">계약 서식 템플릿</div>';
+      refData.templates.forEach(t => {
+        html += `<div class="template-card">
+          <div class="template-head">
+            <span class="template-name">${escHtml(t.name)}</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation();copyTemplate('${escHtml(t.name)}', ${JSON.stringify(t.fields).replace(/'/g,"\\'")})">&#x1F4CB; 복사</button>
+          </div>
+          <div class="template-fields">
+            ${t.fields.map((f,i) => `<div class="template-field"><span class="tf-num">${i+1}</span>${escHtml(f)}</div>`).join('')}
+          </div>
+          <div class="template-footer">
+            <span class="template-law">${escHtml(t.law)}</span>
+            ${t.note ? `<span class="template-note">${escHtml(t.note)}</span>` : ''}
+          </div>
+        </div>`;
+      });
+    }
+
     // 5c. 나라장터 실시간 입찰공고 (비동기 로드)
     html += '<div id="bidResults"></div>';
 
@@ -5148,6 +5224,9 @@ function renderSmartResults(searchResults, advisorData, query) {
       </button>
       <button class="btn" onclick="generateLawSummary()" style="padding:10px 24px;font-size:14px">
         &#x1F4DD; 기안문 법령 요지
+      </button>
+      <button class="btn btn-accent" onclick="generateFullReport()" style="padding:10px 24px;font-size:14px">
+        &#x1F4CA; 종합 리포트
       </button>
     </div>`;
   }
@@ -6271,6 +6350,163 @@ function generateLawSummary() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `법령요지_${data.query.replace(/\s+/g,'_')}_${today.toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ===== 계약 서식 템플릿 복사 =====
+function copyTemplate(name, fields) {
+  let text = `【 ${name} 】\n\n`;
+  fields.forEach((f, i) => {
+    text += `${i+1}. ${f}: ________________________\n\n`;
+  });
+  text += `작성일: ____년 __월 __일\n`;
+  text += `작성자: __________________ (인)\n`;
+  navigator.clipboard.writeText(text).then(() => {
+    toast('서식 템플릿이 복사되었습니다', 'success');
+  });
+}
+
+// ===== 종합 계약 리포트 생성 =====
+function generateFullReport() {
+  if (!lastAdvisorData) { toast('검색을 먼저 수행해주세요', 'info'); return; }
+  const data = lastAdvisorData;
+  const rd = data.ref_data || {};
+  const cm = rd.contract_method || {};
+  const today = new Date();
+  const fmtDate = `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일`;
+
+  let r = '';
+  r += '╔══════════════════════════════════════════╗\n';
+  r += '║         계 약 종 합 분 석 리 포 트       ║\n';
+  r += '╚══════════════════════════════════════════╝\n\n';
+  r += `작성일: ${fmtDate}\n`;
+  r += `작성자: ${currentUser?.display_name || '___________'}\n`;
+  r += `부  서: ${currentUser?.department || '___________'}\n`;
+  r += `검색어: ${data.query}\n\n`;
+
+  // 1. 개요
+  r += '━━━ Ⅰ. 계약 개요 ━━━\n';
+  if (cm.amount_display) r += `  추정 금액: ${cm.amount_display}\n`;
+  if (cm.method) r += `  계약 방식: ${cm.method}\n`;
+  if (cm.details?.length) cm.details.forEach(d => { r += `    ▸ ${d}\n`; });
+  if (cm.warnings?.length) { r += '  [주의]\n'; cm.warnings.forEach(w => { r += `    ⚠ ${w}\n`; }); }
+  r += '\n';
+
+  // 2. 추천 법령
+  r += '━━━ Ⅱ. 관련 법령 ━━━\n';
+  if (data.recommendations?.length) {
+    data.recommendations.forEach((rec, i) => {
+      r += `  ${i+1}. [${rec.priority}] ${rec.law} (${rec.type})\n`;
+      r += `     사유: ${rec.reason}\n`;
+      if (rec.key_articles) r += `     핵심 조문: ${rec.key_articles}\n`;
+    });
+  }
+  r += '\n';
+
+  // 3. 프로세스
+  if (rd.process?.length) {
+    r += '━━━ Ⅲ. 계약 프로세스 ━━━\n';
+    let day = 0;
+    rd.process.forEach(s => {
+      r += `  D+${String(day).padStart(3,' ')} │ ${s.step} (${s.duration||7}일)`;
+      if (s.law) r += ` [${s.law}]`;
+      r += '\n';
+      day += (s.duration || 7);
+    });
+    r += `  ─────┼──────────────────────\n`;
+    r += `  합계 │ ${day}일 (약 ${Math.ceil(day/30)}개월)\n\n`;
+  }
+
+  // 4. 리스크
+  if (rd.risks?.length) {
+    r += '━━━ Ⅳ. 리스크 분석 ━━━\n';
+    rd.risks.forEach(rk => {
+      const lvl = rk.level === 'high' ? '▲높음' : rk.level === 'medium' ? '●중간' : '○낮음';
+      r += `  ${lvl} │ ${rk.title}\n`;
+      r += `        │ ${rk.desc}\n`;
+      r += `        │ 근거: ${rk.law}\n\n`;
+    });
+  }
+
+  // 5. 감사 지적 사례
+  if (rd.audit_cases?.length) {
+    r += '━━━ Ⅴ. 감사 지적 주의 ━━━\n';
+    rd.audit_cases.forEach(ac => {
+      r += `  ⛔ ${ac.title}\n`;
+      r += `     현상: ${ac.desc}\n`;
+      r += `     결과: ${ac.impact}\n`;
+      r += `     예방: ${ac.prevention}\n\n`;
+    });
+  }
+
+  // 6. 필수 서류
+  if (rd.required_docs?.length) {
+    r += '━━━ Ⅵ. 필수 서류 ━━━\n';
+    rd.required_docs.forEach(d => {
+      r += `  ${d.required ? '‼' : '○'} ${d.name} (${d.when})\n`;
+    });
+    r += '\n';
+  }
+
+  // 7. 부서 역할
+  if (rd.role_map?.length) {
+    r += '━━━ Ⅶ. 부서별 역할 ━━━\n';
+    rd.role_map.forEach(stage => {
+      r += `  【${stage.stage}】\n`;
+      stage.roles.forEach(role => {
+        r += `    ${role.dept}: ${role.action}`;
+        if (role.note) r += ` (${role.note})`;
+        r += '\n';
+      });
+    });
+    r += '\n';
+  }
+
+  // 8. 체크리스트
+  if (rd.cases?.length) {
+    r += '━━━ Ⅷ. 실무 체크리스트 ━━━\n';
+    rd.cases.forEach(c => {
+      r += `  [${c.title}]\n`;
+      if (c.checklist?.length) c.checklist.forEach(item => { r += `    □ ${item}\n`; });
+      r += '\n';
+    });
+  }
+
+  // 9. 특약 조항
+  if (rd.special_clauses?.length) {
+    r += '━━━ Ⅸ. 특약 조항 (예시) ━━━\n';
+    rd.special_clauses.forEach(sc => {
+      r += `  ○ ${sc.title}\n`;
+      r += `    "${sc.text}"\n`;
+      if (sc.law) r += `    근거: ${sc.law}\n`;
+      r += '\n';
+    });
+  }
+
+  // 10. Q&A
+  if (rd.qa?.length) {
+    r += '━━━ Ⅹ. 자주 묻는 질문 ━━━\n';
+    rd.qa.forEach(qa => {
+      r += `  Q. ${qa.q}\n`;
+      r += `  A. ${qa.a}\n`;
+      r += `     (${qa.law})\n\n`;
+    });
+  }
+
+  r += '╔══════════════════════════════════════════╗\n';
+  r += '║  한수원 계약 법령 검색 시스템 자동 생성  ║\n';
+  r += `║  ${fmtDate}                     ║\n`;
+  r += '╚══════════════════════════════════════════╝\n';
+
+  // 클립보드 복사 + 다운로드
+  navigator.clipboard.writeText(r).then(() => {
+    toast('종합 리포트가 클립보드에 복사되었습니다', 'success');
+  });
+  const blob = new Blob([r], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `종합리포트_${data.query.replace(/\s+/g,'_')}_${today.toISOString().split('T')[0]}.txt`;
   a.click();
   URL.revokeObjectURL(a.href);
 }
