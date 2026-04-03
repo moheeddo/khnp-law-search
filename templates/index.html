@@ -3157,6 +3157,56 @@ kbd {
   line-height: 1.5;
 }
 
+/* 단계별 담당 부서·역할 */
+.role-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 16px;
+}
+.role-stage {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.role-stage:last-child { border-bottom: none; }
+.role-stage-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  padding-top: 4px;
+}
+.role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.role-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.role-dept {
+  padding: 2px 8px;
+  background: var(--accent-muted);
+  border-radius: 4px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 11px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.role-action { color: var(--text-secondary); }
+.role-note {
+  font-size: 10px;
+  color: var(--warn);
+  white-space: nowrap;
+}
+
 /* 법령 간 상호참조 링크 */
 .ext-law-ref {
   color: var(--purple);
@@ -4563,6 +4613,27 @@ function renderSmartResults(searchResults, advisorData, query) {
     _currentTimeline = null;
   }
 
+  // 3.7. 단계별 담당 부서·역할
+  if (refData.role_map?.length) {
+    html += '<div class="smart-divider">단계별 담당 부서·역할</div>';
+    html += '<div class="role-timeline">';
+    refData.role_map.forEach(stage => {
+      html += `<div class="role-stage">
+        <div class="role-stage-name">${escHtml(stage.stage)}</div>
+        <div class="role-list">
+          ${stage.roles.map(r => `
+            <div class="role-item">
+              <span class="role-dept">${escHtml(r.dept)}</span>
+              <span class="role-action">${escHtml(r.action)}</span>
+              ${r.note ? `<span class="role-note">${escHtml(r.note)}</span>` : ''}
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
   // 4. 조문 검색 결과 (키워드 매칭)
   if (hasSearch) {
     // 어드바이저 추천에 이미 있는 법령은 중복 제거
@@ -4798,6 +4869,9 @@ function renderSmartResults(searchResults, advisorData, query) {
       </button>
       <button class="btn" onclick="printChecklist()" style="padding:10px 24px;font-size:14px">
         &#x2705; 체크리스트 출력
+      </button>
+      <button class="btn" onclick="generateLawSummary()" style="padding:10px 24px;font-size:14px">
+        &#x1F4DD; 기안문 법령 요지
       </button>
     </div>`;
   }
@@ -5844,6 +5918,85 @@ function printChecklist() {
 
   win.document.write(html);
   win.document.close();
+}
+
+// ===== 기안문 법령 요지 자동 생성 =====
+function generateLawSummary() {
+  if (!lastAdvisorData) { toast('검색을 먼저 수행해주세요', 'info'); return; }
+  const data = lastAdvisorData;
+  const refData = data.ref_data || {};
+  const cm = refData.contract_method || {};
+  const today = new Date();
+
+  let doc = '';
+  doc += '【 관련 법령 요지 】\n\n';
+
+  // 1. 계약 근거
+  doc += '1. 계약 근거\n';
+  if (data.recommendations?.length) {
+    const essential = data.recommendations.filter(r => r.priority === '필수');
+    essential.forEach(r => {
+      doc += `  ○ ${r.law} (${r.type})`;
+      if (r.key_articles) doc += ` ${r.key_articles}`;
+      doc += '\n';
+      doc += `    - ${r.reason}\n`;
+    });
+  }
+  doc += '\n';
+
+  // 2. 계약 방식
+  if (cm.method) {
+    doc += '2. 계약 방식\n';
+    doc += `  ○ ${cm.method}`;
+    if (cm.amount_display) doc += ` (추정가격 ${cm.amount_display})`;
+    doc += '\n';
+    if (cm.details?.length) {
+      cm.details.forEach(d => { doc += `    - ${d}\n`; });
+    }
+    doc += '\n';
+  }
+
+  // 3. 주요 조문 요지
+  if (refData.articles?.length) {
+    doc += `${cm.method ? '3' : '2'}. 주요 조문 요지\n`;
+    refData.articles.slice(0, 5).forEach(a => {
+      const firstLine = a.content.split('\n').filter(l=>l.trim())[0] || '';
+      const clean = firstLine.replace(/\*\*/g, '').replace(/<[^>]+>/g, '').trim();
+      doc += `  ○ ${a.law} ${a.number} (${a.title})\n`;
+      doc += `    "${clean.substring(0, 100)}${clean.length > 100 ? '...' : ''}"\n`;
+    });
+    doc += '\n';
+  }
+
+  // 4. 유의사항
+  if (refData.risks?.length) {
+    const nextNum = (cm.method ? 3 : 2) + (refData.articles?.length ? 1 : 0) + 1;
+    const highRisks = refData.risks.filter(r => r.level === 'high' || r.level === 'medium');
+    if (highRisks.length) {
+      doc += `${nextNum}. 유의사항\n`;
+      highRisks.forEach(r => {
+        doc += `  ○ ${r.title}: ${r.desc}\n`;
+        doc += `    (근거: ${r.law})\n`;
+      });
+      doc += '\n';
+    }
+  }
+
+  doc += `────────────────────────────\n`;
+  doc += `※ ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 기준 법령 요지입니다.\n`;
+  doc += `※ 한수원 계약 법령 검색 시스템에서 자동 생성\n`;
+
+  // 클립보드 복사 + 다운로드
+  navigator.clipboard.writeText(doc).then(() => {
+    toast('법령 요지가 클립보드에 복사되었습니다 (파일도 다운로드됩니다)', 'success');
+  });
+
+  const blob = new Blob([doc], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `법령요지_${data.query.replace(/\s+/g,'_')}_${today.toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // ===== 법률↔시행령 핵심 차이 =====

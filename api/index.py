@@ -509,6 +509,42 @@ AUDIT_CASES = [
     {"keywords":["원전","원자력","QA"],"title":"품질보증 서류 미비","desc":"원전 납품 물품의 QA 서류(시험성적서 등) 확인 소홀","impact":"원전비리방지법 위반, 최대 2년 입찰제한","prevention":"QA 등급 확인 → 시험성적서 원본 대조 → 품질검사 입회"},
 ]
 
+ROLE_MAP = [
+    {"stage":"수요확인·사양서","roles":[
+        {"dept":"수요부서","action":"소요량·사양서 확정, 기술규격서 작성","note":""},
+        {"dept":"계약부서","action":"예산 확인, 계약 방식 사전 협의","note":""},
+    ]},
+    {"stage":"예정가격·원가","roles":[
+        {"dept":"계약부서","action":"예정가격 작성, 원가계산 또는 거래실례 조사","note":"비밀유지 철저"},
+        {"dept":"재무부서","action":"예산 배정 확인","note":""},
+    ]},
+    {"stage":"입찰·공고","roles":[
+        {"dept":"계약부서","action":"입찰공고문 작성·게시, 질의응답 처리","note":"공고기간 7일 이상"},
+        {"dept":"법무팀","action":"입찰조건·계약조건 법률 검토","note":"2억 이상 권장"},
+    ]},
+    {"stage":"심사·낙찰","roles":[
+        {"dept":"계약부서","action":"개찰, 적격심사·종합심사 진행","note":""},
+        {"dept":"기술부서","action":"기술평가, 제안서 심사 참여","note":"협상계약 시"},
+        {"dept":"계약심사위원회","action":"계약심사 의결","note":"2억 이상"},
+    ]},
+    {"stage":"계약체결","roles":[
+        {"dept":"계약부서","action":"계약서 작성, 보증금 징구, 계약 체결","note":""},
+        {"dept":"법무팀","action":"계약서 조항 검토, 특약 사항 확인","note":"고액·특수 계약"},
+        {"dept":"수요부서","action":"계약 내용 최종 확인","note":""},
+    ]},
+    {"stage":"이행·관리","roles":[
+        {"dept":"수요부서","action":"계약 이행 감독, 기성검사","note":""},
+        {"dept":"계약부서","action":"대가 지급, 선급금 관리, 계약변경 처리","note":""},
+        {"dept":"안전환경팀","action":"현장 안전 점검","note":"공사 계약"},
+        {"dept":"품질부서","action":"품질검사, QA 확인","note":"원전 관련"},
+    ]},
+    {"stage":"준공·검수","roles":[
+        {"dept":"수요부서","action":"준공검사·물품 검수 실시","note":""},
+        {"dept":"계약부서","action":"하자보수보증금 징구, 최종 대가 지급","note":""},
+        {"dept":"감사팀","action":"계약 이행 적정성 사후 검토","note":"고액 계약"},
+    ]},
+]
+
 def get_reference_data(query, recommendations):
     """검색어 + 추천 법령 기반 참고 조문·계약 사례 생성"""
     index = get_index()
@@ -726,6 +762,9 @@ def get_reference_data(query, recommendations):
         if any(kw in q for kw in ac["keywords"]):
             audit.append(ac)
     ref["audit_cases"] = audit[:5]
+
+    # ── 단계별 담당 부서·역할 ──
+    ref["role_map"] = ROLE_MAP
 
     return ref
 
