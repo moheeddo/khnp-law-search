@@ -2113,6 +2113,21 @@ body.landing .landing-wrap { display: flex; }
   color: var(--accent);
   margin-top: 4px;
 }
+
+/* Article reference links */
+.art-ref-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  cursor: pointer;
+  font-weight: 600;
+}
+.art-ref-link:hover {
+  text-decoration-style: solid;
+  background: var(--accent-muted);
+  border-radius: 3px;
+  padding: 0 2px;
+}
 </style>
 </head>
 <body class="landing">
@@ -3230,6 +3245,10 @@ function structureBody(raw) {
     }
     html += `<div class="para">${escHtml(trimmed)}</div>`;
   }
+  // 조문 참조 링크화: "제7조" → 클릭 가능 링크
+  html = html.replace(/제(\d+)조(?:의(\d+))?/g, (match) => {
+    return `<a class="art-ref-link" onclick="event.stopPropagation();scrollToArticleByNum('${match}')" title="${match}으로 이동">${match}</a>`;
+  });
   return html;
 }
 
@@ -3537,6 +3556,20 @@ function goBack() {
     showView(previousView === 'results' ? 'results' : previousView === 'advisor' ? 'advisor' : 'welcome');
   } else {
     showView('welcome');
+  }
+}
+
+function scrollToArticleByNum(artNum) {
+  const blocks = document.querySelectorAll('.art-block');
+  for (const block of blocks) {
+    const numEl = block.querySelector('.art-num');
+    if (numEl && numEl.textContent.trim() === artNum) {
+      block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      block.style.outline = '2px solid var(--accent)';
+      block.style.transition = 'outline 0.3s';
+      setTimeout(() => { block.style.outline = 'none'; }, 2000);
+      return;
+    }
   }
 }
 </script>

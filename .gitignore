@@ -6,8 +6,10 @@ lawsearch.db
 *.png
 *.jpg
 *.md
+!DOCS.md
 .playwright-mcp/
 snap-*.md
 screenshot-*.png
 node_modules/
 .vercel/
+.vercel
