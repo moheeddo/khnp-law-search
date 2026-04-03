@@ -3484,6 +3484,122 @@ kbd {
 .template-law { color: var(--accent); font-weight: 600; }
 .template-note { color: var(--text-muted); }
 
+.sim-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.sim-modal {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 520px;
+  max-width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.sim-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+.sim-input-group {
+  margin-bottom: 12px;
+}
+.sim-input-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.sim-input-group input, .sim-input-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+.sim-input-group input:focus, .sim-input-group select:focus { border-color: var(--accent); }
+.sim-quick-amounts {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.sim-quick-amounts button {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sim-quick-amounts button:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.sim-summary {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.sim-total {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.sim-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sim-group {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+}
+.sim-group-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+}
+.sim-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 12px;
+}
+.sim-label { color: var(--text-secondary); }
+.sim-value { font-weight: 600; color: var(--text-primary); text-align: right; }
+.sim-row.highlight .sim-value { color: var(--accent); font-size: 14px; }
+.sim-row.warn .sim-value { color: var(--danger); }
+.sim-row.muted .sim-value { color: var(--text-muted); font-style: italic; }
+.sim-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
+
 </style>
 </head>
 <body class="landing">
@@ -3660,6 +3776,7 @@ kbd {
       <button class="btn" onclick="doAdvisor('계약보증금')" style="font-size:12px;padding:6px 14px;border-radius:var(--radius-xl);background:var(--accent-muted);color:var(--accent);border-color:var(--accent);font-weight:600">&#x1F4CB; 계약서 조항 ↔ 법령 매핑</button>
     </div>
     <div style="margin-top:20px">
+      <button class="btn" onclick="openSimulator()" style="padding:10px 20px;font-size:14px;margin-right:8px">&#x1F4B0; 비용 시뮬레이터</button>
       <button class="btn btn-accent" onclick="startWizard()" style="padding:10px 24px;font-size:14px">&#x1F9ED; 계약유형 가이드</button>
     </div>
     <div class="shortcuts-hint">
@@ -3761,6 +3878,8 @@ kbd {
         <span class="count" id="bmCount"></span>
         <button class="btn btn-sm" onclick="viewAllBookmarkedArticles()">&#x1F4D6; 조문 모아보기</button>
         <button class="btn btn-sm" onclick="exportBookmarks()">&#x1F4E5; 내보내기</button>
+        <button class="btn btn-sm" onclick="shareBookmarks()">&#x1F4E4; 공유 코드</button>
+        <button class="btn btn-sm" onclick="importBookmarks()">&#x1F4E5; 가져오기</button>
       </div>
       <div class="bm-folders" id="bmFolders"></div>
       <div class="bm-list" id="bmList"></div>
@@ -6844,6 +6963,202 @@ async function viewAllBookmarkedArticles() {
 
   document.getElementById('lawBody').innerHTML = html || '<div class="empty"><h3>조문 데이터를 불러올 수 없습니다</h3></div>';
   document.getElementById('tocGrid').innerHTML = '';
+}
+
+// ===== Cost Simulator =====
+function openSimulator() {
+  let existing = document.getElementById('simulatorArea');
+  if (existing) { existing.remove(); return; }
+
+  const div = document.createElement('div');
+  div.id = 'simulatorArea';
+  div.innerHTML = `
+    <div class="sim-overlay" onclick="document.getElementById('simulatorArea').remove()">
+      <div class="sim-modal" onclick="event.stopPropagation()">
+        <div class="sim-title">&#x1F4B0; 계약 비용 시뮬레이터</div>
+        <div class="sim-input-group">
+          <label>계약금액 (원)</label>
+          <input type="text" id="simAmount" placeholder="예: 500000000" oninput="runSimulation()">
+          <div class="sim-quick-amounts">
+            <button onclick="setSimAmount(50000000)">5천만</button>
+            <button onclick="setSimAmount(100000000)">1억</button>
+            <button onclick="setSimAmount(300000000)">3억</button>
+            <button onclick="setSimAmount(500000000)">5억</button>
+            <button onclick="setSimAmount(1000000000)">10억</button>
+            <button onclick="setSimAmount(5000000000)">50억</button>
+          </div>
+        </div>
+        <div class="sim-input-group">
+          <label>계약 유형</label>
+          <select id="simType" onchange="runSimulation()">
+            <option value="goods">물품</option>
+            <option value="construction">공사</option>
+            <option value="service">용역</option>
+          </select>
+        </div>
+        <div class="sim-input-group">
+          <label>예상 이행기간 (일)</label>
+          <input type="number" id="simDuration" value="90" oninput="runSimulation()">
+        </div>
+        <div id="simResult" class="sim-result"></div>
+        <div class="sim-actions">
+          <button class="btn btn-sm" onclick="copySimResult()">&#x1F4CB; 결과 복사</button>
+          <button class="btn btn-sm" onclick="document.getElementById('simulatorArea').remove()">닫기</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(div);
+  runSimulation();
+}
+
+function setSimAmount(val) {
+  document.getElementById('simAmount').value = val;
+  runSimulation();
+}
+
+function runSimulation() {
+  const amtStr = document.getElementById('simAmount').value.replace(/,/g, '');
+  const amt = parseInt(amtStr) || 0;
+  const type = document.getElementById('simType').value;
+  const duration = parseInt(document.getElementById('simDuration').value) || 90;
+  const el = document.getElementById('simResult');
+  if (!amt) { el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">금액을 입력하세요</div>'; return; }
+
+  const fmt = (n) => n.toLocaleString() + '원';
+  const fmtShort = (n) => n >= 100000000 ? (n/100000000).toFixed(1)+'억' : n >= 10000 ? Math.round(n/10000)+'만' : n.toLocaleString();
+
+  // 보증금
+  const depositRate = type === 'construction' ? 0.15 : 0.10;
+  const deposit = Math.round(amt * depositRate);
+  const defectRate = type === 'construction' ? 0.05 : 0.03;
+  const defectDeposit = Math.round(amt * defectRate);
+
+  // 선급금
+  const advance = Math.round(amt * 0.7);
+
+  // 지체상금
+  const penaltyRate = type === 'construction' ? 0.001 : type === 'service' ? 0.00125 : 0.00075;
+  const penaltyDaily = Math.round(amt * penaltyRate);
+  const penaltyMax = deposit;
+  const penaltyMaxDays = Math.floor(penaltyMax / penaltyDaily);
+
+  // 부가세
+  const vat = Math.round(amt * 0.1);
+  const total = amt + vat;
+
+  // 입찰보증금
+  const bidDeposit = Math.round(amt * 0.05);
+
+  const typeName = type === 'construction' ? '공사' : type === 'service' ? '용역' : '물품';
+
+  let html = `<div class="sim-summary">
+    <div class="sim-total">${typeName} 계약 | ${fmtShort(amt)}원</div>
+  </div>`;
+
+  html += '<div class="sim-grid">';
+  const items = [
+    {cat:'계약금액', items:[
+      {label:'계약금액 (부가세 별도)', value:fmt(amt), cls:''},
+      {label:'부가가치세 (10%)', value:fmt(vat), cls:''},
+      {label:'총 계약금액 (부가세 포함)', value:fmt(total), cls:'highlight'},
+    ]},
+    {cat:'보증금', items:[
+      {label:'입찰보증금 (5%)', value:fmt(bidDeposit), cls:''},
+      {label:'계약보증금 ('+depositRate*100+'%)', value:fmt(deposit), cls:'highlight'},
+      {label:'하자보수보증금 ('+defectRate*100+'%)', value:fmt(defectDeposit), cls:''},
+    ]},
+    {cat:'대가지급', items:[
+      {label:'선급금 한도 (70%)', value:fmt(advance), cls:''},
+      {label:'기성금 (계약비율)', value:'계약조건에 따름', cls:'muted'},
+    ]},
+    {cat:'지체상금', items:[
+      {label:'1일당 ('+penaltyRate*1000+'/1000)', value:fmt(penaltyDaily), cls:'warn'},
+      {label:'상한 (보증금 상당)', value:fmt(penaltyMax), cls:''},
+      {label:'상한 도달 일수', value:penaltyMaxDays+'일', cls:''},
+      {label:duration+'일 지체 시', value:fmt(Math.min(penaltyDaily * duration, penaltyMax)), cls:'warn'},
+    ]},
+  ];
+
+  items.forEach(group => {
+    html += '<div class="sim-group"><div class="sim-group-title">'+group.cat+'</div>';
+    group.items.forEach(item => {
+      html += '<div class="sim-row '+item.cls+'"><span class="sim-label">'+item.label+'</span><span class="sim-value">'+item.value+'</span></div>';
+    });
+    html += '</div>';
+  });
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+function copySimResult() {
+  const el = document.getElementById('simResult');
+  if (!el) return;
+  navigator.clipboard.writeText(el.innerText).then(() => {
+    toast('시뮬레이션 결과가 복사되었습니다', 'success');
+  });
+}
+
+// ===== Bookmark Share / Import =====
+function shareBookmarks() {
+  if (!bookmarks.length) { toast('북마크가 없습니다', 'info'); return; }
+  const data = bookmarks.map(b => ({l:b.law_name, t:b.file_type, a:b.article_num, n:b.article_title, m:b.memo, f:b.folder}));
+  const code = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+
+  navigator.clipboard.writeText(code).then(() => {
+    toast('공유 코드가 복사되었습니다. 팀원에게 전달하세요.', 'success');
+  });
+
+  const div = document.createElement('div');
+  div.className = 'modal-overlay visible';
+  div.onclick = () => div.remove();
+  div.innerHTML = `<div class="modal" style="width:480px" onclick="event.stopPropagation()">
+    <h2>&#x1F4E4; 북마크 공유 코드</h2>
+    <p class="modal-sub">아래 코드를 팀원에게 전달하세요. "가져오기"로 불러올 수 있습니다.</p>
+    <textarea style="width:100%;height:100px;padding:10px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-input);color:var(--text-primary);resize:none" readonly onclick="this.select()">${code}</textarea>
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="this.closest('.modal-overlay').remove()">확인</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+}
+
+function importBookmarks() {
+  const code = prompt('공유 코드를 붙여넣으세요:');
+  if (!code) return;
+  try {
+    const json = decodeURIComponent(escape(atob(code.trim())));
+    const data = JSON.parse(json);
+    if (!Array.isArray(data)) throw new Error('invalid');
+
+    let imported = 0;
+    for (const b of data) {
+      const exists = bookmarks.some(bm => bm.law_name === b.l && bm.file_type === b.t && bm.article_num === (b.a||''));
+      if (!exists) {
+        bookmarks.push({
+          id: Date.now() + imported,
+          law_name: b.l,
+          file_type: b.t || '법률',
+          article_num: b.a || '',
+          article_title: b.n || '',
+          memo: b.m || '',
+          folder: b.f || '가져온 북마크',
+        });
+        imported++;
+      }
+    }
+
+    if (imported > 0) {
+      renderBookmarkList();
+      renderBookmarkNav();
+      toast(imported + '개 북마크를 가져왔습니다', 'success');
+    } else {
+      toast('새로운 북마크가 없습니다 (이미 존재)', 'info');
+    }
+  } catch(e) {
+    toast('유효하지 않은 코드입니다', 'error');
+  }
 }
 </script>
 </body>
