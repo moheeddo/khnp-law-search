@@ -2292,6 +2292,67 @@ body.landing .landing-wrap { display: flex; }
   color: var(--accent);
 }
 
+/* ===== Compare View ===== */
+.compare-view { margin-bottom: 20px; }
+.compare-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--accent);
+  margin-bottom: 8px;
+}
+.compare-col-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+.compare-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.compare-col {
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.compare-art-num {
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.compare-art-body {
+  color: var(--text-secondary);
+  word-break: keep-all;
+}
+.compare-empty {
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+/* ===== Print Styles ===== */
+@media print {
+  .header, .sidebar, .search-section, .landing-wrap,
+  .results-head .btn, .smart-banner-tags, .ref-links,
+  .process-arrow, .related-queries, #searchHistory,
+  .adv-item-action, .smart-law-arrow, .ref-expand-btn { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .main-wrap { display: block !important; padding: 0 !important; }
+  .card { border: 1px solid #ddd !important; box-shadow: none !important; }
+  .results-head { border-bottom: 2px solid #333 !important; }
+  .smart-banner { border: 1px solid #ddd !important; background: #f9f9f9 !important; }
+  .smart-law-card, .ref-article-card, .ref-case-card { break-inside: avoid; }
+}
+
 </style>
 </head>
 <body class="landing">
@@ -2487,6 +2548,7 @@ body.landing .landing-wrap { display: flex; }
     <div class="card results" id="resultsView">
       <div class="results-head">
         <h3 id="resultsTitle">검색 결과</h3>
+        <button class="btn btn-sm" onclick="window.print()">&#x1F5A8; 인쇄</button>
         <span class="count" id="resultsCount"></span>
       </div>
       <div class="results-list" id="resultsList"></div>
@@ -2513,6 +2575,7 @@ body.landing .landing-wrap { display: flex; }
         </div>
       </div>
       <div class="type-tabs" id="typeTabs"></div>
+      <button class="btn btn-sm" id="compareBtn" onclick="toggleCompareView()" style="display:none">&#x2194; 비교 보기</button>
       <div id="aiSummaryArea"></div>
       <div class="focus-toggle" id="focusToggle" style="display:none">
         <label>
@@ -3531,6 +3594,15 @@ async function openLaw(lawName, fileType, advInfo) {
     `<button class="type-tab ${t === data.file_type ? 'active' : ''}" onclick="openLaw('${lawName}','${t}')">${t}</button>`
   ).join('');
 
+  // 비교 보기 버튼 표시 (2개 이상 타입일 때)
+  const compareBtn = document.getElementById('compareBtn');
+  if ((data.available_types || []).length >= 2) {
+    compareBtn.style.display = '';
+    compareBtn.textContent = '\u2194 비교 보기';
+  } else {
+    compareBtn.style.display = 'none';
+  }
+
   const arts = data.articles || [];
 
   // TOC에 핵심 조문 표시
@@ -3554,6 +3626,61 @@ async function openLaw(lawName, fileType, advInfo) {
   // AI 요약 (핵심 조문이 있으면 비동기 로드)
   if (highlightedArticles.length > 0 && advisorContext) {
     loadAiSummary(lawName, arts);
+  }
+}
+
+async function toggleCompareView() {
+  if (!currentLaw) return;
+  const lawParams = new URLSearchParams({name: currentLaw});
+  // 현재 타입 외 다른 타입 로드
+  const viewerView = document.getElementById('viewerView');
+  const tabs = viewerView.querySelectorAll('.type-tab');
+  const types = [...tabs].map(t => t.textContent);
+  const otherType = types.find(t => t !== currentFileType) || types[0];
+
+  const otherParams = new URLSearchParams({name: currentLaw, type: otherType});
+  const otherData = await api('/api/law?' + otherParams);
+  if (!otherData || otherData.error) return;
+
+  // 비교 뷰 생성
+  const lawBody = document.getElementById('lawBody');
+  const currentArts = [...lawBody.querySelectorAll('.art-block')];
+
+  let compareHtml = '<div class="compare-view">';
+  compareHtml += `<div class="compare-header"><div class="compare-col-title">${escHtml(currentFileType)}</div><div class="compare-col-title">${escHtml(otherType)}</div></div>`;
+
+  // 조문 번호 매칭
+  const otherArtsMap = {};
+  for (const a of otherData.articles) {
+    otherArtsMap[a.number] = a;
+  }
+
+  // 현재 법의 조문 기준으로 비교
+  const currentData = await api('/api/law?' + lawParams.toString() + '&type=' + currentFileType);
+  for (const art of (currentData?.articles || [])) {
+    const other = otherArtsMap[art.number];
+    compareHtml += `<div class="compare-row">
+      <div class="compare-col">
+        <div class="compare-art-num">${escHtml(art.number)} ${art.title ? '('+escHtml(art.title)+')' : ''}</div>
+        <div class="compare-art-body">${escHtml(art.content.substring(0, 300))}${art.content.length > 300 ? '...' : ''}</div>
+      </div>
+      <div class="compare-col">
+        ${other ? `
+          <div class="compare-art-num">${escHtml(other.number)} ${other.title ? '('+escHtml(other.title)+')' : ''}</div>
+          <div class="compare-art-body">${escHtml(other.content.substring(0, 300))}${other.content.length > 300 ? '...' : ''}</div>
+        ` : '<div class="compare-empty">해당 조문 없음</div>'}
+      </div>
+    </div>`;
+  }
+  compareHtml += '</div>';
+
+  // 토글
+  if (lawBody.querySelector('.compare-view')) {
+    lawBody.querySelector('.compare-view').remove();
+    document.getElementById('compareBtn').textContent = '\u2194 비교 보기';
+  } else {
+    lawBody.insertAdjacentHTML('afterbegin', compareHtml);
+    document.getElementById('compareBtn').textContent = '\u2194 비교 닫기';
   }
 }
 
