@@ -2488,6 +2488,106 @@ kbd {
   .smart-law-card, .ref-article-card, .ref-case-card { break-inside: avoid; }
 }
 
+/* Timeline */
+.timeline-summary {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 8px 0 4px;
+}
+.timeline-summary strong {
+  color: var(--accent);
+  font-size: 16px;
+}
+.timeline-bar {
+  display: flex;
+  gap: 2px;
+  margin: 8px 0 16px;
+  min-height: 52px;
+}
+.tl-segment {
+  background: var(--accent-muted);
+  border-radius: var(--radius-sm);
+  padding: 6px 4px;
+  text-align: center;
+  min-width: 30px;
+  border: 1px solid rgba(37,99,235,0.1);
+  transition: all var(--transition);
+}
+.tl-segment:hover {
+  background: var(--accent);
+  color: white;
+}
+.tl-segment:hover .tl-seg-label,
+.tl-segment:hover .tl-seg-days { color: white; }
+.tl-seg-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tl-seg-days {
+  font-size: 10px;
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+/* Law warnings */
+.law-warning {
+  padding: 10px 16px;
+  margin: 8px 22px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.5;
+}
+.law-warning.future {
+  background: var(--warn-muted);
+  border: 1px solid rgba(217,119,6,0.2);
+  color: var(--warn);
+}
+.law-warning.recent {
+  background: var(--accent-muted);
+  border: 1px solid rgba(37,99,235,0.15);
+  color: var(--accent);
+}
+.law-warn-icon { font-size: 16px; flex-shrink: 0; }
+
+/* User stats */
+.user-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.stat-item strong {
+  color: var(--accent);
+  font-weight: 700;
+}
+.stat-sep { color: var(--border); }
+.stat-kw {
+  padding: 2px 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-size: 11px;
+}
+.stat-kw:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 </style>
 </head>
 <body class="landing">
@@ -2635,6 +2735,7 @@ kbd {
     <div class="hero-glow"></div>
     <h2>어떤 법령을 확인해야 할까요?</h2>
     <p class="hero-sub">상황을 입력하면 확인해야 할 법령을 안내합니다</p>
+    <div id="userStats"></div>
     <div class="advisor-search">
       <input type="text" id="advisorInput" class="advisor-input"
              placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경...">
@@ -2873,6 +2974,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCategories(), loadStats()]);
   setupEvents();
   renderSearchHistory();
+  renderStats();
 
   // 체크리스트 localStorage 저장 (이벤트 위임)
   document.addEventListener('change', (e) => {
@@ -2942,6 +3044,51 @@ function removeHistory(query) {
   history = history.filter(h => h !== query);
   localStorage.setItem('searchHistory', JSON.stringify(history));
   renderSearchHistory();
+}
+
+// ===== Search Stats =====
+function saveSearchStats(query) {
+  const stats = JSON.parse(localStorage.getItem('searchStats') || '{"total":0,"weekly":{},"keywords":{}}');
+  stats.total++;
+  const weekKey = new Date().toISOString().split('T')[0];
+  stats.weekly[weekKey] = (stats.weekly[weekKey] || 0) + 1;
+  query.split(/\s+/).forEach(kw => {
+    if (kw.length >= 2) {
+      stats.keywords[kw] = (stats.keywords[kw] || 0) + 1;
+    }
+  });
+  const cutoff = new Date(Date.now() - 30*24*60*60*1000).toISOString().split('T')[0];
+  for (const k of Object.keys(stats.weekly)) {
+    if (k < cutoff) delete stats.weekly[k];
+  }
+  localStorage.setItem('searchStats', JSON.stringify(stats));
+  renderStats();
+}
+
+function renderStats() {
+  const el = document.getElementById('userStats');
+  if (!el) return;
+  const stats = JSON.parse(localStorage.getItem('searchStats') || '{"total":0,"weekly":{},"keywords":{}}');
+  if (stats.total === 0) { el.innerHTML = ''; return; }
+  const today = new Date();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  let weekCount = 0;
+  for (const [date, count] of Object.entries(stats.weekly)) {
+    if (date >= weekStart.toISOString().split('T')[0]) weekCount += count;
+  }
+  const topKws = Object.entries(stats.keywords)
+    .sort((a,b) => b[1] - a[1])
+    .slice(0, 5);
+  el.innerHTML = `
+    <div class="user-stats">
+      <span class="stat-item">검색 <strong>${stats.total}</strong>회</span>
+      <span class="stat-item">이번 주 <strong>${weekCount}</strong>회</span>
+      ${topKws.length ? '<span class="stat-sep">|</span> 자주 찾는: ' + topKws.map(([kw,cnt]) =>
+        `<span class="stat-kw" onclick="doAdvisor('${escHtml(kw)}')">${escHtml(kw)}</span>`
+      ).join(' ') : ''}
+    </div>
+  `;
 }
 
 function setupEvents() {
@@ -3303,6 +3450,7 @@ async function doSearch(q) {
   const query = input.value.trim();
   if (!query) return;
   saveSearchHistory(query);
+  saveSearchStats(query);
   showView('results');
   $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   $('#resultsTitle').textContent = '';
@@ -3476,6 +3624,21 @@ function renderSmartResults(searchResults, advisorData, query) {
         ${s.law ? `<div class="process-step-law">${escHtml(s.law)}</div>` : ''}
       </div>`;
     });
+    html += '</div>';
+  }
+
+  // 3.6. 계약일정 자동 타임라인
+  if (refData0?.timeline) {
+    const tl = refData0.timeline;
+    html += `<div class="timeline-summary">예상 소요기간: <strong>${tl.total_days}일</strong> (약 ${Math.ceil(tl.total_days/30)}개월)</div>`;
+    html += '<div class="timeline-bar">';
+    for (const s of tl.steps) {
+      const pct = Math.max(2, (s.duration / tl.total_days) * 100);
+      html += `<div class="tl-segment" style="flex:${pct}" title="${escHtml(s.step)}: ${s.duration}일">
+        <div class="tl-seg-label">${escHtml(s.step)}</div>
+        <div class="tl-seg-days">${s.duration}일</div>
+      </div>`;
+    }
     html += '</div>';
   }
 
@@ -3868,6 +4031,17 @@ async function openLaw(lawName, fileType, advInfo) {
     $('#focusToggle').style.display = 'none';
   }
 
+  // 법령 시행일·개정일 경고
+  if (data.warnings?.length) {
+    const warnHtml = data.warnings.map(w => `
+      <div class="law-warning ${w.type}">
+        <span class="law-warn-icon">${w.type === 'future' ? '&#x26A0;' : '&#x1F4C5;'}</span>
+        ${escHtml(w.msg)}
+      </div>
+    `).join('');
+    document.getElementById('aiSummaryArea').insertAdjacentHTML('afterbegin', warnHtml);
+  }
+
   renderArticles(arts);
   updateBookmarkButtons();
 
@@ -4139,6 +4313,7 @@ async function doAdvisor(q) {
   const query = (input ? input.value : q || '').trim();
   if (!query) return;
   saveSearchHistory(query);
+  saveSearchStats(query);
   showView('advisor');
   $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
   const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);

@@ -432,6 +432,35 @@ def get_reference_data(query, recommendations):
     links.append({"title":"알리오","url":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","desc":"한수원 경영정보 공시"})
     ref["links"] = links
 
+    # ── 4. 계약일정 자동 타임라인 ──
+    if ref.get("process") and ref.get("contract_method"):
+        timeline = []
+        day = 0
+        STEP_DAYS = {
+            "수요확인": 5, "수요조사": 5, "수요예측": 5,
+            "설계·사양 확정": 15, "과업지시서 작성": 10,
+            "예정가격 작성": 7, "단가 산정": 7,
+            "입찰공고": 7, "입찰·제안서 평가": 14, "입찰·단가결정": 10,
+            "입찰참가등록": 7, "적격심사": 10,
+            "개찰·낙찰": 3, "협상·계약": 10,
+            "계약체결": 5, "단가계약 체결": 5,
+            "착공·시공": 90, "이행": 30, "착수·수행": 60,
+            "납품": 14, "납품요청": 3,
+            "기성검사": 7, "중간성과 검토": 5,
+            "검수": 5, "검수·대가지급": 7, "검수·준공": 7, "최종성과 납품": 5,
+            "준공검사": 10, "대가지급": 14,
+            "하자담보": 365,
+            "수의계약 사유 확인": 3, "견적서 징수": 5, "예정가격 결정": 3,
+            "계약심사": 5, "이행·검수": 14,
+            "해지사유 발생": 0, "시정요구": 14, "해지 통보": 3,
+            "기성정산": 14, "보증금 처리": 7, "후속조치": 30,
+        }
+        for step in ref["process"]:
+            days = STEP_DAYS.get(step["step"], 7)
+            timeline.append({**step, "start_day": day, "duration": days})
+            day += days
+        ref["timeline"] = {"steps": timeline, "total_days": day}
+
     return ref
 
 def get_related_queries(query):
@@ -566,7 +595,27 @@ def api_law():
     related = RELATED_LAWS.get(law_name, [])
     # 현재 열린 법령은 제외
     related = [r for r in related if not (r["law"] == law_name and r["type"] == ft)]
-    return jsonify({"law_name":law_name,"file_type":ft,"title":fd["meta"].get("제목",law_name),"meta":fd["meta"],"articles":fd["articles"],"available_types":list(law["files"].keys()),"related_laws":related[:5]})
+    # 법령 시행일·개정일 경고
+    warnings = []
+    from datetime import datetime, timedelta
+    meta = fd["meta"]
+    try:
+        enforcement = meta.get("시행일자","")
+        if enforcement:
+            enf_str = enforcement.replace(".","-")
+            enf_date = datetime.strptime(enf_str, "%Y-%m-%d")
+            if enf_date > datetime.now():
+                warnings.append({"type":"future","msg":f"이 법령은 {enforcement}에 시행 예정입니다. 현재 시행 중인 법령과 다를 수 있습니다."})
+            elif (datetime.now() - enf_date).days < 90:
+                warnings.append({"type":"recent","msg":f"이 법령은 {enforcement}에 시행된 최근 개정 법령입니다. 변경 내용을 확인하세요."})
+        promulgation = meta.get("공포일자","")
+        if promulgation:
+            pub_str = promulgation.replace(".","-")
+            pub_date = datetime.strptime(pub_str, "%Y-%m-%d")
+            if pub_date > datetime.now():
+                warnings.append({"type":"future","msg":f"공포일: {promulgation} (아직 공포 전)"})
+    except: pass
+    return jsonify({"law_name":law_name,"file_type":ft,"title":meta.get("제목",law_name),"meta":meta,"articles":fd["articles"],"available_types":list(law["files"].keys()),"related_laws":related[:5],"warnings":warnings})
 
 @app.route("/api/summarize", methods=["POST"])
 def api_summarize():
