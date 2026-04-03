@@ -2300,6 +2300,63 @@ kbd {
   line-height: 1.5;
 }
 
+/* ===== Calculator ===== */
+.calc-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-top: 10px;
+}
+.calc-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.calc-item {
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}
+.calc-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.calc-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent);
+}
+.calc-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.calc-custom {
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.calc-custom input {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+.calc-custom input:focus { border-color: var(--accent); }
+
 /* ===== Search History ===== */
 .search-history {
   display: flex;
@@ -2652,6 +2709,7 @@ kbd {
             <span class="bm-icon">&#9734;</span>
             <span>북마크</span>
           </button>
+          <button class="btn btn-sm" onclick="shareLaw()" title="URL 복사">&#x1F517; 공유</button>
           <a class="btn btn-sm" id="lawGoKr" href="#" target="_blank" rel="noopener">
             &#x1F517; 법령정보센터
           </a>
@@ -2689,6 +2747,7 @@ kbd {
           내 북마크
         </h3>
         <span class="count" id="bmCount"></span>
+        <button class="btn btn-sm" onclick="exportBookmarks()">&#x1F4E5; 내보내기</button>
       </div>
       <div class="bm-folders" id="bmFolders"></div>
       <div class="bm-list" id="bmList"></div>
@@ -2854,6 +2913,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         break;
     }
   });
+
+  // 해시에서 법령 열기
+  setTimeout(loadFromHash, 500);
 });
 
 // ===== Search History =====
@@ -3370,6 +3432,35 @@ function renderSmartResults(searchResults, advisorData, query) {
           ${cm.warnings?.length ? `<div class="cm-warnings">${cm.warnings.map(w => `<div class="cm-warn-item">&#x26A0; ${escHtml(w)}</div>`).join('')}</div>` : ''}
         </div>
       </div>`;
+    // 계약금액 자동 계산기
+    if (cm.amount) {
+      const amt = cm.amount;
+      const calcItems = [
+        {label: '계약보증금 (10%)', value: Math.round(amt * 0.1), note: '국가계약법 제12조'},
+        {label: '계약보증금 (15%)', value: Math.round(amt * 0.15), note: '공사계약 기준'},
+        {label: '하자보수보증금 (2~5%)', value: Math.round(amt * 0.03), note: '시행령 제62조 (3% 기준)'},
+        {label: '선급금 한도 (70%)', value: Math.round(amt * 0.7), note: '시행령 제58조'},
+        {label: '지체상금/일 (공사 1/1000)', value: Math.round(amt * 0.001), note: '시행령 제74조'},
+        {label: '지체상금/일 (물품 0.75/1000)', value: Math.round(amt * 0.00075), note: '시행령 제74조'},
+      ];
+      html += `<div class="calc-card">
+        <div class="calc-title">&#x1F9EE; 간이 계산기 (${escHtml(cm.amount_display)} 기준)</div>
+        <div class="calc-grid">
+          ${calcItems.map(c => `
+            <div class="calc-item">
+              <div class="calc-label">${escHtml(c.label)}</div>
+              <div class="calc-value">${c.value.toLocaleString()}원</div>
+              <div class="calc-note">${escHtml(c.note)}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="calc-custom">
+          <input type="number" id="calcCustomAmt" placeholder="직접 금액 입력 (원)"
+                 onchange="updateCalc(this.value)" style="flex:1">
+          <button class="btn btn-sm" onclick="updateCalc(document.getElementById('calcCustomAmt').value)">계산</button>
+        </div>
+      </div>`;
+    }
   }
 
   // 3.5. 계약 프로세스 플로우
@@ -3635,6 +3726,26 @@ function openFromSmartAdvisor(idx) {
   });
 }
 
+function updateCalc(val) {
+  const amt = parseInt(val);
+  if (!amt || amt <= 0) return;
+  const display = amt >= 100000000 ? (amt/100000000).toFixed(1)+'억원' : amt >= 10000 ? (amt/10000).toFixed(0)+'만원' : amt.toLocaleString()+'원';
+  const items = [
+    {label:'계약보증금 (10%)', value:Math.round(amt*0.1), note:'국가계약법 제12조'},
+    {label:'계약보증금 (15%)', value:Math.round(amt*0.15), note:'공사계약 기준'},
+    {label:'하자보수보증금 (3%)', value:Math.round(amt*0.03), note:'시행령 제62조'},
+    {label:'선급금 한도 (70%)', value:Math.round(amt*0.7), note:'시행령 제58조'},
+    {label:'지체상금/일 (공사)', value:Math.round(amt*0.001), note:'1/1000'},
+    {label:'지체상금/일 (물품)', value:Math.round(amt*0.00075), note:'0.75/1000'},
+  ];
+  const card = document.querySelector('.calc-card');
+  if (!card) return;
+  card.querySelector('.calc-title').innerHTML = '&#x1F9EE; 간이 계산기 (' + escHtml(display) + ' 기준)';
+  card.querySelector('.calc-grid').innerHTML = items.map(c =>
+    `<div class="calc-item"><div class="calc-label">${escHtml(c.label)}</div><div class="calc-value">${c.value.toLocaleString()}원</div><div class="calc-note">${escHtml(c.note)}</div></div>`
+  ).join('');
+}
+
 // ===== Law Viewer (Enhanced) =====
 let highlightedArticles = [];  // 어드바이저에서 추천된 핵심 조문 번호 목록
 let advisorContext = '';        // 검색 맥락
@@ -3778,6 +3889,12 @@ async function openLaw(lawName, fileType, advInfo) {
   // AI 요약 (핵심 조문이 있으면 비동기 로드)
   if (highlightedArticles.length > 0 && advisorContext) {
     loadAiSummary(lawName, arts);
+  }
+
+  // URL 해시 업데이트
+  if (lawName) {
+    const hash = `law=${encodeURIComponent(lawName)}&type=${encodeURIComponent(data.file_type)}`;
+    history.replaceState(null, '', '#' + hash);
   }
 }
 
@@ -3957,6 +4074,9 @@ async function openLawArticle(lawName, fileType, articleNum) {
         scrollToArt(i);
       }
     });
+    // 조문 해시 업데이트
+    const hash = `law=${encodeURIComponent(lawName)}&type=${encodeURIComponent(fileType)}&art=${encodeURIComponent(articleNum)}`;
+    history.replaceState(null, '', '#' + hash);
   }, 100);
 }
 
@@ -4149,6 +4269,54 @@ function goBack() {
   } else {
     showView('welcome');
   }
+}
+
+function shareLaw() {
+  const url = location.href;
+  navigator.clipboard.writeText(url).then(() => {
+    toast('법령 URL이 복사되었습니다', 'success');
+  });
+}
+
+function loadFromHash() {
+  const hash = location.hash.substring(1);
+  if (!hash) return;
+  const params = new URLSearchParams(hash);
+  const law = params.get('law');
+  const type = params.get('type') || '법률';
+  const art = params.get('art');
+  if (law) {
+    if (art) {
+      openLawArticle(law, type, art);
+    } else {
+      openLaw(law, type);
+    }
+  }
+}
+
+function exportBookmarks() {
+  if (!bookmarks.length) { toast('북마크가 없습니다', 'info'); return; }
+  let text = '=== 한수원 법령 북마크 ===\n';
+  text += `내보내기: ${new Date().toLocaleDateString('ko-KR')}\n\n`;
+
+  const folders = [...new Set(bookmarks.map(b => b.folder))];
+  for (const folder of folders) {
+    text += `[${folder}]\n`;
+    const items = bookmarks.filter(b => b.folder === folder);
+    for (const b of items) {
+      text += `  - ${b.law_name} ${b.article_num || ''} ${b.article_title ? '('+b.article_title+')' : ''}\n`;
+      if (b.memo) text += `    메모: ${b.memo}\n`;
+    }
+    text += '\n';
+  }
+
+  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `법령북마크_${new Date().toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('북마크를 내보냈습니다', 'success');
 }
 
 function scrollToArticleByNum(artNum) {
