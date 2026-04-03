@@ -138,24 +138,47 @@ def call_solar(query, kw_result):
     except: return None
 
 def get_alio_refs(query):
-    """검색어 기반 알리오/나라장터 참고자료 링크 생성"""
+    """검색어 기반 알리오/나라장터 참고자료 - 한수원/공기업/전체 카테고리별"""
     q = query.lower()
-    refs = []
-    # 한수원 기관코드: C0220
+    groups = []  # [{category, refs}]
+
+    # ── 한수원 ──
+    khnp = []
     if any(kw in q for kw in ["입찰","공고","경쟁","제한경쟁","참가자격","PQ","낙찰"]):
-        refs.append({"title":"한수원 입찰공고 (알리오)","url":"https://www.alio.go.kr/popSusi.do?apbaId=C0220&reportFormRootNo=B1030","desc":"한수원 최신 입찰공고 현황","icon":"bid"})
-        refs.append({"title":"나라장터 입찰정보","url":"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameTgong.do?url=https://www.g2b.go.kr:8101/ep/tbid/tbidList.do","desc":"공공조달 입찰공고 통합검색","icon":"bid"})
-    if any(kw in q for kw in ["계약","단가","수의","공사","용역","구매","물품","조달"]):
-        refs.append({"title":"한수원 계약정보 (알리오)","url":"https://www.alio.go.kr/popSusi.do?apbaId=C0220&reportFormRootNo=B1040","desc":"한수원 계약 체결 현황","icon":"contract"})
-    if any(kw in q for kw in ["경영","공시","평가","감사","임원"]):
-        refs.append({"title":"한수원 경영공시 (알리오)","url":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","desc":"한수원 경영정보 공시","icon":"info"})
-    if any(kw in q for kw in ["부정당","제재","비리","청렴"]):
-        refs.append({"title":"부정당업자 제재현황","url":"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameTgong.do?url=https://www.g2b.go.kr:8101/ep/rslt/rsltSanctnList.do","desc":"나라장터 부정당업자 제재 목록","icon":"warn"})
-    # 기본: 항상 알리오 기관정보 표시
-    if not refs:
-        refs.append({"title":"한수원 기관정보 (알리오)","url":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","desc":"한국수력원자력 경영정보 공시","icon":"info"})
-    refs.append({"title":"한수원 전자입찰","url":"https://ebiz.khnp.co.kr","desc":"한수원 전자조달시스템","icon":"link"})
-    return refs
+        khnp.append({"title":"한수원 입찰공고","url":"https://www.alio.go.kr/popSusi.do?apbaId=C0220&reportFormRootNo=B1030","desc":"한수원 최신 입찰공고 현황","icon":"bid"})
+    if any(kw in q for kw in ["계약","단가","수의","공사","용역","구매","물품","조달","수산물","식품","납품"]):
+        khnp.append({"title":"한수원 계약정보","url":"https://www.alio.go.kr/popSusi.do?apbaId=C0220&reportFormRootNo=B1040","desc":"한수원 계약 체결·이행 현황","icon":"contract"})
+    if any(kw in q for kw in ["경영","공시","평가","감사","임원","인사","보수"]):
+        khnp.append({"title":"한수원 경영공시","url":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","desc":"한수원 경영정보 공시","icon":"info"})
+    if any(kw in q for kw in ["부정당","제재","비리","청렴","뇌물"]):
+        khnp.append({"title":"한수원 청렴·윤리경영","url":"https://www.khnp.co.kr/content/884/main.do","desc":"한수원 청렴계약·윤리경영 안내","icon":"warn"})
+    khnp.append({"title":"한수원 전자조달","url":"https://ebiz.khnp.co.kr","desc":"한수원 전자입찰·계약시스템","icon":"link"})
+    if any(kw in q for kw in ["원전","원자력","핵","방사선","안전"]):
+        khnp.append({"title":"한수원 원전현황","url":"https://www.khnp.co.kr/content/163/main.do","desc":"원자력발전소 운영 현황","icon":"info"})
+    groups.append({"category":"한수원","refs":khnp})
+
+    # ── 공기업·공공기관 ──
+    public = []
+    if any(kw in q for kw in ["입찰","공고","경쟁","참가자격","PQ","낙찰","계약","조달","구매","납품","물품","공사","용역"]):
+        public.append({"title":"알리오 공공기관 입찰·계약","url":"https://www.alio.go.kr/informationBidList.do","desc":"전체 공공기관 입찰·계약 정보 검색","icon":"bid"})
+    if any(kw in q for kw in ["경영","공시","평가","감사","기관"]):
+        public.append({"title":"알리오 경영정보 공시","url":"https://www.alio.go.kr/informationDisclosureList.do","desc":"전체 공공기관 경영공시 통합검색","icon":"info"})
+    if any(kw in q for kw in ["부정당","제재","비리","담합"]):
+        public.append({"title":"공기업 부정당업자 제재","url":"https://www.alio.go.kr/informationSanctionList.do","desc":"공공기관 부정당업자 제재 현황","icon":"warn"})
+    public.append({"title":"알리오 공공기관 현황","url":"https://www.alio.go.kr/organ/organList.do","desc":"전체 공공기관 경영정보 목록","icon":"info"})
+    groups.append({"category":"공기업·공공기관","refs":public})
+
+    # ── 전체 (나라장터·법령정보) ──
+    general = []
+    if any(kw in q for kw in ["입찰","공고","경쟁","참가자격","PQ","낙찰","조달","구매","물품","공사","용역","계약","단가","수의","납품"]):
+        general.append({"title":"나라장터 입찰공고","url":"https://www.g2b.go.kr:8101/ep/tbid/tbidList.do","desc":"국가종합전자조달 입찰공고 통합검색","icon":"bid"})
+        general.append({"title":"나라장터 계약정보","url":"https://www.g2b.go.kr:8101/ep/result/resultList.do","desc":"국가종합전자조달 계약체결 정보","icon":"contract"})
+    if any(kw in q for kw in ["부정당","제재","비리","담합","청렴"]):
+        general.append({"title":"나라장터 부정당업자","url":"https://www.g2b.go.kr:8101/ep/rslt/rsltSanctnList.do","desc":"부정당업자 제재 현황 조회","icon":"warn"})
+    general.append({"title":"국가법령정보센터","url":"https://www.law.go.kr","desc":"법률·시행령·판례 통합검색","icon":"link"})
+    groups.append({"category":"전체","refs":general})
+
+    return groups
 
 def advise(query):
     kw = advise_keyword(query)

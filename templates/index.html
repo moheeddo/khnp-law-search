@@ -2672,31 +2672,34 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 5. 알리오 참고자료
+  // 5. 알리오 참고자료 (카테고리별 그룹)
   if (advisorData?.alio_refs?.length) {
-    html += `
-      <div class="smart-divider">외부 참고자료</div>
-      <div class="smart-section">
-        <div class="smart-section-head">
-          <div class="smart-section-icon" style="background:var(--success-muted)">&#x1F310;</div>
-          <div class="smart-section-title">알리오 · 나라장터 참고자료</div>
-          <div class="smart-section-count">${advisorData.alio_refs.length}건</div>
-        </div>
-    `;
+    html += '<div class="smart-divider">외부 참고자료</div>';
     const alioIcons = {bid:'&#x1F4CB;',contract:'&#x1F4DD;',info:'&#x1F3DB;',warn:'&#9888;',link:'&#x1F517;'};
-    for (const ref of advisorData.alio_refs) {
+    const catIcons = {'한수원':'&#x1F3ED;','공기업·공공기관':'&#x1F3DB;','전체':'&#x1F310;'};
+    const catColors = {'한수원':'var(--accent-muted)','공기업·공공기관':'var(--purple-muted)','전체':'var(--success-muted)'};
+    for (const group of advisorData.alio_refs) {
       html += `
-        <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" onclick="event.stopPropagation()">
-          <div class="alio-ref-icon">${alioIcons[ref.icon] || '&#x1F517;'}</div>
-          <div class="alio-ref-body">
-            <div class="alio-ref-title">${escHtml(ref.title)}</div>
-            <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
+        <div class="smart-section">
+          <div class="smart-section-head">
+            <div class="smart-section-icon" style="background:${catColors[group.category]||'var(--success-muted)'}">${catIcons[group.category]||'&#x1F310;'}</div>
+            <div class="smart-section-title">${escHtml(group.category)}</div>
+            <div class="smart-section-count">${group.refs.length}건</div>
           </div>
-          <div class="alio-ref-arrow">&#8599;</div>
-        </a>
       `;
+      for (const ref of group.refs) {
+        html += `
+          <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" onclick="event.stopPropagation()">
+            <div class="alio-ref-icon" style="background:${catColors[group.category]||'var(--success-muted)'}">${alioIcons[ref.icon] || '&#x1F517;'}</div>
+            <div class="alio-ref-body">
+              <div class="alio-ref-title">${escHtml(ref.title)}</div>
+              <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
+            </div>
+            <div class="alio-ref-arrow">&#8599;</div>
+          </a>`;
+      }
+      html += '</div>';
     }
-    html += '</div>';
   }
 
   html += '</div>';
@@ -2998,20 +3001,23 @@ function renderAdvisor(data) {
     </div>
   `).join('');
 
-  // 알리오 참고자료
+  // 알리오 참고자료 (카테고리별)
   if (data.alio_refs?.length) {
     const alioIcons = {bid:'&#x1F4CB;',contract:'&#x1F4DD;',info:'&#x1F3DB;',warn:'&#9888;',link:'&#x1F517;'};
-    listHtml += '<div style="padding:12px 16px 4px;font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;border-top:1px solid var(--border);margin-top:4px">&#x1F310; 알리오 · 나라장터 참고자료</div>';
-    for (const ref of data.alio_refs) {
-      listHtml += `
-        <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" style="margin:4px 8px" onclick="event.stopPropagation()">
-          <div class="alio-ref-icon">${alioIcons[ref.icon] || '&#x1F517;'}</div>
-          <div class="alio-ref-body">
-            <div class="alio-ref-title">${escHtml(ref.title)}</div>
-            <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
-          </div>
-          <div class="alio-ref-arrow">&#8599;</div>
-        </a>`;
+    const catLabels = {'한수원':'&#x1F3ED; 한수원','공기업·공공기관':'&#x1F3DB; 공기업·공공기관','전체':'&#x1F310; 전체'};
+    for (const group of data.alio_refs) {
+      listHtml += `<div style="padding:12px 16px 4px;font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:1px;border-top:1px solid var(--border);margin-top:4px">${catLabels[group.category]||group.category} 참고자료</div>`;
+      for (const ref of group.refs) {
+        listHtml += `
+          <a href="${escHtml(ref.url)}" target="_blank" rel="noopener" class="alio-ref-card" style="margin:4px 8px" onclick="event.stopPropagation()">
+            <div class="alio-ref-icon">${alioIcons[ref.icon] || '&#x1F517;'}</div>
+            <div class="alio-ref-body">
+              <div class="alio-ref-title">${escHtml(ref.title)}</div>
+              <div class="alio-ref-desc">${escHtml(ref.desc)}</div>
+            </div>
+            <div class="alio-ref-arrow">&#8599;</div>
+          </a>`;
+      }
     }
   }
 
