@@ -3319,6 +3319,115 @@ kbd {
 .sched-law { font-size: 10px; color: var(--accent); }
 .weekend-row { background: var(--warn-muted); }
 
+/* ===== My Contracts Dashboard ===== */
+.my-contracts {
+  width: 100%;
+  max-width: 500px;
+  margin-bottom: 16px;
+}
+.my-contracts-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  padding: 0 4px;
+}
+.my-contracts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.my-contract-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.mc-status { flex-shrink: 0; }
+.mc-name {
+  flex: 1;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.mc-name:hover { color: var(--accent); text-decoration: underline; }
+.mc-del {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0.3;
+  transition: opacity var(--transition);
+}
+.mc-del:hover { opacity: 1; color: var(--danger); }
+
+/* ===== Quiz ===== */
+.quiz-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-top: 20px;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.quiz-progress {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.quiz-question {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.quiz-opt {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: left;
+  transition: all var(--transition);
+}
+.quiz-opt:hover {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+}
+.quiz-result-icon { font-size: 32px; margin-bottom: 8px; }
+.quiz-result-text { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.quiz-explanation {
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  line-height: 1.6;
+  text-align: left;
+}
+.quiz-score { font-size: 24px; font-weight: 800; color: var(--accent); }
+.quiz-grade { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
 </style>
 </head>
 <body class="landing">
@@ -3472,6 +3581,7 @@ kbd {
              placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경...">
       <button class="advisor-btn" id="advisorBtn">검색</button>
     </div>
+    <div id="myContracts" class="my-contracts"></div>
     <div id="searchHistory" class="search-history"></div>
     <div id="subscriptionList" class="subscription-list"></div>
     <div class="advisor-examples">
@@ -3500,6 +3610,7 @@ kbd {
       <span><kbd>/</kbd> 검색</span>
       <span><kbd>Esc</kbd> 뒤로</span>
       <span><kbd>Ctrl+H</kbd> 홈</span>
+      <button class="btn btn-sm" onclick="startQuiz()" style="margin-left:8px">&#x1F4DA; 법령 퀴즈</button>
     </div>
     <div style="margin-top:12px;text-align:center">
       <button class="btn btn-sm" onclick="exportDailyLog()">&#x1F4DD; 오늘의 업무일지</button>
@@ -3860,11 +3971,176 @@ function deleteMemoInline(idx, law, type, num) {
   toast('메모가 삭제되었습니다', 'info');
 }
 
+// ===== My Contracts Dashboard =====
+function getMyContracts() {
+  return JSON.parse(localStorage.getItem('myContracts') || '[]');
+}
+function saveMyContracts(list) {
+  localStorage.setItem('myContracts', JSON.stringify(list));
+}
+
+function addContract() {
+  const name = prompt('계약명을 입력하세요 (예: 수산물 단가계약)');
+  if (!name) return;
+  const contracts = getMyContracts();
+  contracts.push({
+    id: Date.now(),
+    name: name,
+    status: '준비',
+    createdAt: new Date().toISOString(),
+    notes: '',
+  });
+  saveMyContracts(contracts);
+  renderMyContracts();
+}
+
+function updateContractStatus(id, status) {
+  const contracts = getMyContracts();
+  const c = contracts.find(c => c.id === id);
+  if (c) { c.status = status; saveMyContracts(contracts); renderMyContracts(); }
+}
+
+function deleteContract(id) {
+  let contracts = getMyContracts();
+  contracts = contracts.filter(c => c.id !== id);
+  saveMyContracts(contracts);
+  renderMyContracts();
+}
+
+function searchContract(name) {
+  doAdvisor(name);
+}
+
+function renderMyContracts() {
+  const el = document.getElementById('myContracts');
+  if (!el) return;
+  const contracts = getMyContracts();
+  if (!contracts.length) {
+    el.innerHTML = '';
+    return;
+  }
+
+  const statusColors = {
+    '준비': 'var(--text-muted)',
+    '입찰중': 'var(--accent)',
+    '계약체결': 'var(--success)',
+    '이행중': 'var(--warn)',
+    '완료': 'var(--purple)',
+  };
+  const statuses = ['준비','입찰중','계약체결','이행중','완료'];
+
+  let html = '<div class="my-contracts-head"><span>&#x1F4BC; 나의 계약</span><button class="btn btn-sm" onclick="addContract()">+ 추가</button></div>';
+  html += '<div class="my-contracts-list">';
+  contracts.forEach(c => {
+    html += `<div class="my-contract-item">
+      <div class="mc-status" style="color:${statusColors[c.status] || ''}">
+        <select onchange="updateContractStatus(${c.id}, this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:inherit;cursor:pointer">
+          ${statuses.map(s => `<option value="${s}" ${s===c.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="mc-name" onclick="searchContract('${escHtml(c.name)}')" title="클릭하면 관련 법령 검색">${escHtml(c.name)}</div>
+      <button class="mc-del" onclick="deleteContract(${c.id})" title="삭제">&#x2715;</button>
+    </div>`;
+  });
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+// ===== Quiz =====
+const QUIZ_DATA = [
+  {q:"수의계약이 가능한 물품 추정가격 기준은?", options:["1천만원 미만","2천만원 미만","5천만원 미만","1억원 미만"], answer:2, explanation:"시행령 제26조: 추정가격 5천만원 미만 물품·용역은 수의계약 가능"},
+  {q:"입찰공고 최소 기간은?", options:["3일","5일","7일","10일"], answer:2, explanation:"시행령 제33조: 일반경쟁입찰은 7일 이상 공고"},
+  {q:"계약보증금 비율은 계약금액의?", options:["5% 이상","10% 이상","15% 이상","20% 이상"], answer:1, explanation:"시행령 제50조: 계약금액의 10% 이상 (공사는 15%)"},
+  {q:"지체상금률 (공사, 1일당)은?", options:["0.5/1000","0.75/1000","1/1000","1.5/1000"], answer:2, explanation:"시행령 제74조: 공사 1/1000, 물품 0.75/1000, 용역 1.25/1000"},
+  {q:"물가변동 조정 요건 중 등락률 기준은?", options:["1% 이상","3% 이상","5% 이상","10% 이상"], answer:1, explanation:"시행령 제64조: 입찰일 기준 90일 이상 경과 + 3% 이상 등락"},
+  {q:"선급금 지급 한도는 계약금액의?", options:["30% 이내","50% 이내","70% 이내","100%"], answer:2, explanation:"시행령 제58조: 계약금액의 70% 이내"},
+  {q:"검사 완료 후 대가 지급 기한은?", options:["7일 이내","10일 이내","14일 이내","30일 이내"], answer:2, explanation:"국가계약법 제15조, 시행령 제55조: 검사 후 14일 이내"},
+  {q:"부정당업자 담합 시 제재기간은?", options:["6개월","1년","2년","3년"], answer:2, explanation:"시행령 제76조: 담합 시 2년 입찰참가자격 제한"},
+  {q:"하도급대금 지급 기한은 대금 수령 후?", options:["15일","30일","60일","90일"], answer:2, explanation:"하도급법 제13조: 대금 수령일로부터 60일 이내"},
+  {q:"WTO 정부조달협정 적용 공사 기준 금액은?", options:["100억 이상","200억 이상","300억 이상","500억 이상"], answer:2, explanation:"국제입찰 대상: 공사 300억 이상, 물품·용역 200억 이상"},
+];
+
+let quizState = { current: 0, score: 0, total: 5, questions: [] };
+
+function startQuiz() {
+  const shuffled = [...QUIZ_DATA].sort(() => Math.random() - 0.5);
+  quizState = { current: 0, score: 0, total: 5, questions: shuffled.slice(0, 5) };
+  showQuizQuestion();
+}
+
+function showQuizQuestion() {
+  const q = quizState.questions[quizState.current];
+  if (!q) { showQuizResult(); return; }
+
+  let existing = document.getElementById('quizArea');
+  if (!existing) {
+    existing = document.createElement('div');
+    existing.id = 'quizArea';
+    document.querySelector('.advisor-hero').appendChild(existing);
+  }
+
+  existing.innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-progress">${quizState.current + 1} / ${quizState.total}</div>
+      <div class="quiz-question">${escHtml(q.q)}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt, i) => `
+          <button class="quiz-opt" onclick="answerQuiz(${i})">${i+1}. ${escHtml(opt)}</button>
+        `).join('')}
+      </div>
+      <button class="btn btn-sm" onclick="document.getElementById('quizArea').remove()" style="margin-top:8px">닫기</button>
+    </div>
+  `;
+}
+
+function answerQuiz(idx) {
+  const q = quizState.questions[quizState.current];
+  const correct = idx === q.answer;
+  if (correct) quizState.score++;
+
+  const area = document.getElementById('quizArea');
+  area.innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-progress">${quizState.current + 1} / ${quizState.total}</div>
+      <div class="quiz-result-icon">${correct ? '&#x2705;' : '&#x274C;'}</div>
+      <div class="quiz-result-text">${correct ? '정답!' : '오답...'}</div>
+      <div class="quiz-explanation">${escHtml(q.explanation)}</div>
+      <button class="btn btn-accent btn-sm" onclick="quizState.current++;showQuizQuestion()" style="margin-top:12px">
+        ${quizState.current < quizState.total - 1 ? '다음 문제' : '결과 보기'}
+      </button>
+    </div>
+  `;
+}
+
+function showQuizResult() {
+  const area = document.getElementById('quizArea');
+  const pct = Math.round((quizState.score / quizState.total) * 100);
+  const grade = pct >= 80 ? '우수' : pct >= 60 ? '보통' : '노력 필요';
+
+  area.innerHTML = `
+    <div class="quiz-card">
+      <div class="quiz-result-icon" style="font-size:40px">&#x1F3C6;</div>
+      <div class="quiz-score">${quizState.score} / ${quizState.total} (${pct}%)</div>
+      <div class="quiz-grade">${grade}</div>
+      <div style="display:flex;gap:8px;margin-top:16px;justify-content:center">
+        <button class="btn btn-accent btn-sm" onclick="startQuiz()">다시 도전</button>
+        <button class="btn btn-sm" onclick="document.getElementById('quizArea').remove()">닫기</button>
+      </div>
+    </div>
+  `;
+
+  const stats = JSON.parse(localStorage.getItem('quizStats') || '{"attempts":0,"totalScore":0}');
+  stats.attempts++;
+  stats.totalScore += quizState.score;
+  localStorage.setItem('quizStats', JSON.stringify(stats));
+}
+
 // ===== Init =====
 document.addEventListener('DOMContentLoaded', async () => {
   await checkAuth();
   await Promise.all([loadCategories(), loadStats(), loadGlossary()]);
   setupEvents();
+  renderMyContracts();
   renderSearchHistory();
   renderSubscriptions();
   renderStats();
