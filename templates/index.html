@@ -1485,6 +1485,67 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
   animation: pulse 1.5s infinite;
 }
 
+/* Skeleton loading */
+.skeleton-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.skeleton-line {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-card) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite;
+  margin-bottom: 10px;
+}
+.skeleton-line.short { width: 40%; }
+.skeleton-line.medium { width: 70%; }
+.skeleton-line.long { width: 90%; }
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* First visit welcome banner */
+.welcome-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent);
+  color: #fff;
+  padding: 14px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 10000;
+  max-width: 460px;
+  width: 90%;
+  font-size: 14px;
+  line-height: 1.5;
+  animation: welcomeSlideUp 0.4s ease-out;
+}
+.welcome-banner-close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  cursor: pointer;
+  opacity: 0.8;
+}
+.welcome-banner-close:hover { opacity: 1; }
+.welcome-banner h4 { margin: 0 0 6px; font-size: 15px; }
+.welcome-banner p { margin: 0; opacity: 0.9; font-size: 13px; }
+@keyframes welcomeSlideUp {
+  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 .loading-inline {
   display: inline-flex;
   align-items: center;
@@ -4538,6 +4599,9 @@ function toast(msg, type='info') {
 
 function escHtml(t) {
   if (t == null) return '';
+  if (typeof t === 'object') {
+    t = Array.isArray(t) ? t.join(', ') : JSON.stringify(t);
+  }
   const d = document.createElement('div');
   d.textContent = String(t);
   return d.innerHTML;
@@ -5163,6 +5227,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // 첫 방문 안내 배너 (1회만 표시)
+  if (!localStorage.getItem('khnp_visited')) {
+    const banner = document.createElement('div');
+    banner.className = 'welcome-banner';
+    banner.setAttribute('role', 'status');
+    const bClose = document.createElement('button');
+    bClose.className = 'welcome-banner-close';
+    bClose.setAttribute('aria-label', '\uB2EB\uAE30');
+    bClose.innerHTML = '&times;';
+    bClose.onclick = function() { banner.remove(); };
+    banner.appendChild(bClose);
+    const bTitle = document.createElement('h4');
+    bTitle.textContent = '\uD55C\uC218\uC6D0 \uACC4\uC57D \uBC95\uB839 \uAC80\uC0C9 \uC2DC\uC2A4\uD15C\uC5D0 \uC624\uC2E0 \uAC83\uC744 \uD658\uC601\uD569\uB2C8\uB2E4';
+    banner.appendChild(bTitle);
+    const bDesc = document.createElement('p');
+    bDesc.textContent = 'AI \uC5B4\uB4DC\uBC14\uC774\uC800\uC5D0 \uC790\uC5F0\uC5B4\uB85C \uC9C8\uBB38\uD558\uAC70\uB098, 28\uAC1C \uD575\uC2EC \uBC95\uB839\uC744 \uCE74\uD14C\uACE0\uB9AC\uBCC4\uB85C \uD0D0\uC0C9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4. \uAC80\uC0C9\uCC3D\uC5D0 "\uACF5\uC0AC \uC785\uCC30 3\uC5B5"\uCC98\uB7FC \uAE08\uC561\uC744 \uD3EC\uD568\uD558\uBA74 \uACC4\uC57D\uBC29\uC2DD\uB3C4 \uC790\uB3D9 \uC548\uB0B4\uB429\uB2C8\uB2E4.';
+    banner.appendChild(bDesc);
+    document.body.appendChild(banner);
+    safeLSSet('khnp_visited', '1');
+    setTimeout(() => { if (banner.parentElement) banner.remove(); }, 12000);
+  }
+
   // 해시에서 법령 열기
   setTimeout(loadFromHash, 500);
   setTimeout(checkSubscriptionUpdates, 5000);
@@ -5602,7 +5688,10 @@ async function doSearch(q) {
   saveSearchStats(query);
   logActivity('search', query);
   showView('results');
-  $('#resultsList').innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">법령 데이터를 검색하고 AI 분석 중입니다...</div></div>';
+  $('#resultsList').innerHTML = `<div class="loading"><div class="spinner"></div><div class="loading-text">법령 데이터를 검색하고 AI 분석 중입니다...</div></div>
+    <div class="skeleton-card"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
+    <div class="skeleton-card"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
+    <div class="skeleton-card"><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>`;
   $('#resultsTitle').textContent = '';
   $('#resultsCount').textContent = '';
   const cat = $('#categoryFilter').value;
@@ -7245,7 +7334,9 @@ async function doAdvisor(q) {
   saveSearchStats(query);
   logActivity('search', query);
   showView('advisor');
-  $('#advList').innerHTML = '<div class="loading"><div class="spinner"></div><div class="loading-text">AI 어드바이저가 법령을 분석 중입니다...</div></div>';
+  $('#advList').innerHTML = `<div class="loading"><div class="spinner"></div><div class="loading-text">AI 어드바이저가 법령을 분석 중입니다...</div></div>
+    <div class="skeleton-card"><div class="skeleton-line long"></div><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>
+    <div class="skeleton-card"><div class="skeleton-line medium"></div><div class="skeleton-line short"></div></div>`;
   try {
     const data = await api(`/api/advisor?q=${encodeURIComponent(query)}`);
     renderAdvisor(data);
@@ -7925,11 +8016,12 @@ function toggleToc() {
 }
 
 // ===== View Management =====
-let previousView = 'welcome';
+let viewHistory = ['welcome'];
 
 function showView(view) {
-  if (currentView !== view && currentView !== 'viewer') {
-    previousView = currentView;
+  if (currentView !== view) {
+    viewHistory.push(currentView);
+    if (viewHistory.length > 20) viewHistory = viewHistory.slice(-10);
   }
   currentView = view;
   const isLanding = view === 'welcome';
@@ -7945,8 +8037,17 @@ function showView(view) {
 }
 
 function goBack() {
-  if (currentView === 'viewer') {
-    showView(previousView === 'results' ? 'results' : previousView === 'advisor' ? 'advisor' : 'welcome');
+  if (viewHistory.length > 0) {
+    let prev = viewHistory.pop();
+    // viewer에서 돌아갈 때 이전 viewer는 건너뛰고 results/advisor/welcome로
+    while (prev === 'viewer' && viewHistory.length > 0) {
+      prev = viewHistory.pop();
+    }
+    showView(prev || 'welcome');
+    // showView가 push했으므로 중복 제거
+    if (viewHistory.length > 0 && viewHistory[viewHistory.length - 1] === prev) {
+      viewHistory.pop();
+    }
   } else {
     showView('welcome');
   }

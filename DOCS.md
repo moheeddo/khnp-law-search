@@ -281,10 +281,45 @@ python build_index.py
 
 | 날짜 | 변경 내용 |
 |------|-----------|
+| 2026-04-04 | 4차 QA: Vercel 배포 검증, 엣지케이스 방어 강화, UX 개선 (스켈레톤 로딩, 첫 방문 안내, 뒤로가기 히스토리 스택), app.py 동기화 목록 정리 |
 | 2026-04-04 | 3차 QA: 성능 최적화 (응답 크기 축소, 검색 조기종료), 접근성 개선 (aria-label, 색상 대비), 보안 강화 (XSS 방어, 입력 길이 제한), font-display: swap |
 | 2026-04-03 | 2차 QA + 고도화: key_articles 누락 27건 보완, refData 변수 참조 버그 수정, 접기/펼치기 섹션 4종 추가, 로딩 인디케이터 개선, 에러 메시지 사용자 친화적 개선 |
 | 2026-04-03 | 3차 고도화: 금액별 계약방식 자동 판별 (공사/용역/물품, 6단계 금액 구간), 최근 검색 이력 (localStorage, 최대 10건), 유사 검색어 추천 (시나리오 키워드 기반) |
 | 2026-04-03 | 계약 프로세스 플로우 기능 추가: 검색 키워드 기반 6가지 계약 유형(입찰, 공사, 용역, 구매, 단가, 수의계약)의 단계별 프로세스를 시각적으로 표시. 백엔드 `PROCESS_FLOWS` 데이터 및 `get_reference_data` 연동, 프론트엔드 프로세스 다이어그램 렌더링 구현. |
+
+### 2026-04-04 (4차 QA)
+- **Vercel 배포 설정 검증**: vercel.json 라우트 우선순위(static -> api -> fallback) 정상, .vercelignore에서 data/*.json 및 static/frames/*.webp 미제외 확인, requirements.txt 패키지(flask, pyyaml) 완비 확인
+- **엣지케이스 방어 (백엔드)**:
+  - `parse_amount`: "1조" 단위 지원 추가, "1.5만원" 소수점 지원, 음수 금액("-5억") 거부를 위한 negative lookbehind 추가
+  - `get_contract_method`: amount=0/None/-1 방어 처리 추가, "1조원" 이상 금액 표시 지원
+- **엣지케이스 방어 (프론트엔드)**:
+  - `escHtml()`: 배열/객체 입력 시 `[object Object]` 대신 의미 있는 문자열로 변환 (Array.join, JSON.stringify)
+- **UX 개선**:
+  - 첫 방문 안내 배너: localStorage 기반 1회만 표시, 12초 후 자동 소멸, AI 어드바이저/금액 검색 안내
+  - 스켈레톤 로딩 UI: 검색 결과/어드바이저 로딩 시 shimmer 애니메이션 카드 표시
+  - 뒤로가기 히스토리 스택: `previousView` 단일 변수에서 `viewHistory` 배열로 변경, viewer->viewer(교차참조) 시 올바른 뷰로 복귀
+
+#### app.py 동기화 필요 목록
+
+api/index.py 기준으로 app.py에 누락된 항목:
+
+| 구분 | 항목 | 상세 |
+|------|------|------|
+| 시나리오 | 계약해지/해제, 계약내용변경 | 2개 시나리오 미반영 |
+| key_articles | ADVISOR_SCENARIOS 전체 | api/index.py 77건 vs app.py 2건 (Solar 프롬프트 내 예시만) |
+| 함수 (20개) | parse_amount, get_contract_method, get_reference_data, get_related_queries, get_method_comparison, get_required_docs, fetch_g2b_bids, summarize 등 | 금액 판별, 참고 데이터, 나라장터, AI 요약 등 핵심 기능 |
+| 라우트 (8개) | /api/bids, /api/glossary, /api/clauses, /api/law-diff, /api/templates, /api/check-updates, /api/law(query param 방식), /static/ | API 엔드포인트 미반영 |
+| 상수 (12개) | PROCESS_FLOWS, SPECIAL_CLAUSES, AUDIT_CASES, ROLE_MAP, LAW_SUMMARIES, GLOSSARY, PRACTICAL_QA, CONTRACT_TEMPLATES, CONTRACT_CLAUSES, LAW_DECREE_DIFF, RELATED_LAWS | 프로세스 플로우, 특약, 감사사례, 용어사전 등 데이터 |
+
+app.py에만 있는 항목 (Vercel에서 미사용):
+
+| 구분 | 항목 | 비고 |
+|------|------|------|
+| DB/인증 | get_db, init_db, hash_password, verify_password, login_required | SQLite DB + 세션 인증 (Vercel에서는 stub 처리) |
+| 인증 라우트 | /api/auth/login, /api/auth/register, /api/auth/logout | Vercel에서는 /api/auth/me만 stub |
+| 북마크 | add/delete/update/check_bookmark, bookmark_folders | 서버사이드 북마크 (Vercel에서는 localStorage만) |
+| 법령 빌드 | build_index, parse_frontmatter, extract_articles | legalize-kr 마크다운 파싱 (Vercel에서는 JSON 사용) |
+| 라우트 형식 | /api/law/<path:law_name> | Vercel은 /api/law?name= 방식 |
 
 ### 2026-04-04 (3차 QA)
 - **성능 최적화 (백엔드)**:

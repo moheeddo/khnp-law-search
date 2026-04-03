@@ -210,10 +210,11 @@ def call_solar(query, kw_result):
 def parse_amount(query):
     """검색어에서 금액 추출 (단위: 원)"""
     patterns = [
-        (r'(\d+(?:\.\d+)?)\s*억', 100000000),
-        (r'(\d+(?:,\d{3})*)\s*만\s*원', 10000),
-        (r'(\d+(?:\.\d+)?)\s*천만', 10000000),
-        (r'(\d+(?:,\d{3})*)\s*원', 1),
+        (r'(?<![-\d])(\d+(?:\.\d+)?)\s*조', 1000000000000),
+        (r'(?<![-\d])(\d+(?:\.\d+)?)\s*억', 100000000),
+        (r'(?<![-\d])(\d+(?:\.\d+)?)\s*천만', 10000000),
+        (r'(?<![-\d])(\d+(?:,\d{3})*(?:\.\d+)?)\s*만\s*원', 10000),
+        (r'(?<![-\d])(\d+(?:,\d{3})*)\s*원', 1),
     ]
     for pat, mult in patterns:
         m = re.search(pat, query)
@@ -224,6 +225,8 @@ def parse_amount(query):
 
 def get_contract_method(amount, query):
     """금액·유형별 계약방식 판별"""
+    if not amount or amount <= 0:
+        return {"amount": amount or 0, "amount_display": "0원", "method": "금액을 확인해주세요", "details": [], "warnings": []}
     q = query.lower()
     is_construction = any(kw in q for kw in ["공사","건설","시공","토목"])
     is_service = any(kw in q for kw in ["용역","설계","컨설팅","SW","IT"])
@@ -231,7 +234,9 @@ def get_contract_method(amount, query):
     result = {"amount": amount, "amount_display": "", "method": "", "details": [], "warnings": []}
 
     # 금액 표시
-    if amount >= 100000000:
+    if amount >= 1000000000000:
+        result["amount_display"] = f"{amount/1000000000000:.1f}조원"
+    elif amount >= 100000000:
         result["amount_display"] = f"{amount/100000000:.1f}억원"
     elif amount >= 10000:
         result["amount_display"] = f"{amount/10000:.0f}만원"
