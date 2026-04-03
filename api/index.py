@@ -1045,3 +1045,24 @@ def api_templates():
     if q:
         return jsonify([t for t in CONTRACT_TEMPLATES if q in t["name"].lower() or q in t["type"].lower()])
     return jsonify(CONTRACT_TEMPLATES)
+
+@app.route("/api/check-updates")
+def api_check_updates():
+    """구독 법령의 메타 정보 반환 (프론트에서 변경 비교)"""
+    names = request.args.get("names","").split(",")
+    index = get_index()
+    result = []
+    for name in names:
+        name = name.strip()
+        if not name or name not in index: continue
+        law = index[name]
+        for ft, fd in law["files"].items():
+            meta = fd.get("meta",{})
+            result.append({
+                "law": name,
+                "type": ft,
+                "enforcement": meta.get("시행일자",""),
+                "promulgation": meta.get("공포일자",""),
+                "status": meta.get("상태",""),
+            })
+    return jsonify(result)

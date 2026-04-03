@@ -3368,6 +3368,76 @@ kbd {
   transition: opacity var(--transition);
 }
 .mc-del:hover { opacity: 1; color: var(--danger); }
+.add-contract-form {
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  margin-bottom: 6px;
+  align-items: center;
+}
+.add-contract-form input {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 12px;
+  outline: none;
+}
+.mc-deadline {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.mc-deadline.mc-urgent {
+  color: var(--danger);
+  font-weight: 700;
+}
+.cal-upcoming {
+  margin-top: 8px;
+  padding: 8px 10px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.cal-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.cal-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-light);
+}
+.cal-item:last-child { border-bottom: none; }
+.cal-item.cal-urgent { color: var(--danger); }
+.cal-date {
+  font-weight: 600;
+  width: 70px;
+  flex-shrink: 0;
+}
+.cal-name { flex: 1; color: var(--text-secondary); }
+.cal-dday {
+  font-weight: 700;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  white-space: nowrap;
+}
+.cal-item.cal-urgent .cal-dday {
+  background: var(--danger-muted);
+  color: var(--danger);
+}
 
 /* ===== Quiz ===== */
 .quiz-card {
@@ -4062,6 +4132,40 @@ function renderSubscriptions() {
   `;
 }
 
+async function checkSubscriptionUpdates() {
+  const subs = getSubscriptions();
+  if (!subs.length) return;
+
+  const names = subs.map(s => s.law).join(',');
+  const data = await api('/api/check-updates?names=' + encodeURIComponent(names));
+  if (!data?.length) return;
+
+  let alerts = [];
+  for (const s of subs) {
+    const current = data.find(d => d.law === s.law);
+    if (!current) continue;
+
+    const currentMeta = `${current.enforcement}|${current.promulgation}|${current.status}`;
+
+    if (s.savedMeta && s.savedMeta !== currentMeta) {
+      alerts.push({
+        law: s.law,
+        msg: `시행일: ${current.enforcement}, 상태: ${current.status}`,
+        type: 'changed',
+      });
+    }
+
+    s.savedMeta = currentMeta;
+  }
+  saveSubscriptions(subs);
+
+  if (alerts.length) {
+    alerts.forEach(a => {
+      toast(`법령 변경 감지: ${a.law}`, 'info');
+    });
+  }
+}
+
 function highlight(text, keywords) {
   if (!text || !keywords.length) return text || '';
   let r = text;
@@ -4155,18 +4259,77 @@ function saveMyContracts(list) {
 }
 
 function addContract() {
-  const name = prompt('계약명을 입력하세요 (예: 수산물 단가계약)');
-  if (!name) return;
+  let existing = document.getElementById('addContractForm');
+  if (existing) { existing.remove(); return; }
+
+  const form = document.createElement('div');
+  form.id = 'addContractForm';
+  form.className = 'add-contract-form';
+  form.innerHTML = `
+    <input type="text" id="newContractName" placeholder="계약명 (예: 수산물 단가계약)" style="flex:1">
+    <input type="date" id="newContractDeadline" title="마감일">
+    <button class="btn btn-sm btn-accent" onclick="saveNewContract()">추가</button>
+    <button class="btn btn-sm" onclick="this.parentElement.remove()">취소</button>
+  `;
+
+  const mcEl = document.getElementById('myContracts');
+  mcEl.querySelector('.my-contracts-list')?.insertAdjacentElement('beforebegin', form);
+}
+
+function saveNewContract() {
+  const name = document.getElementById('newContractName').value.trim();
+  if (!name) { toast('계약명을 입력하세요', 'info'); return; }
+  const deadline = document.getElementById('newContractDeadline').value;
+
   const contracts = getMyContracts();
   contracts.push({
     id: Date.now(),
     name: name,
     status: '준비',
+    deadline: deadline || '',
     createdAt: new Date().toISOString(),
-    notes: '',
   });
   saveMyContracts(contracts);
+  document.getElementById('addContractForm')?.remove();
   renderMyContracts();
+}
+
+function isDueSoon(dateStr) {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  const diff = (d - new Date()) / (1000*60*60*24);
+  return diff >= 0 && diff <= 7;
+}
+
+function renderCalendarView() {
+  const contracts = getMyContracts().filter(c => c.deadline);
+  if (!contracts.length) return '';
+
+  const today = new Date();
+  const nextWeek = new Date(today);
+  nextWeek.setDate(today.getDate() + 14);
+
+  const upcoming = contracts.filter(c => {
+    const d = new Date(c.deadline);
+    return d >= today && d <= nextWeek;
+  }).sort((a,b) => new Date(a.deadline) - new Date(b.deadline));
+
+  if (!upcoming.length) return '';
+
+  let html = '<div class="cal-upcoming"><div class="cal-title">&#x1F4C5; 다가오는 일정 (2주)</div>';
+  upcoming.forEach(c => {
+    const d = new Date(c.deadline);
+    const diff = Math.ceil((d - today) / (1000*60*60*24));
+    const days = ['일','월','화','수','목','금','토'];
+    const urgent = diff <= 3;
+    html += `<div class="cal-item ${urgent ? 'cal-urgent' : ''}">
+      <span class="cal-date">${d.getMonth()+1}/${d.getDate()} (${days[d.getDay()]})</span>
+      <span class="cal-name">${escHtml(c.name)}</span>
+      <span class="cal-dday">${diff === 0 ? 'D-Day' : `D-${diff}`}</span>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
 }
 
 function updateContractStatus(id, status) {
@@ -4214,10 +4377,12 @@ function renderMyContracts() {
         </select>
       </div>
       <div class="mc-name" onclick="searchContract('${escHtml(c.name)}')" title="클릭하면 관련 법령 검색">${escHtml(c.name)}</div>
+      ${c.deadline ? `<span class="mc-deadline ${isDueSoon(c.deadline) ? 'mc-urgent' : ''}">${c.deadline}</span>` : ''}
       <button class="mc-del" onclick="deleteContract(${c.id})" title="삭제">&#x2715;</button>
     </div>`;
   });
   html += '</div>';
+  html += renderCalendarView();
   el.innerHTML = html;
 }
 
@@ -4362,6 +4527,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 해시에서 법령 열기
   setTimeout(loadFromHash, 500);
+  setTimeout(checkSubscriptionUpdates, 5000);
 });
 
 // ===== Search History =====
