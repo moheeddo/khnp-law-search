@@ -4472,7 +4472,6 @@ kbd {
     img.onload = () => {
       loaded++;
       if (loaded === 1) drawFrame(0); // draw first frame immediately
-      if (loaded === FRAME_COUNT) console.log('All hero frames loaded');
     };
     frames.push(img);
   }
