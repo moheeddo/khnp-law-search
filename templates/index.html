@@ -1834,6 +1834,67 @@ body.landing .landing-wrap { display: flex; }
   background: var(--border);
 }
 
+/* Process flow */
+.process-flow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  overflow-x: auto;
+  padding: 16px 0;
+  margin: 8px 0;
+}
+.process-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 110px;
+  max-width: 130px;
+  text-align: center;
+  position: relative;
+  flex-shrink: 0;
+}
+.process-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  position: relative;
+  z-index: 1;
+}
+.process-step-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.process-step-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.process-step-law {
+  font-size: 9px;
+  color: var(--accent);
+  margin-top: 3px;
+  cursor: pointer;
+}
+.process-step-law:hover { text-decoration: underline; }
+.process-arrow {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: 16px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
 /* Alio reference cards */
 .alio-ref-card {
   display: flex;
@@ -2967,6 +3028,23 @@ function renderSmartResults(searchResults, advisorData, query) {
       }
       html += '</div>';
     }
+  }
+
+  // 3.5. 계약 프로세스 플로우
+  const refData0 = advisorData?.ref_data;
+  if (refData0?.process?.length) {
+    html += '<div class="smart-divider">계약 프로세스</div>';
+    html += '<div class="process-flow">';
+    refData0.process.forEach((s, i) => {
+      if (i > 0) html += '<div class="process-arrow">&#8594;</div>';
+      html += `<div class="process-step">
+        <div class="process-step-num">${i+1}</div>
+        <div class="process-step-name">${escHtml(s.step)}</div>
+        <div class="process-step-desc">${escHtml(s.desc)}</div>
+        ${s.law ? `<div class="process-step-law">${escHtml(s.law)}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
   }
 
   // 4. 조문 검색 결과 (키워드 매칭)
