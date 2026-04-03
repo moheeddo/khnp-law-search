@@ -57,6 +57,7 @@
   --switch-knob: #ffffff;
   --smart-banner-bg: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(37,99,235,0.06) 100%);
   --option-bg: #ffffff;
+  --bg-card: #ffffff;
 }
 
 [data-theme="dark"] {
@@ -90,6 +91,7 @@
   --switch-knob: #e8eaed;
   --smart-banner-bg: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(37,99,235,0.1) 100%);
   --option-bg: #22262f;
+  --bg-card: #1a1d27;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1578,6 +1580,30 @@ mark { background: rgba(37,99,235,0.12); color: var(--accent); padding: 0 2px; b
   border-radius: var(--radius-sm);
   display: inline-block;
 }
+
+/* ===== Scroll to Top ===== */
+.scroll-top-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  z-index: 1500;
+  transition: all var(--transition);
+  opacity: 0.9;
+}
+.scroll-top-btn:hover { opacity: 1; transform: scale(1.1); }
+.scroll-top-btn.visible { display: flex; }
 
 /* ===== Toast ===== */
 .toast-container {
@@ -4328,6 +4354,9 @@ kbd {
 <!-- Toast Container -->
 <div class="toast-container" id="toasts"></div>
 
+<!-- Scroll to Top Button -->
+<button class="scroll-top-btn" id="scrollTopBtn" onclick="scrollToTop()" aria-label="맨 위로 스크롤">&#x2191;</button>
+
 <!-- Main -->
 <!-- Landing (full-width, no sidebar) -->
 <div class="landing-wrap" id="landingWrap">
@@ -4596,6 +4625,24 @@ function toast(msg, type='info') {
   $('#toasts').appendChild(el);
   setTimeout(() => el.remove(), 3000);
 }
+
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  const lawBody = document.getElementById('lawBody');
+  if (lawBody) lawBody.scrollTop = 0;
+}
+
+// Show/hide scroll-to-top button on scroll
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scrollTopBtn');
+  if (btn) {
+    if (window.scrollY > 400) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }
+}, { passive: true });
 
 function escHtml(t) {
   if (t == null) return '';
@@ -5327,14 +5374,14 @@ function renderStats() {
 
 function setupEvents() {
   // Advisor
-  $('#advisorInput').addEventListener('keydown', e => { if (e.key === 'Enter') doAdvisor(); });
+  $('#advisorInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); doAdvisor(); } });
   $('#advisorBtn').addEventListener('click', () => doAdvisor());
   $$('.adv-example').forEach(t => t.addEventListener('click', () => {
     $('#advisorInput').value = t.dataset.q;
     doAdvisor();
   }));
   // Law search
-  $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+  $('#searchInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.target.blur(); doSearch(); } });
   $('#searchBtn').addEventListener('click', () => doSearch());
   $$('.quick-tag').forEach(t => t.addEventListener('click', () => {
     $('#searchInput').value = t.dataset.q;
