@@ -4014,6 +4014,50 @@ kbd {
 }
 .law-note-content textarea:focus { border-color: var(--accent); }
 
+/* ===== Contract Comparison ===== */
+.compare-contracts-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-top: 12px;
+}
+.compare-contracts-table th {
+  text-align: center;
+  padding: 8px;
+  border-bottom: 2px solid var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.compare-contracts-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  color: var(--text-secondary);
+}
+.cc-label {
+  text-align: left !important;
+  font-weight: 600;
+  color: var(--text-primary) !important;
+  width: 80px;
+}
+.cc-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.cc-law-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  margin: 2px;
+}
+.cc-common { background: var(--accent-muted); color: var(--accent); }
+.cc-only1 { background: var(--warn-muted); color: var(--warn); }
+.cc-only2 { background: var(--purple-muted); color: var(--purple); }
+
 </style>
 </head>
 <body class="landing">
@@ -4205,6 +4249,7 @@ kbd {
     </div>
     <div style="margin-top:12px;text-align:center">
       <button class="btn btn-sm" onclick="exportDailyLog()">&#x1F4DD; 오늘의 업무일지</button>
+      <button class="btn btn-sm" onclick="exportWeeklyReport()" style="margin-left:4px">&#x1F4CA; 주간 리포트</button>
       <button class="btn btn-sm" onclick="showCacheStatus()" style="margin-left:8px">&#x1F4E5; 오프라인 저장 관리</button>
     </div>
   </div>
@@ -4719,10 +4764,11 @@ function renderMyContracts() {
   };
   const statuses = ['준비','입찰중','계약체결','이행중','완료'];
 
-  let html = '<div class="my-contracts-head"><span>&#x1F4BC; 나의 계약</span><button class="btn btn-sm" onclick="addContract()">+ 추가</button></div>';
+  let html = '<div class="my-contracts-head"><span>&#x1F4BC; 나의 계약</span><div><button class="btn btn-sm" id="compareCBtn" onclick="compareContracts()" style="display:none">&#x2194; 비교</button><button class="btn btn-sm" onclick="addContract()">+ 추가</button></div></div>';
   html += '<div class="my-contracts-list">';
   contracts.forEach(c => {
     html += `<div class="my-contract-item">
+      <input type="checkbox" class="mc-check" value="${c.id}" onchange="updateCompareBtn()">
       <div class="mc-status" style="color:${statusColors[c.status] || ''}">
         <select onchange="updateContractStatus(${c.id}, this.value)" style="font-size:11px;padding:2px 4px;border:1px solid var(--border);border-radius:4px;background:var(--bg-input);color:inherit;cursor:pointer">
           ${statuses.map(s => `<option value="${s}" ${s===c.status?'selected':''}>${s}</option>`).join('')}
@@ -6264,6 +6310,163 @@ function exportDailyLog() {
   a.click();
   URL.revokeObjectURL(a.href);
   toast('업무일지가 생성되었습니다', 'success');
+}
+
+// ===== 두 계약 비교 분석 =====
+function updateCompareBtn() {
+  const checked = document.querySelectorAll('.mc-check:checked');
+  const btn = document.getElementById('compareCBtn');
+  if (btn) btn.style.display = checked.length === 2 ? '' : 'none';
+}
+
+async function compareContracts() {
+  const checked = [...document.querySelectorAll('.mc-check:checked')];
+  if (checked.length !== 2) return;
+
+  const contracts = getMyContracts();
+  const c1 = contracts.find(c => c.id === parseInt(checked[0].value));
+  const c2 = contracts.find(c => c.id === parseInt(checked[1].value));
+  if (!c1 || !c2) return;
+
+  toast('두 계약을 분석 중...', 'info');
+
+  const [r1, r2] = await Promise.all([
+    api('/api/advisor?q=' + encodeURIComponent(c1.name)),
+    api('/api/advisor?q=' + encodeURIComponent(c2.name)),
+  ]);
+
+  const div = document.createElement('div');
+  div.className = 'modal-overlay visible';
+  div.onclick = () => div.remove();
+
+  const laws1 = new Set((r1.recommendations||[]).map(r=>r.law));
+  const laws2 = new Set((r2.recommendations||[]).map(r=>r.law));
+  const common = [...laws1].filter(l => laws2.has(l));
+  const only1 = [...laws1].filter(l => !laws2.has(l));
+  const only2 = [...laws2].filter(l => !laws1.has(l));
+
+  const rd1 = r1.ref_data || {};
+  const rd2 = r2.ref_data || {};
+
+  let h = `<div class="modal" style="width:600px;max-height:80vh;overflow-y:auto" onclick="event.stopPropagation()">
+    <h2>&#x2194; 계약 비교 분석</h2>
+    <table class="compare-contracts-table">
+      <thead><tr><th></th><th>${escHtml(c1.name)}</th><th>${escHtml(c2.name)}</th></tr></thead>
+      <tbody>
+        <tr><td class="cc-label">상태</td><td>${c1.status}</td><td>${c2.status}</td></tr>
+        <tr><td class="cc-label">마감일</td><td>${c1.deadline||'-'}</td><td>${c2.deadline||'-'}</td></tr>
+        <tr><td class="cc-label">계약방식</td><td>${rd1.contract_method?.method||'-'}</td><td>${rd2.contract_method?.method||'-'}</td></tr>
+        <tr><td class="cc-label">위험도</td>
+          <td style="color:${(rd1.risk_score?.score||0)<60?'var(--success)':'var(--danger)'}">${rd1.risk_score?.score||'-'}점</td>
+          <td style="color:${(rd2.risk_score?.score||0)<60?'var(--success)':'var(--danger)'}">${rd2.risk_score?.score||'-'}점</td>
+        </tr>
+        <tr><td class="cc-label">추천법령</td><td>${(r1.recommendations||[]).length}건</td><td>${(r2.recommendations||[]).length}건</td></tr>
+        <tr><td class="cc-label">리스크</td><td>${(rd1.risks||[]).length}건</td><td>${(rd2.risks||[]).length}건</td></tr>
+        <tr><td class="cc-label">프로세스</td><td>${(rd1.process||[]).length}단계</td><td>${(rd2.process||[]).length}단계</td></tr>
+      </tbody>
+    </table>
+
+    <div style="margin-top:16px">
+      <div class="cc-section-title">공통 법령 (${common.length}건)</div>
+      ${common.map(l => `<span class="cc-law-chip cc-common">${escHtml(l.length>15?l.substring(0,15)+'\u2026':l)}</span>`).join(' ')}
+
+      <div class="cc-section-title" style="margin-top:10px">${escHtml(c1.name)}에만 해당 (${only1.length}건)</div>
+      ${only1.map(l => `<span class="cc-law-chip cc-only1">${escHtml(l.length>15?l.substring(0,15)+'\u2026':l)}</span>`).join(' ')}
+
+      <div class="cc-section-title" style="margin-top:10px">${escHtml(c2.name)}에만 해당 (${only2.length}건)</div>
+      ${only2.map(l => `<span class="cc-law-chip cc-only2">${escHtml(l.length>15?l.substring(0,15)+'\u2026':l)}</span>`).join(' ')}
+    </div>
+
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn btn-accent" onclick="this.closest('.modal-overlay').remove()">확인</button>
+    </div>
+  </div>`;
+
+  div.innerHTML = h;
+  document.body.appendChild(div);
+}
+
+// ===== 주간 업무 리포트 =====
+function exportWeeklyReport() {
+  const stats = JSON.parse(localStorage.getItem('searchStats') || '{"total":0,"weekly":{},"keywords":{}}');
+  const logs = JSON.parse(localStorage.getItem('activityLog') || '[]');
+  const contracts = getMyContracts();
+  const subs = getSubscriptions();
+  const today = new Date();
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  const weekStartStr = weekStart.toISOString().split('T')[0];
+
+  let weekSearches = 0;
+  for (const [date, count] of Object.entries(stats.weekly || {})) {
+    if (date >= weekStartStr) weekSearches += count;
+  }
+
+  const weekLogs = logs.filter(l => l.time >= weekStartStr + 'T00:00:00');
+  const searches = weekLogs.filter(l => l.type === 'search');
+  const views = weekLogs.filter(l => l.type === 'view');
+  const downloads = weekLogs.filter(l => l.type === 'download');
+
+  const kwFreq = {};
+  searches.forEach(s => {
+    s.detail.split(/\s+/).forEach(kw => {
+      if (kw.length >= 2) kwFreq[kw] = (kwFreq[kw]||0) + 1;
+    });
+  });
+  const topKws = Object.entries(kwFreq).sort((a,b)=>b[1]-a[1]).slice(0,10);
+
+  let r = '';
+  r += '\u2554\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2557\n';
+  r += '\u2551         \uC8FC \uAC04 \uC5C5 \uBB34 \uB9AC \uD3EC \uD2B8         \u2551\n';
+  r += '\u255A\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u255D\n\n';
+  r += `\uAE30\uAC04: ${weekStart.toLocaleDateString('ko-KR')} ~ ${today.toLocaleDateString('ko-KR')}\n`;
+  r += `\uC791\uC131\uC790: ${currentUser?.display_name || '________'}\n`;
+  r += `\uBD80\uC11C: ${currentUser?.department || '________'}\n\n`;
+
+  r += '\u2501\u2501\u2501 1. \uD65C\uB3D9 \uC694\uC57D \u2501\u2501\u2501\n';
+  r += `  \uAC80\uC0C9: ${weekSearches}\uD68C\n`;
+  r += `  \uBC95\uB839 \uC5F4\uB78C: ${views.length}\uAC74\n`;
+  r += `  \uB9AC\uD3EC\uD2B8 \uC0DD\uC131: ${downloads.length}\uAC74\n`;
+  r += `  \uC9C4\uD589 \uACC4\uC57D: ${contracts.filter(c=>c.status!=='\uC644\uB8CC').length}\uAC74\n`;
+  r += `  \uAD6C\uB3C5 \uBC95\uB839: ${subs.length}\uAC74\n\n`;
+
+  if (topKws.length) {
+    r += '\u2501\u2501\u2501 2. \uC8FC\uC694 \uAC80\uC0C9 \uD0A4\uC6CC\uB4DC \u2501\u2501\u2501\n';
+    topKws.forEach(([kw, cnt], i) => { r += `  ${i+1}. ${kw} (${cnt}\uD68C)\n`; });
+    r += '\n';
+  }
+
+  if (contracts.length) {
+    r += '\u2501\u2501\u2501 3. \uACC4\uC57D \uD604\uD669 \u2501\u2501\u2501\n';
+    const statusCount = {};
+    contracts.forEach(c => { statusCount[c.status] = (statusCount[c.status]||0) + 1; });
+    Object.entries(statusCount).forEach(([s,n]) => { r += `  ${s}: ${n}\uAC74\n`; });
+    r += '\n  [\uC0C1\uC138]\n';
+    contracts.forEach(c => {
+      r += `  - ${c.name} [${c.status}]`;
+      if (c.deadline) r += ` (\uB9C8\uAC10: ${c.deadline})`;
+      r += '\n';
+    });
+    r += '\n';
+  }
+
+  r += '\u2501\u2501\u2501 4. \uB2E4\uC74C \uC8FC \uACC4\uD68D \u2501\u2501\u2501\n';
+  r += '  \u25CB \n';
+  r += '  \u25CB \n\n';
+
+  r += '\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\n';
+  r += '\uD55C\uC218\uC6D0 \uACC4\uC57D \uBC95\uB839 \uAC80\uC0C9 \uC2DC\uC2A4\uD15C \uC790\uB3D9 \uC0DD\uC131\n';
+
+  navigator.clipboard.writeText(r).then(() => {
+    toast('\uC8FC\uAC04 \uB9AC\uD3EC\uD2B8\uAC00 \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uB418\uC5C8\uC2B5\uB2C8\uB2E4', 'success');
+  });
+
+  const blob = new Blob([r], {type:'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `\uC8FC\uAC04\uB9AC\uD3EC\uD2B8_${today.toISOString().split('T')[0]}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 // 나라장터 입찰공고 비동기 로드
