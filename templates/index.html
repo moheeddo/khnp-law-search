@@ -4332,23 +4332,28 @@ kbd {
       <div class="sc-chip" onclick="doAdvisor('발전 전력거래 송전')"><span class="chip-icon">&#9889;</span>전력</div>
       <div class="sc-chip" onclick="doAdvisor('안전 산업재해')"><span class="chip-icon">&#x1F6E1;</span>안전</div>
     </div>
-    <div style="margin-top:8px">
-      <button class="btn" onclick="doAdvisor('계약보증금')" style="font-size:12px;padding:6px 14px;border-radius:var(--radius-xl);background:var(--accent-muted);color:var(--accent);border-color:var(--accent);font-weight:600">&#x1F4CB; 계약서 조항 ↔ 법령 매핑</button>
-    </div>
-    <div style="margin-top:20px">
-      <button class="btn" onclick="openSimulator()" style="padding:10px 20px;font-size:14px;margin-right:8px">&#x1F4B0; 비용 시뮬레이터</button>
-      <button class="btn btn-accent" onclick="startWizard()" style="padding:10px 24px;font-size:14px">&#x1F9ED; 계약유형 가이드</button>
-    </div>
-    <div class="shortcuts-hint">
-      <span><kbd>/</kbd> 검색</span>
-      <span><kbd>Esc</kbd> 뒤로</span>
-      <span><kbd>Ctrl+H</kbd> 홈</span>
-      <button class="btn btn-sm" onclick="startQuiz()" style="margin-left:8px">&#x1F4DA; 법령 퀴즈</button>
-    </div>
-    <div style="margin-top:12px;text-align:center">
-      <button class="btn btn-sm" onclick="exportDailyLog()">&#x1F4DD; 오늘의 업무일지</button>
-      <button class="btn btn-sm" onclick="exportWeeklyReport()" style="margin-left:4px">&#x1F4CA; 주간 리포트</button>
-      <button class="btn btn-sm" onclick="showCacheStatus()" style="margin-left:8px">&#x1F4E5; 오프라인 저장 관리</button>
+    <div class="tools-toggle-wrap" style="margin-top:16px;text-align:center">
+      <button class="btn btn-sm" onclick="toggleLandingTools()" id="toolsToggleBtn" style="font-size:12px;color:var(--text-muted);border-color:var(--border-light)">&#x1F527; 도구 모음 펼치기 &#x25BC;</button>
+      <div id="landingToolsArea" style="display:none;margin-top:12px">
+        <div style="margin-bottom:8px">
+          <button class="btn" onclick="doAdvisor('계약보증금')" style="font-size:12px;padding:6px 14px;border-radius:var(--radius-xl);background:var(--accent-muted);color:var(--accent);border-color:var(--accent);font-weight:600">&#x1F4CB; 계약서 조항 &#x2194; 법령 매핑</button>
+        </div>
+        <div style="margin-bottom:12px">
+          <button class="btn" onclick="openSimulator()" style="padding:10px 20px;font-size:14px;margin-right:8px">&#x1F4B0; 비용 시뮬레이터</button>
+          <button class="btn btn-accent" onclick="startWizard()" style="padding:10px 24px;font-size:14px">&#x1F9ED; 계약유형 가이드</button>
+        </div>
+        <div class="shortcuts-hint">
+          <span><kbd>/</kbd> 검색</span>
+          <span><kbd>Esc</kbd> 뒤로</span>
+          <span><kbd>Ctrl+H</kbd> 홈</span>
+          <button class="btn btn-sm" onclick="startQuiz()" style="margin-left:8px">&#x1F4DA; 법령 퀴즈</button>
+        </div>
+        <div style="margin-top:12px;text-align:center">
+          <button class="btn btn-sm" onclick="exportDailyLog()">&#x1F4DD; 오늘의 업무일지</button>
+          <button class="btn btn-sm" onclick="exportWeeklyReport()" style="margin-left:4px">&#x1F4CA; 주간 리포트</button>
+          <button class="btn btn-sm" onclick="showCacheStatus()" style="margin-left:8px">&#x1F4E5; 오프라인 저장 관리</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -4531,11 +4536,19 @@ let _currentTimeline = null; // 날짜 계산기용 타임라인 데이터
 const $ = s => document.querySelector(s);
 const $$ = s => document.querySelectorAll(s);
 const api = async (path, opts) => {
-  const res = await fetch(path, opts);
-  if (!res.ok && res.status !== 400) {
-    console.error(`API error: ${res.status} ${path}`);
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(path, opts);
+      if (!res.ok && res.status !== 400) {
+        console.error(`API error: ${res.status} ${path}`);
+      }
+      return await res.json();
+    } catch (e) {
+      if (attempt === 0) { await new Promise(r => setTimeout(r, 1000)); continue; }
+      console.error('API fetch failed:', path, e);
+      return null;
+    }
   }
-  return res.json();
 };
 const post = (path, data) => api(path, {
   method: 'POST',
@@ -4559,6 +4572,15 @@ function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
   const lawBody = document.getElementById('lawBody');
   if (lawBody) lawBody.scrollTop = 0;
+}
+
+function toggleLandingTools() {
+  const area = document.getElementById('landingToolsArea');
+  const btn = document.getElementById('toolsToggleBtn');
+  if (!area || !btn) return;
+  const hidden = area.style.display === 'none';
+  area.style.display = hidden ? 'block' : 'none';
+  btn.innerHTML = hidden ? '&#x1F527; 도구 모음 접기 &#x25B2;' : '&#x1F527; 도구 모음 펼치기 &#x25BC;';
 }
 
 // Show/hide scroll-to-top button on scroll
@@ -5791,8 +5813,10 @@ function renderSmartResults(searchResults, advisorData, query) {
   }
 
   let html = '<div class="smart-results">';
+  const refData0 = advisorData?.ref_data;
+  const refData = refData0; // alias for compatibility
 
-  // 1. 추론 배너
+  // ── 1. 추론 배너 ──
   const inferredTitle = inferContext(query);
   const inferredSub = hasAdvisor ? inferSubtitle(query, advisorData.categories) : '키워드 매칭으로 관련 법령을 검색했습니다';
   const isSolar = advisorData?.source === 'solar';
@@ -5811,24 +5835,13 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>
   `;
 
-  // 2. AI 분석 (Solar)
-  if (advisorData?.analysis) {
-    html += `
-      <div class="smart-ai-box">
-        <div class="smart-ai-label">&#9889; AI 분석</div>
-        <div class="smart-ai-text">${escHtml(advisorData.analysis)}</div>
-      </div>
-    `;
-  }
-
-  // 2.5. 요약 대시보드
-  const refDataPre = advisorData?.ref_data;
+  // ── 2. 요약 대시보드 + 위험도 점수 ──
   const summaryStats = {
     laws: hasAdvisor ? advisorData.recommendations.length : 0,
-    articles: refDataPre?.articles?.length || 0,
-    cases: refDataPre?.cases?.length || 0,
-    process: refDataPre?.process?.length || 0,
-    qa: refDataPre?.qa?.length || 0,
+    articles: refData0?.articles?.length || 0,
+    cases: refData0?.cases?.length || 0,
+    process: refData0?.process?.length || 0,
+    qa: refData0?.qa?.length || 0,
   };
   if (summaryStats.laws > 0) {
     html += `<div class="summary-dash">
@@ -5840,11 +5853,9 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>`;
   }
 
-  // 2.6. 위험도 게이지
-  if (refDataPre?.risk_score) {
-    const rs = refDataPre.risk_score;
+  if (refData0?.risk_score) {
+    const rs = refData0.risk_score;
     const color = rs.score < 30 ? 'var(--success)' : rs.score < 60 ? 'var(--warn)' : 'var(--danger)';
-    const bgColor = rs.score < 30 ? 'var(--success-muted)' : rs.score < 60 ? 'var(--warn-muted)' : 'var(--danger-muted)';
 
     html += `<div class="risk-score-card">
       <div class="rs-gauge">
@@ -5862,9 +5873,18 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>`;
   }
 
-  // 3. 어드바이저 추천 법령 (우선순위별 그룹)
+  // ── 3. AI 분석 (Solar) ──
+  if (advisorData?.analysis) {
+    html += `
+      <div class="smart-ai-box">
+        <div class="smart-ai-label">&#9889; AI 분석</div>
+        <div class="smart-ai-text">${escHtml(advisorData.analysis)}</div>
+      </div>
+    `;
+  }
+
+  // ── 4. 추천 법령 (우선순위별 그룹) ──
   if (hasAdvisor) {
-    // Store advisor data for openFromSmartAdvisor
     lastAdvisorData = advisorData;
 
     const priorityGroups = {
@@ -5912,15 +5932,14 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 3.3. 주요 법령 요약 카드
-  const refData0 = advisorData?.ref_data;
+  // ── 4.5. 주요 법령 요약 카드 ──
   if (refData0?.law_cards?.length) {
     html += '<div class="law-cards-grid">';
     refData0.law_cards.forEach(lc => {
       const pColor = lc.priority === '필수' ? 'var(--danger)' : lc.priority === '권장' ? 'var(--accent)' : 'var(--text-muted)';
       html += `<div class="law-summary-card" onclick="openLaw('${escHtml(lc.law)}','${escHtml(lc.type)}')">
         <div class="lsc-badge" style="color:${pColor}">${escHtml(lc.priority)}</div>
-        <div class="lsc-name">${escHtml(lc.law.length > 16 ? lc.law.substring(0,16)+'…' : lc.law)}</div>
+        <div class="lsc-name">${escHtml(lc.law.length > 16 ? lc.law.substring(0,16)+'\u2026' : lc.law)}</div>
         <div class="lsc-short">${escHtml(lc.short)}</div>
         <div class="lsc-scope">${escHtml(lc.scope)}</div>
         <div class="lsc-key">${escHtml(lc.key)}</div>
@@ -5929,7 +5948,7 @@ function renderSmartResults(searchResults, advisorData, query) {
     html += '</div>';
   }
 
-  // 3.4. 금액별 계약방식 판별
+  // ── 5. 금액별 계약방식 + 계산기 (금액 있을 때) ──
   if (refData0?.contract_method) {
     const cm = refData0.contract_method;
     html += `
@@ -5946,7 +5965,6 @@ function renderSmartResults(searchResults, advisorData, query) {
           ${cm.warnings?.length ? `<div class="cm-warnings">${cm.warnings.map(w => `<div class="cm-warn-item">&#x26A0; ${escHtml(w)}</div>`).join('')}</div>` : ''}
         </div>
       </div>`;
-    // 계약금액 자동 계산기
     if (cm.amount) {
       const amt = cm.amount;
       const calcItems = [
@@ -5977,7 +5995,7 @@ function renderSmartResults(searchResults, advisorData, query) {
     }
   }
 
-  // 3.4.5. 계약방식 비교표
+  // ── 6. 계약방식 비교표 ──
   if (refData0?.method_comparison) {
     const mc = refData0.method_comparison;
     html += `<div class="method-compare">
@@ -6003,7 +6021,101 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>`;
   }
 
-  // 3.4.6. 필수 제출 서류
+  // ── 7. 프로세스 플로우 + 타임라인 + 일정 계산기 ──
+  if (refData0?.process?.length) {
+    html += '<div class="smart-divider">계약 프로세스</div>';
+    html += '<div class="process-flow">';
+    refData0.process.forEach((s, i) => {
+      if (i > 0) html += '<div class="process-arrow">&#8594;</div>';
+      html += `<div class="process-step">
+        <div class="process-step-num">${i+1}</div>
+        <div class="process-step-name">${escHtml(s.step)}</div>
+        <div class="process-step-desc">${escHtml(s.desc)}</div>
+        ${s.law ? `<div class="process-step-law">${escHtml(s.law)}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  if (refData0?.timeline) {
+    const tl = refData0.timeline;
+    _currentTimeline = tl;
+    html += `<div class="timeline-summary">예상 소요기간: <strong>${tl.total_days}일</strong> (약 ${Math.ceil(tl.total_days/30)}개월)</div>`;
+    html += '<div class="timeline-bar">';
+    for (const s of tl.steps) {
+      const pct = Math.max(2, (s.duration / tl.total_days) * 100);
+      html += `<div class="tl-segment" style="flex:${pct}" title="${escHtml(s.step)}: ${s.duration}일">
+        <div class="tl-seg-label">${escHtml(s.step)}</div>
+        <div class="tl-seg-days">${s.duration}일</div>
+      </div>`;
+    }
+    html += '</div>';
+    html += `<div class="date-calc">
+      <div class="date-calc-head">
+        <span>&#x1F4C5; 시작일 기준 일정 계산</span>
+        <input type="date" id="scheduleStartDate" value="${new Date().toISOString().split('T')[0]}" onchange="calcSchedule()">
+      </div>
+      <div id="scheduleResult" class="schedule-result"></div>
+    </div>`;
+  } else {
+    _currentTimeline = null;
+  }
+
+  // ── 8. Q&A (바로 답을 원하는 질문) ──
+  if (refData?.qa?.length) {
+    html += '<div class="smart-divider">자주 묻는 질문</div>';
+    for (const qa of refData.qa) {
+      html += `<div class="qa-card">
+        <div class="qa-q">Q. ${escHtml(qa.q)}</div>
+        <div class="qa-a">${escHtml(qa.a)}</div>
+        <div class="qa-law">${escHtml(qa.law)}</div>
+      </div>`;
+    }
+  }
+
+  // ── 9. 리스크 체커 + 감사 지적 (접기/펼치기) ──
+  if (refData?.risks?.length) {
+    html += '<div class="smart-divider">계약 리스크 체크</div>';
+    html += '<div class="risk-grid">';
+    const levelIcons = {high:'&#x1F534;', medium:'&#x1F7E1;', low:'&#x1F7E2;'};
+    const levelLabels = {high:'높음', medium:'중간', low:'낮음'};
+    for (const r of refData.risks) {
+      html += `<div class="risk-card risk-${r.level}">
+        <div class="risk-header">
+          <span class="risk-level">${levelIcons[r.level]||''} ${levelLabels[r.level]||''}</span>
+          <span class="risk-title">${escHtml(r.title)}</span>
+        </div>
+        <div class="risk-desc">${escHtml(r.desc)}</div>
+        <div class="risk-law">${escHtml(r.law)}</div>
+      </div>`;
+    }
+    html += '</div>';
+  }
+
+  if (refData?.audit_cases?.length) {
+    html += `<div class="smart-section collapsible collapsed">
+      <div class="smart-section-head" onclick="toggleSmartSection(this)">
+        <div class="smart-section-icon" style="background:var(--danger-muted)">&#x26D4;</div>
+        <div class="smart-section-title">감사 지적 사례</div>
+        <div class="smart-section-count">${refData.audit_cases.length}건</div>
+        <span class="smart-section-toggle">&#x25BC;</span>
+      </div>
+      <div class="smart-section-body">
+      <div class="audit-list">`;
+    for (const ac of refData.audit_cases) {
+      html += `<div class="audit-card">
+        <div class="audit-title">&#x26D4; ${escHtml(ac.title)}</div>
+        <div class="audit-desc">${escHtml(ac.desc)}</div>
+        <div class="audit-detail">
+          <div class="audit-impact"><strong>결과:</strong> ${escHtml(ac.impact)}</div>
+          <div class="audit-prevent"><strong>예방:</strong> ${escHtml(ac.prevention)}</div>
+        </div>
+      </div>`;
+    }
+    html += '</div></div></div>';
+  }
+
+  // ── 10. 필수 서류 ──
   if (refData0?.required_docs?.length) {
     html += `<div class="smart-section">
       <div class="smart-section-head">
@@ -6025,49 +6137,7 @@ function renderSmartResults(searchResults, advisorData, query) {
     </div>`;
   }
 
-  // 3.5. 계약 프로세스 플로우
-  if (refData0?.process?.length) {
-    html += '<div class="smart-divider">계약 프로세스</div>';
-    html += '<div class="process-flow">';
-    refData0.process.forEach((s, i) => {
-      if (i > 0) html += '<div class="process-arrow">&#8594;</div>';
-      html += `<div class="process-step">
-        <div class="process-step-num">${i+1}</div>
-        <div class="process-step-name">${escHtml(s.step)}</div>
-        <div class="process-step-desc">${escHtml(s.desc)}</div>
-        ${s.law ? `<div class="process-step-law">${escHtml(s.law)}</div>` : ''}
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // 3.6. 계약일정 자동 타임라인
-  if (refData0?.timeline) {
-    const tl = refData0.timeline;
-    _currentTimeline = tl;
-    html += `<div class="timeline-summary">예상 소요기간: <strong>${tl.total_days}일</strong> (약 ${Math.ceil(tl.total_days/30)}개월)</div>`;
-    html += '<div class="timeline-bar">';
-    for (const s of tl.steps) {
-      const pct = Math.max(2, (s.duration / tl.total_days) * 100);
-      html += `<div class="tl-segment" style="flex:${pct}" title="${escHtml(s.step)}: ${s.duration}일">
-        <div class="tl-seg-label">${escHtml(s.step)}</div>
-        <div class="tl-seg-days">${s.duration}일</div>
-      </div>`;
-    }
-    html += '</div>';
-    // 날짜 기반 일정 계산기
-    html += `<div class="date-calc">
-      <div class="date-calc-head">
-        <span>&#x1F4C5; 시작일 기준 일정 계산</span>
-        <input type="date" id="scheduleStartDate" value="${new Date().toISOString().split('T')[0]}" onchange="calcSchedule()">
-      </div>
-      <div id="scheduleResult" class="schedule-result"></div>
-    </div>`;
-  } else {
-    _currentTimeline = null;
-  }
-
-  // 3.7. 단계별 담당 부서·역할
+  // ── 11. 부서 역할 (접기/펼치기) ──
   if (refData0?.role_map?.length) {
     html += `<div class="smart-section collapsible collapsed">
       <div class="smart-section-head" onclick="toggleSmartSection(this)">
@@ -6095,16 +6165,176 @@ function renderSmartResults(searchResults, advisorData, query) {
     html += '</div></div></div>';
   }
 
-  // 4. 조문 검색 결과 (키워드 매칭)
+  // ── 12. 참고 조문 (하이라이트) ──
+  if (refData) {
+    const qkws = refData.query_keywords || query.toLowerCase().split(/\s+/);
+    function hlContent(text) {
+      let h = escHtml(text);
+      for (const kw of qkws) {
+        if (kw.length < 1) continue;
+        const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
+        h = h.replace(re, '<mark>$1</mark>');
+      }
+      return h;
+    }
+
+    if (refData.articles?.length) {
+      html += `<div class="smart-divider">관련 조문 원문</div>
+        <div class="smart-section">
+          <div class="smart-section-head">
+            <div class="smart-section-icon articles">&#x1F4D6;</div>
+            <div class="smart-section-title">검색어 관련 조문 (키워드 하이라이트)</div>
+            <div class="smart-section-count">${refData.articles.length}건</div>
+          </div>`;
+      refData.articles.forEach((a, ai) => {
+        const fullContent = a.content || '';
+        const lines = fullContent.split('\n').filter(l=>l.trim());
+        const preview = lines.slice(0, 5).join('\n');
+        const hasMore = lines.length > 5;
+        html += `
+          <div class="ref-article-card">
+            <div class="ref-article-head">
+              <span class="ref-article-law">${escHtml(a.law)}</span>
+              <span class="ref-article-type">${escHtml(a.type)}</span>
+              <span class="smart-priority-badge p-${a.priority}">${a.priority}</span>
+              <button class="btn btn-sm" style="margin-left:auto" onclick="event.stopPropagation();openLawArticle('${escHtml(a.law)}','${escHtml(a.type)}','${escHtml(a.number)}')">법령 열기 &#8594;</button>
+            </div>
+            <div class="ref-article-num">${escHtml(a.number)} ${a.title ? '('+escHtml(a.title)+')' : ''}</div>
+            <div class="ref-article-body" id="refArt${ai}">${hlContent(preview)}</div>
+            ${hasMore ? `
+              <button class="ref-expand-btn" id="refExpBtn${ai}" onclick="event.stopPropagation();toggleRefArticle(${ai}, ${JSON.stringify(fullContent).replace(/</g,'\\x3c')})">
+                &#x25BC; 전문 보기 (${lines.length}줄)
+              </button>` : ''}
+            <div class="ref-article-reason">${escHtml(a.reason)}</div>
+          </div>`;
+      });
+      html += '</div>';
+    }
+
+    // ── 13. 계약 사례 + 체크리스트 ──
+    if (refData.cases?.length) {
+      html += '<div class="smart-divider">계약 사례 · 실무 가이드</div>';
+      for (const c of refData.cases) {
+        html += `
+          <div class="ref-case-card">
+            <div class="ref-case-head">
+              <span class="ref-case-icon">&#x1F4BC;</span>
+              <span class="ref-case-title">${escHtml(c.title)}</span>
+            </div>
+            <div class="ref-case-desc">${hlContent(c.desc)}</div>
+            ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">${escHtml(l)}</span>`).join('')}</div>` : ''}
+            ${c.checklist?.length ? `
+              <div class="ref-checklist">
+                <div class="ref-checklist-title">&#x2705; 실무 체크리스트</div>
+                ${c.checklist.map(item=>{const checked=localStorage.getItem('checklist_'+item.substring(0,30))==='1'?'checked':'';return `<label class="ref-check-item"><input type="checkbox" ${checked}><span>${escHtml(item)}</span></label>`;}).join('')}
+              </div>` : ''}
+          </div>`;
+      }
+    }
+
+    // ── 14. 특약 조항 (접기/펼치기) ──
+    if (refData.special_clauses?.length) {
+      html += `<div class="smart-section collapsible collapsed">
+        <div class="smart-section-head" onclick="toggleSmartSection(this)">
+          <div class="smart-section-icon" style="background:var(--purple-muted)">&#x1F4DD;</div>
+          <div class="smart-section-title">계약서 특약 조항 예시</div>
+          <div class="smart-section-count">${refData.special_clauses.length}건</div>
+          <span class="smart-section-toggle">&#x25BC;</span>
+        </div>
+        <div class="smart-section-body">
+        <div class="clause-examples">`;
+      for (const sc of refData.special_clauses) {
+        html += `<div class="spec-clause-card">
+          <div class="spec-clause-head">
+            <span class="spec-clause-title">${escHtml(sc.title)}</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation();copyClause(this)" data-text="${escHtml(sc.text)}" title="복사">&#x1F4CB; 복사</button>
+          </div>
+          <div class="spec-clause-text">${escHtml(sc.text)}</div>
+          ${sc.law ? `<div class="spec-clause-law">${escHtml(sc.law)}</div>` : ''}
+        </div>`;
+      }
+      html += '</div></div></div>';
+    }
+
+    // ── 15. 서식 템플릿 (접기/펼치기) ──
+    if (refData.templates?.length) {
+      html += `<div class="smart-section collapsible collapsed">
+        <div class="smart-section-head" onclick="toggleSmartSection(this)">
+          <div class="smart-section-icon" style="background:var(--accent-muted)">&#x1F4C4;</div>
+          <div class="smart-section-title">계약 서식 템플릿</div>
+          <div class="smart-section-count">${refData.templates.length}건</div>
+          <span class="smart-section-toggle">&#x25BC;</span>
+        </div>
+        <div class="smart-section-body">`;
+      refData.templates.forEach(t => {
+        html += `<div class="template-card">
+          <div class="template-head">
+            <span class="template-name">${escHtml(t.name)}</span>
+            <button class="btn btn-sm" onclick="event.stopPropagation();copyTemplate('${escHtml(t.name)}', ${JSON.stringify(t.fields).replace(/'/g,"\\'")})">&#x1F4CB; 복사</button>
+          </div>
+          <div class="template-fields">
+            ${t.fields.map((f,i) => `<div class="template-field"><span class="tf-num">${i+1}</span>${escHtml(f)}</div>`).join('')}
+          </div>
+          <div class="template-footer">
+            <span class="template-law">${escHtml(t.law)}</span>
+            ${t.note ? `<span class="template-note">${escHtml(t.note)}</span>` : ''}
+          </div>
+        </div>`;
+      });
+      html += '</div></div>';
+    }
+
+    // ── 16. 계약서 조항 매핑 (비동기 로드) ──
+    html += '<div id="clauseArea"></div>';
+
+    // ── 17. 나라장터 입찰공고 (비동기 로드) ──
+    html += '<div id="bidResults"></div>';
+
+    // ── 18. 외부 링크 ──
+    if (refData.links?.length) {
+      html += '<div class="ref-links">';
+      for (const l of refData.links) {
+        html += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)}</a>`;
+      }
+      html += '</div>';
+    }
+  }
+
+  // 유사 검색어 추천
+  if (advisorData?.related_queries?.length) {
+    html += '<div class="related-queries"><span class="rq-label">관련 검색어</span>';
+    for (const rq of advisorData.related_queries) {
+      html += `<span class="rq-item" onclick="doSearch('${escHtml(rq)}')">${escHtml(rq)}</span>`;
+    }
+    html += '</div>';
+  }
+
+  // ── 19. 버튼 (종합리포트, 검토요청서, 기안문요지, 체크리스트 출력) ──
+  if (refData) {
+    html += `<div style="text-align:center;padding:16px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-accent" onclick="generateFullReport()" style="padding:10px 24px;font-size:14px">
+        &#x1F4CA; 종합 리포트
+      </button>
+      <button class="btn btn-accent" onclick="generateReviewRequest()" style="padding:10px 24px;font-size:14px">
+        &#x1F4C4; 계약 검토 요청서 생성
+      </button>
+      <button class="btn" onclick="generateLawSummary()" style="padding:10px 24px;font-size:14px">
+        &#x1F4DD; 기안문 법령 요지
+      </button>
+      <button class="btn" onclick="printChecklist()" style="padding:10px 24px;font-size:14px">
+        &#x2705; 체크리스트 출력
+      </button>
+    </div>`;
+  }
+
+  // 조문 검색 결과 (키워드 매칭) - 하단 보충 정보
   if (hasSearch) {
-    // 어드바이저 추천에 이미 있는 법령은 중복 제거
     const advisorLaws = new Set();
     if (hasAdvisor) {
       advisorData.recommendations.forEach(r => advisorLaws.add(r.law));
     }
     const filteredSearch = searchResults.filter(r => !advisorLaws.has(r.law_name));
     const articlesFromSearch = [];
-    // 어드바이저 추천 법령의 매칭 조문도 수집
     searchResults.forEach(r => {
       (r.matching_articles || []).slice(0, 3).forEach(a => {
         articlesFromSearch.push({ ...a, law_name: r.law_name, file_type: r.file_type, title: r.title || r.law_name });
@@ -6140,7 +6370,6 @@ function renderSmartResults(searchResults, advisorData, query) {
       html += '</div>';
     }
 
-    // 추가 법령 (어드바이저에 없는 것)
     if (filteredSearch.length > 0) {
       html += `
         <div class="smart-divider">추가 관련 법령</div>
@@ -6168,227 +6397,6 @@ function renderSmartResults(searchResults, advisorData, query) {
       }
       html += '</div>';
     }
-  }
-
-  // 5. 참고자료
-  const refData = advisorData?.ref_data;
-  if (refData) {
-    const qkws = refData.query_keywords || query.toLowerCase().split(/\s+/);
-
-    // 키워드 하이라이트 함수 (조문 내용에 적용)
-    function hlContent(text) {
-      let h = escHtml(text);
-      for (const kw of qkws) {
-        if (kw.length < 1) continue;
-        const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
-        h = h.replace(re, '<mark>$1</mark>');
-      }
-      return h;
-    }
-
-    // 5-pre. 계약서 조항 매핑 (비동기 로드 영역)
-    html += '<div id="clauseArea"></div>';
-
-    // 5-pre2. 실무 Q&A
-    if (refData.qa?.length) {
-      html += '<div class="smart-divider">자주 묻는 질문</div>';
-      for (const qa of refData.qa) {
-        html += `<div class="qa-card">
-          <div class="qa-q">Q. ${escHtml(qa.q)}</div>
-          <div class="qa-a">${escHtml(qa.a)}</div>
-          <div class="qa-law">${escHtml(qa.law)}</div>
-        </div>`;
-      }
-    }
-
-    // 5-pre3. 계약 리스크 체커
-    if (refData.risks?.length) {
-      html += '<div class="smart-divider">계약 리스크 체크</div>';
-      html += '<div class="risk-grid">';
-      const levelIcons = {high:'&#x1F534;', medium:'&#x1F7E1;', low:'&#x1F7E2;'};
-      const levelLabels = {high:'높음', medium:'중간', low:'낮음'};
-      for (const r of refData.risks) {
-        html += `<div class="risk-card risk-${r.level}">
-          <div class="risk-header">
-            <span class="risk-level">${levelIcons[r.level]||''} ${levelLabels[r.level]||''}</span>
-            <span class="risk-title">${escHtml(r.title)}</span>
-          </div>
-          <div class="risk-desc">${escHtml(r.desc)}</div>
-          <div class="risk-law">${escHtml(r.law)}</div>
-        </div>`;
-      }
-      html += '</div>';
-    }
-
-    // 5-pre4. 감사 지적 사례
-    if (refData.audit_cases?.length) {
-      html += `<div class="smart-section collapsible collapsed">
-        <div class="smart-section-head" onclick="toggleSmartSection(this)">
-          <div class="smart-section-icon" style="background:var(--danger-muted)">&#x26D4;</div>
-          <div class="smart-section-title">감사 지적 사례</div>
-          <div class="smart-section-count">${refData.audit_cases.length}건</div>
-          <span class="smart-section-toggle">&#x25BC;</span>
-        </div>
-        <div class="smart-section-body">
-        <div class="audit-list">`;
-      for (const ac of refData.audit_cases) {
-        html += `<div class="audit-card">
-          <div class="audit-title">&#x26D4; ${escHtml(ac.title)}</div>
-          <div class="audit-desc">${escHtml(ac.desc)}</div>
-          <div class="audit-detail">
-            <div class="audit-impact"><strong>결과:</strong> ${escHtml(ac.impact)}</div>
-            <div class="audit-prevent"><strong>예방:</strong> ${escHtml(ac.prevention)}</div>
-          </div>
-        </div>`;
-      }
-      html += '</div></div></div>';
-    }
-
-    // 5a. 참고 조문 (전체 내용 + 하이라이트 + 펼치기/접기)
-    if (refData.articles?.length) {
-      html += `<div class="smart-divider">관련 조문 원문</div>
-        <div class="smart-section">
-          <div class="smart-section-head">
-            <div class="smart-section-icon articles">&#x1F4D6;</div>
-            <div class="smart-section-title">검색어 관련 조문 (키워드 하이라이트)</div>
-            <div class="smart-section-count">${refData.articles.length}건</div>
-          </div>`;
-      refData.articles.forEach((a, ai) => {
-        const fullContent = a.content || '';
-        const lines = fullContent.split('\n').filter(l=>l.trim());
-        const preview = lines.slice(0, 5).join('\n');
-        const hasMore = lines.length > 5;
-        html += `
-          <div class="ref-article-card">
-            <div class="ref-article-head">
-              <span class="ref-article-law">${escHtml(a.law)}</span>
-              <span class="ref-article-type">${escHtml(a.type)}</span>
-              <span class="smart-priority-badge p-${a.priority}">${a.priority}</span>
-              <button class="btn btn-sm" style="margin-left:auto" onclick="event.stopPropagation();openLawArticle('${escHtml(a.law)}','${escHtml(a.type)}','${escHtml(a.number)}')">법령 열기 &#8594;</button>
-            </div>
-            <div class="ref-article-num">${escHtml(a.number)} ${a.title ? '('+escHtml(a.title)+')' : ''}</div>
-            <div class="ref-article-body" id="refArt${ai}">${hlContent(preview)}</div>
-            ${hasMore ? `
-              <button class="ref-expand-btn" id="refExpBtn${ai}" onclick="event.stopPropagation();toggleRefArticle(${ai}, ${JSON.stringify(fullContent).replace(/</g,'\\x3c')})">
-                &#x25BC; 전문 보기 (${lines.length}줄)
-              </button>` : ''}
-            <div class="ref-article-reason">${escHtml(a.reason)}</div>
-          </div>`;
-      });
-      html += '</div>';
-    }
-
-    // 5b. 계약 사례
-    if (refData.cases?.length) {
-      html += '<div class="smart-divider">계약 사례 · 실무 가이드</div>';
-      for (const c of refData.cases) {
-        html += `
-          <div class="ref-case-card">
-            <div class="ref-case-head">
-              <span class="ref-case-icon">&#x1F4BC;</span>
-              <span class="ref-case-title">${escHtml(c.title)}</span>
-            </div>
-            <div class="ref-case-desc">${hlContent(c.desc)}</div>
-            ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">${escHtml(l)}</span>`).join('')}</div>` : ''}
-            ${c.checklist?.length ? `
-              <div class="ref-checklist">
-                <div class="ref-checklist-title">&#x2705; 실무 체크리스트</div>
-                ${c.checklist.map(item=>{const checked=localStorage.getItem('checklist_'+item.substring(0,30))==='1'?'checked':'';return `<label class="ref-check-item"><input type="checkbox" ${checked}><span>${escHtml(item)}</span></label>`;}).join('')}
-              </div>` : ''}
-          </div>`;
-      }
-    }
-
-    // 5b2. 계약서 특약 조항 예시
-    if (refData.special_clauses?.length) {
-      html += `<div class="smart-section collapsible collapsed">
-        <div class="smart-section-head" onclick="toggleSmartSection(this)">
-          <div class="smart-section-icon" style="background:var(--purple-muted)">&#x1F4DD;</div>
-          <div class="smart-section-title">계약서 특약 조항 예시</div>
-          <div class="smart-section-count">${refData.special_clauses.length}건</div>
-          <span class="smart-section-toggle">&#x25BC;</span>
-        </div>
-        <div class="smart-section-body">
-        <div class="clause-examples">`;
-      for (const sc of refData.special_clauses) {
-        html += `<div class="spec-clause-card">
-          <div class="spec-clause-head">
-            <span class="spec-clause-title">${escHtml(sc.title)}</span>
-            <button class="btn btn-sm" onclick="event.stopPropagation();copyClause(this)" data-text="${escHtml(sc.text)}" title="복사">&#x1F4CB; 복사</button>
-          </div>
-          <div class="spec-clause-text">${escHtml(sc.text)}</div>
-          ${sc.law ? `<div class="spec-clause-law">${escHtml(sc.law)}</div>` : ''}
-        </div>`;
-      }
-      html += '</div></div></div>';
-    }
-
-    // 5b3. 계약 서식 템플릿
-    if (refData.templates?.length) {
-      html += `<div class="smart-section collapsible collapsed">
-        <div class="smart-section-head" onclick="toggleSmartSection(this)">
-          <div class="smart-section-icon" style="background:var(--accent-muted)">&#x1F4C4;</div>
-          <div class="smart-section-title">계약 서식 템플릿</div>
-          <div class="smart-section-count">${refData.templates.length}건</div>
-          <span class="smart-section-toggle">&#x25BC;</span>
-        </div>
-        <div class="smart-section-body">`;
-      refData.templates.forEach(t => {
-        html += `<div class="template-card">
-          <div class="template-head">
-            <span class="template-name">${escHtml(t.name)}</span>
-            <button class="btn btn-sm" onclick="event.stopPropagation();copyTemplate('${escHtml(t.name)}', ${JSON.stringify(t.fields).replace(/'/g,"\\'")})">&#x1F4CB; 복사</button>
-          </div>
-          <div class="template-fields">
-            ${t.fields.map((f,i) => `<div class="template-field"><span class="tf-num">${i+1}</span>${escHtml(f)}</div>`).join('')}
-          </div>
-          <div class="template-footer">
-            <span class="template-law">${escHtml(t.law)}</span>
-            ${t.note ? `<span class="template-note">${escHtml(t.note)}</span>` : ''}
-          </div>
-        </div>`;
-      });
-      html += '</div></div>';
-    }
-
-    // 5c. 나라장터 실시간 입찰공고 (비동기 로드)
-    html += '<div id="bidResults"></div>';
-
-    // 5d. 외부 링크
-    if (refData.links?.length) {
-      html += '<div class="ref-links">';
-      for (const l of refData.links) {
-        html += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)}</a>`;
-      }
-      html += '</div>';
-    }
-  }
-
-  // 5e. 계약 검토 요청서 생성 버튼 + 체크리스트 출력 버튼
-  if (refData) {
-    html += `<div style="text-align:center;padding:16px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="btn btn-accent" onclick="generateReviewRequest()" style="padding:10px 24px;font-size:14px">
-        &#x1F4C4; 계약 검토 요청서 생성
-      </button>
-      <button class="btn" onclick="printChecklist()" style="padding:10px 24px;font-size:14px">
-        &#x2705; 체크리스트 출력
-      </button>
-      <button class="btn" onclick="generateLawSummary()" style="padding:10px 24px;font-size:14px">
-        &#x1F4DD; 기안문 법령 요지
-      </button>
-      <button class="btn btn-accent" onclick="generateFullReport()" style="padding:10px 24px;font-size:14px">
-        &#x1F4CA; 종합 리포트
-      </button>
-    </div>`;
-  }
-
-  // 6. 유사 검색어 추천
-  if (advisorData?.related_queries?.length) {
-    html += '<div class="related-queries"><span class="rq-label">관련 검색어</span>';
-    for (const rq of advisorData.related_queries) {
-      html += `<span class="rq-item" onclick="doSearch('${escHtml(rq)}')">${escHtml(rq)}</span>`;
-    }
-    html += '</div>';
   }
 
   html += '</div>';
