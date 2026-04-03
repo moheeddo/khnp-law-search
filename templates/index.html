@@ -2474,6 +2474,108 @@ kbd {
   padding: 20px;
 }
 
+/* ===== Clause Grid ===== */
+.clause-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.clause-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  transition: all var(--transition);
+}
+.clause-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.clause-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.clause-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+.clause-laws {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.clause-law-ref {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+.clause-law-ref:hover {
+  background: var(--accent);
+  color: white;
+}
+
+/* ===== Q&A Cards ===== */
+.qa-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  margin-bottom: 6px;
+}
+.qa-q {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.qa-a {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  margin-bottom: 4px;
+}
+.qa-law {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* ===== Summary Dashboard ===== */
+.summary-dash {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.dash-item {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.dash-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.dash-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 /* ===== Print Styles ===== */
 @media print {
   .header, .sidebar, .search-section, .landing-wrap,
@@ -2872,6 +2974,9 @@ kbd {
       <div class="sc-chip" onclick="doAdvisor('원전 원자력 핵연료')"><span class="chip-icon">&#9883;</span>원자력</div>
       <div class="sc-chip" onclick="doAdvisor('발전 전력거래 송전')"><span class="chip-icon">&#9889;</span>전력</div>
       <div class="sc-chip" onclick="doAdvisor('안전 산업재해')"><span class="chip-icon">&#x1F6E1;</span>안전</div>
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn" onclick="doAdvisor('계약보증금')" style="font-size:12px;padding:6px 14px;border-radius:var(--radius-xl);background:var(--accent-muted);color:var(--accent);border-color:var(--accent);font-weight:600">&#x1F4CB; 계약서 조항 ↔ 법령 매핑</button>
     </div>
     <div class="shortcuts-hint">
       <span><kbd>/</kbd> 검색</span>
@@ -3704,6 +3809,25 @@ function renderSmartResults(searchResults, advisorData, query) {
     `;
   }
 
+  // 2.5. 요약 대시보드
+  const refDataPre = advisorData?.ref_data;
+  const summaryStats = {
+    laws: hasAdvisor ? advisorData.recommendations.length : 0,
+    articles: refDataPre?.articles?.length || 0,
+    cases: refDataPre?.cases?.length || 0,
+    process: refDataPre?.process?.length || 0,
+    qa: refDataPre?.qa?.length || 0,
+  };
+  if (summaryStats.laws > 0) {
+    html += `<div class="summary-dash">
+      <div class="dash-item"><div class="dash-num">${summaryStats.laws}</div><div class="dash-label">추천 법령</div></div>
+      <div class="dash-item"><div class="dash-num">${summaryStats.articles}</div><div class="dash-label">참고 조문</div></div>
+      <div class="dash-item"><div class="dash-num">${summaryStats.cases}</div><div class="dash-label">계약 사례</div></div>
+      <div class="dash-item"><div class="dash-num">${summaryStats.process}</div><div class="dash-label">프로세스</div></div>
+      ${summaryStats.qa ? `<div class="dash-item"><div class="dash-num">${summaryStats.qa}</div><div class="dash-label">Q&A</div></div>` : ''}
+    </div>`;
+  }
+
   // 3. 어드바이저 추천 법령 (우선순위별 그룹)
   if (hasAdvisor) {
     // Store advisor data for openFromSmartAdvisor
@@ -3925,6 +4049,21 @@ function renderSmartResults(searchResults, advisorData, query) {
       return h;
     }
 
+    // 5-pre. 계약서 조항 매핑 (비동기 로드 영역)
+    html += '<div id="clauseArea"></div>';
+
+    // 5-pre2. 실무 Q&A
+    if (refData.qa?.length) {
+      html += '<div class="smart-divider">자주 묻는 질문</div>';
+      for (const qa of refData.qa) {
+        html += `<div class="qa-card">
+          <div class="qa-q">Q. ${escHtml(qa.q)}</div>
+          <div class="qa-a">${escHtml(qa.a)}</div>
+          <div class="qa-law">${escHtml(qa.law)}</div>
+        </div>`;
+      }
+    }
+
     // 5a. 참고 조문 (전체 내용 + 하이라이트 + 펼치기/접기)
     if (refData.articles?.length) {
       html += `<div class="smart-divider">관련 조문 원문</div>
@@ -4010,6 +4149,31 @@ function renderSmartResults(searchResults, advisorData, query) {
 
   // 나라장터 입찰공고 비동기 로드
   if (refData) loadBidResults(query);
+
+  // 계약서 조항 매핑 비동기 로드
+  loadClauses(query);
+}
+
+// 계약서 조항 매핑 비동기 로드
+async function loadClauses(query) {
+  const el = document.getElementById('clauseArea');
+  if (!el) return;
+  try {
+    const clauses = await api('/api/clauses?q=' + encodeURIComponent(query));
+    if (!clauses?.length) { el.innerHTML = ''; return; }
+    let h = '<div class="smart-divider">계약서 조항 &#8596; 법령 매핑</div><div class="clause-grid">';
+    for (const c of clauses.slice(0, 8)) {
+      h += `<div class="clause-card">
+        <div class="clause-name">${escHtml(c.clause)}</div>
+        <div class="clause-desc">${escHtml(c.desc)}</div>
+        <div class="clause-laws">${c.laws.map(l =>
+          `<span class="clause-law-ref" onclick="openLawArticle('${escHtml(l.law)}','${escHtml(l.type)}','${escHtml(l.article)}')">${escHtml(l.article)}</span>`
+        ).join(' ')}</div>
+      </div>`;
+    }
+    h += '</div>';
+    el.innerHTML = h;
+  } catch(e) { el.innerHTML = ''; }
 }
 
 // 조문 펼치기/접기
