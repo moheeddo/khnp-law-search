@@ -2987,6 +2987,62 @@ kbd {
   font-weight: 600;
 }
 
+/* Date Calculator */
+.date-calc {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.date-calc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.date-calc-head input[type="date"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+.date-calc-head input[type="date"]:focus { border-color: var(--accent); }
+.schedule-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.schedule-table th {
+  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--accent);
+  color: var(--text-muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.schedule-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+.schedule-table tfoot td {
+  border-top: 2px solid var(--accent);
+  border-bottom: none;
+  color: var(--accent);
+}
+.sched-step { font-weight: 600; color: var(--text-primary); }
+.sched-days { text-align: center; font-weight: 700; color: var(--accent); }
+.sched-law { font-size: 10px; color: var(--accent); }
+.weekend-row { background: var(--warn-muted); }
+
 </style>
 </head>
 <body class="landing">
@@ -3168,6 +3224,9 @@ kbd {
       <span><kbd>Esc</kbd> 뒤로</span>
       <span><kbd>Ctrl+H</kbd> 홈</span>
     </div>
+    <div style="margin-top:12px;text-align:center">
+      <button class="btn btn-sm" onclick="exportDailyLog()">&#x1F4DD; 오늘의 업무일지</button>
+    </div>
   </div>
 </div>
 
@@ -3339,6 +3398,7 @@ let bmPending = null; // pending bookmark data for memo modal
 let bmActiveFolder = '전체';
 let glossaryData = null; // 용어사전 데이터
 let recentLaws = []; // 최근 열어본 법령 [{law, type, title}]
+let _currentTimeline = null; // 날짜 계산기용 타임라인 데이터
 
 // ===== Helpers =====
 const $ = s => document.querySelector(s);
@@ -4132,6 +4192,7 @@ function renderSmartResults(searchResults, advisorData, query) {
   // 3.6. 계약일정 자동 타임라인
   if (refData0?.timeline) {
     const tl = refData0.timeline;
+    _currentTimeline = tl;
     html += `<div class="timeline-summary">예상 소요기간: <strong>${tl.total_days}일</strong> (약 ${Math.ceil(tl.total_days/30)}개월)</div>`;
     html += '<div class="timeline-bar">';
     for (const s of tl.steps) {
@@ -4142,6 +4203,16 @@ function renderSmartResults(searchResults, advisorData, query) {
       </div>`;
     }
     html += '</div>';
+    // 날짜 기반 일정 계산기
+    html += `<div class="date-calc">
+      <div class="date-calc-head">
+        <span>&#x1F4C5; 시작일 기준 일정 계산</span>
+        <input type="date" id="scheduleStartDate" value="${new Date().toISOString().split('T')[0]}" onchange="calcSchedule()">
+      </div>
+      <div id="scheduleResult" class="schedule-result"></div>
+    </div>`;
+  } else {
+    _currentTimeline = null;
   }
 
   // 4. 조문 검색 결과 (키워드 매칭)
@@ -4374,6 +4445,9 @@ function renderSmartResults(searchResults, advisorData, query) {
 
   // 계약서 조항 매핑 비동기 로드
   loadClauses(query);
+
+  // 날짜 기반 일정 계산기 자동 실행
+  if (_currentTimeline) setTimeout(calcSchedule, 100);
 }
 
 // 계약서 조항 매핑 비동기 로드
@@ -4426,6 +4500,131 @@ function hlContentGlobal(text) {
     h = h.replace(re, '<mark>$1</mark>');
   }
   return h;
+}
+
+// ===== 날짜 기반 계약일정 계산기 =====
+function calcSchedule() {
+  const startInput = document.getElementById('scheduleStartDate');
+  const resultEl = document.getElementById('scheduleResult');
+  if (!startInput || !resultEl || !_currentTimeline) return;
+
+  const start = new Date(startInput.value);
+  if (isNaN(start.getTime())) return;
+
+  const formatDate = (d) => {
+    const days = ['일','월','화','수','목','금','토'];
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`;
+  };
+
+  let html = '<table class="schedule-table"><thead><tr><th>단계</th><th>시작일</th><th>종료일</th><th>소요</th><th>근거</th></tr></thead><tbody>';
+  let current = new Date(start);
+
+  for (const step of _currentTimeline.steps) {
+    const stepStart = new Date(current);
+    const stepEnd = new Date(current);
+    stepEnd.setDate(stepEnd.getDate() + step.duration);
+
+    const isWeekend = stepStart.getDay() === 0 || stepStart.getDay() === 6;
+
+    html += `<tr${isWeekend ? ' class="weekend-row"' : ''}>
+      <td class="sched-step">${escHtml(step.step)}</td>
+      <td>${formatDate(stepStart)}</td>
+      <td>${formatDate(stepEnd)}</td>
+      <td class="sched-days">${step.duration}일</td>
+      <td class="sched-law">${escHtml(step.law || '')}</td>
+    </tr>`;
+
+    current = stepEnd;
+  }
+
+  const totalEnd = new Date(current);
+  html += `</tbody><tfoot><tr>
+    <td><strong>완료 예정</strong></td>
+    <td colspan="2"><strong>${formatDate(totalEnd)}</strong></td>
+    <td><strong>${_currentTimeline.total_days}일</strong></td>
+    <td></td>
+  </tr></tfoot></table>`;
+
+  resultEl.innerHTML = html;
+}
+
+// ===== 업무 검색 일지 내보내기 =====
+function exportDailyLog() {
+  const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+  const stats = JSON.parse(localStorage.getItem('searchStats') || '{"total":0,"weekly":{},"keywords":{}}');
+  const today = new Date().toISOString().split('T')[0];
+  const todayCount = stats.weekly?.[today] || 0;
+
+  if (!todayCount && !history.length) {
+    toast('오늘 검색 기록이 없습니다', 'info');
+    return;
+  }
+
+  // 메모가 있는 조문 수집
+  const memos = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('memo_')) {
+      const val = localStorage.getItem(key);
+      if (val) {
+        const parts = key.replace('memo_', '').split('_');
+        memos.push({law: parts[0], type: parts[1], article: parts.slice(2).join('_'), memo: val});
+      }
+    }
+  }
+
+  // 체크리스트 완료 항목 수집
+  const checks = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key.startsWith('checklist_') && localStorage.getItem(key) === '1') {
+      checks.push(key.replace('checklist_', ''));
+    }
+  }
+
+  let text = '═══════════════════════════════════\n';
+  text += '  법령 검토 업무일지\n';
+  text += '═══════════════════════════════════\n';
+  text += `날짜: ${new Date().toLocaleDateString('ko-KR', {year:'numeric',month:'long',day:'numeric',weekday:'long'})}\n`;
+  text += `작성자: ${currentUser?.display_name || '(미로그인)'}\n`;
+  text += `부서: ${currentUser?.department || ''}\n\n`;
+
+  text += `■ 검색 현황\n`;
+  text += `  - 오늘 검색: ${todayCount}회\n`;
+  text += `  - 누적 검색: ${stats.total}회\n\n`;
+
+  if (history.length) {
+    text += `■ 검색 이력 (최근 순)\n`;
+    history.forEach((h, i) => { text += `  ${i+1}. ${h}\n`; });
+    text += '\n';
+  }
+
+  if (memos.length) {
+    text += `■ 조문 메모 (${memos.length}건)\n`;
+    for (const m of memos) {
+      text += `  - ${m.law} ${m.article}: ${m.memo}\n`;
+    }
+    text += '\n';
+  }
+
+  if (checks.length) {
+    text += `■ 완료 체크리스트 (${checks.length}건)\n`;
+    for (const c of checks) {
+      text += `  ✓ ${c}\n`;
+    }
+    text += '\n';
+  }
+
+  text += '═══════════════════════════════════\n';
+  text += '한수원 계약 법령 검색 시스템\n';
+
+  const blob = new Blob([text], {type: 'text/plain;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `업무일지_${today}.txt`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('업무일지가 생성되었습니다', 'success');
 }
 
 // 나라장터 입찰공고 비동기 로드
