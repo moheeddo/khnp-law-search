@@ -363,6 +363,43 @@ PROCESS_FLOWS = {
     ],
 }
 
+def get_method_comparison(query):
+    """계약방식 비교표 생성"""
+    q = query.lower()
+    is_construction = any(kw in q for kw in ["공사","건설","시공","토목"])
+    is_service = any(kw in q for kw in ["용역","설계","컨설팅","SW","IT"])
+
+    if is_construction:
+        return {
+            "type": "공사",
+            "methods": [
+                {"name":"일반경쟁","condition":"추정가격 5천만원 이상","pros":"공정성·투명성 확보","cons":"절차 복잡, 최저가 위주","duration":"공고 7일+심사 10일","law":"국가계약법 제7조"},
+                {"name":"제한경쟁","condition":"특수 기술·실적 필요 시","pros":"적격 업체만 참가","cons":"경쟁 제한 사유 소명 필요","duration":"공고 5일+심사 10일","law":"시행령 제21조"},
+                {"name":"지명경쟁","condition":"추정가격 1억 미만+특수","pros":"신속 계약 가능","cons":"매우 제한적 사유만 허용","duration":"통보 5일","law":"시행령 제23조"},
+                {"name":"수의계약","condition":"추정가격 5천만원 미만","pros":"절차 간소, 신속","cons":"감사 지적 위험","duration":"견적 3~5일","law":"시행령 제26조"},
+            ]
+        }
+    elif is_service:
+        return {
+            "type": "용역",
+            "methods": [
+                {"name":"일반경쟁","condition":"추정가격 5천만원 이상","pros":"공정성 확보","cons":"가격 위주 평가","duration":"공고 7일+심사 10일","law":"국가계약법 제7조"},
+                {"name":"협상에 의한 계약","condition":"추정가격 2억 이상 기술용역","pros":"기술능력 중심 평가","cons":"제안서 평가 시간 소요","duration":"공고 10일+평가 14일","law":"시행령 제43조"},
+                {"name":"제한경쟁","condition":"특수 기술·자격 필요","pros":"전문업체 확보","cons":"경쟁 제한 사유 필요","duration":"공고 5일+심사 10일","law":"시행령 제21조"},
+                {"name":"수의계약","condition":"추정가격 5천만원 미만","pros":"절차 간소","cons":"감사 지적 위험","duration":"견적 3~5일","law":"시행령 제26조"},
+            ]
+        }
+    else:  # 물품
+        return {
+            "type": "물품",
+            "methods": [
+                {"name":"일반경쟁","condition":"추정가격 5천만원 이상","pros":"가격 경쟁으로 절감","cons":"최저가 품질 위험","duration":"공고 7일+개찰 3일","law":"국가계약법 제7조"},
+                {"name":"MAS(다수공급자)","condition":"규격 표준화 물품","pros":"즉시 구매 가능","cons":"가격 경쟁 제한","duration":"즉시~3일","law":"조달사업법 제5조의2"},
+                {"name":"제3자 단가계약","condition":"반복 구매 물품","pros":"안정적 공급","cons":"단가 변동 리스크","duration":"단가계약 후 즉시","law":"시행령 제22조"},
+                {"name":"수의계약","condition":"추정가격 2천만원 미만","pros":"신속 구매","cons":"감사 지적 위험","duration":"견적 1~3일","law":"시행령 제26조"},
+            ]
+        }
+
 def get_reference_data(query, recommendations):
     """검색어 + 추천 법령 기반 참고 조문·계약 사례 생성"""
     index = get_index()
@@ -567,6 +604,9 @@ def get_reference_data(query, recommendations):
                 clauses.extend(SPECIAL_CLAUSES.get("물품", []))
                 break
     ref["special_clauses"] = clauses[:6]
+
+    # ── 계약방식 비교표 ──
+    ref["method_comparison"] = get_method_comparison(query)
 
     return ref
 

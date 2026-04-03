@@ -1593,6 +1593,68 @@ body.landing .landing-wrap { display: flex; }
 
 .advisor-btn:hover { filter: brightness(1.1); }
 
+/* ===== Subscription List ===== */
+.subscription-list {
+  margin-bottom: 12px;
+}
+.sub-label {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.sub-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.sub-item {
+  padding: 4px 12px;
+  border-radius: var(--radius-xl);
+  background: var(--warn-muted);
+  border: 1px solid rgba(217,119,6,0.15);
+  color: var(--warn);
+  font-size: 11px;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.sub-item:hover {
+  background: var(--warn);
+  color: white;
+}
+
+/* ===== Method Comparison Table ===== */
+.method-compare {
+  margin-bottom: 16px;
+}
+.compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.compare-table th {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 2px solid var(--accent);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+}
+.compare-table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  line-height: 1.4;
+  vertical-align: top;
+}
+.compare-table tr:hover { background: var(--bg-hover); }
+.ct-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.ct-pro { color: var(--success); }
+.ct-con { color: var(--danger); }
+.ct-law { font-size: 10px; color: var(--accent); white-space: nowrap; }
+
 .advisor-examples {
   display: flex;
   gap: 6px;
@@ -3262,6 +3324,7 @@ kbd {
       <button class="advisor-btn" id="advisorBtn">검색</button>
     </div>
     <div id="searchHistory" class="search-history"></div>
+    <div id="subscriptionList" class="subscription-list"></div>
     <div class="advisor-examples">
       <span class="adv-example" data-q="원전 기자재 구매">원전 기자재 구매</span>
       <span class="adv-example" data-q="공사 하도급 관리">공사 하도급</span>
@@ -3336,6 +3399,7 @@ kbd {
           <div class="viewer-meta" id="viewerMeta"></div>
         </div>
         <div class="viewer-actions">
+          <button class="btn btn-sm" id="subscribeBtn" onclick="toggleSubscribe()">&#x1F514; 구독</button>
           <button class="btn-bookmark" id="lawBookmarkBtn" onclick="toggleLawBookmark()">
             <span class="bm-icon">&#9734;</span>
             <span>북마크</span>
@@ -3492,6 +3556,76 @@ function escHtml(t) {
   return d.innerHTML;
 }
 
+// ===== Subscription Functions =====
+function getSubscriptions() {
+  return JSON.parse(localStorage.getItem('lawSubscriptions') || '[]');
+}
+
+function saveSubscriptions(subs) {
+  localStorage.setItem('lawSubscriptions', JSON.stringify(subs));
+}
+
+function toggleSubscribe() {
+  if (!currentLaw) return;
+  let subs = getSubscriptions();
+  const idx = subs.findIndex(s => s.law === currentLaw);
+  const btn = document.getElementById('subscribeBtn');
+
+  if (idx >= 0) {
+    subs.splice(idx, 1);
+    btn.innerHTML = '&#x1F514; 구독';
+    btn.classList.remove('btn-accent');
+    toast('구독이 해제되었습니다', 'info');
+  } else {
+    const meta = document.getElementById('viewerMeta')?.textContent || '';
+    subs.push({
+      law: currentLaw,
+      type: currentFileType,
+      subscribedAt: new Date().toISOString(),
+      lastMeta: meta,
+    });
+    btn.innerHTML = '&#x1F514; 구독중';
+    btn.classList.add('btn-accent');
+    toast('법령을 구독했습니다. 변경 시 알림을 받습니다.', 'success');
+  }
+  saveSubscriptions(subs);
+  renderSubscriptionCount();
+}
+
+function updateSubscribeBtn() {
+  const btn = document.getElementById('subscribeBtn');
+  if (!btn || !currentLaw) return;
+  const subs = getSubscriptions();
+  const isSubscribed = subs.some(s => s.law === currentLaw);
+  btn.innerHTML = isSubscribed ? '&#x1F514; 구독중' : '&#x1F514; 구독';
+  if (isSubscribed) btn.classList.add('btn-accent');
+  else btn.classList.remove('btn-accent');
+}
+
+function renderSubscriptionCount() {
+  const subs = getSubscriptions();
+  const el = document.getElementById('subCount');
+  if (el) el.textContent = subs.length > 0 ? `(${subs.length})` : '';
+}
+
+function renderSubscriptions() {
+  const el = document.getElementById('subscriptionList');
+  if (!el) return;
+  const subs = getSubscriptions();
+  if (!subs.length) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div class="sub-label">&#x1F514; 내 구독 법령 <span id="subCount">(${subs.length})</span></div>
+    <div class="sub-items">
+      ${subs.map(s => `
+        <span class="sub-item" onclick="openLaw('${escHtml(s.law)}','${escHtml(s.type || '법률')}')">
+          ${escHtml(s.law.length > 15 ? s.law.substring(0,15)+'…' : s.law)}
+        </span>
+      `).join('')}
+    </div>
+  `;
+}
+
 function highlight(text, keywords) {
   if (!text || !keywords.length) return text || '';
   let r = text;
@@ -3582,6 +3716,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadCategories(), loadStats(), loadGlossary()]);
   setupEvents();
   renderSearchHistory();
+  renderSubscriptions();
   renderStats();
 
   // 체크리스트 localStorage 저장 (이벤트 위임)
@@ -4236,6 +4371,32 @@ function renderSmartResults(searchResults, advisorData, query) {
         </div>
       </div>`;
     }
+  }
+
+  // 3.4.5. 계약방식 비교표
+  if (refData0?.method_comparison) {
+    const mc = refData0.method_comparison;
+    html += `<div class="method-compare">
+      <div class="smart-section-head">
+        <div class="smart-section-icon" style="background:var(--purple-muted)">&#x2696;</div>
+        <div class="smart-section-title">${escHtml(mc.type)} 계약방식 비교</div>
+      </div>
+      <table class="compare-table">
+        <thead><tr>
+          <th>방식</th><th>적용 조건</th><th>장점</th><th>단점</th><th>소요기간</th><th>근거</th>
+        </tr></thead>
+        <tbody>
+          ${mc.methods.map(m => `<tr>
+            <td class="ct-name">${escHtml(m.name)}</td>
+            <td>${escHtml(m.condition)}</td>
+            <td class="ct-pro">${escHtml(m.pros)}</td>
+            <td class="ct-con">${escHtml(m.cons)}</td>
+            <td>${escHtml(m.duration)}</td>
+            <td class="ct-law">${escHtml(m.law)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
   }
 
   // 3.5. 계약 프로세스 플로우
@@ -4947,6 +5108,8 @@ async function openLaw(lawName, fileType, advInfo) {
     const hash = `law=${encodeURIComponent(lawName)}&type=${encodeURIComponent(data.file_type)}`;
     history.replaceState(null, '', '#' + hash);
   }
+
+  updateSubscribeBtn();
 }
 
 async function toggleCompareView() {
