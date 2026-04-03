@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>한수원 계약 법령 검색</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='28' font-size='28'>⚖</text></svg>">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
@@ -3670,6 +3670,115 @@ kbd {
   margin-top: 16px;
 }
 
+/* ===== Offline Badge ===== */
+.offline-badge {
+  font-size: 10px;
+  color: var(--success);
+  padding: 2px 8px;
+  background: var(--success-muted);
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+/* ===== Mobile Optimization ===== */
+@media (max-width: 768px) {
+  /* 헤더 */
+  .header-top { padding: 8px 12px; }
+  .brand-text h1 { font-size: 14px; }
+  .brand-text .sub { display: none; }
+  .header-stats { display: none; }
+  .search-section { padding: 0 12px 10px; }
+  .search-bar { flex-direction: column; gap: 6px; }
+  .search-filter { min-width: auto; }
+  .quick-tags { gap: 4px; }
+  .quick-tag { padding: 3px 8px; font-size: 11px; }
+
+  /* 사이드바 → 축소 */
+  .sidebar { padding: 6px 12px; gap: 4px; }
+  .cat-head { padding: 6px 10px; }
+  .cat-info h3 { font-size: 11px; }
+  .cat-icon { width: 24px; height: 24px; font-size: 12px; }
+
+  /* 랜딩 */
+  .advisor-hero { padding: 20px 16px; }
+  .advisor-hero h2 { font-size: 22px; }
+  .hero-sub { font-size: 13px; }
+  .advisor-search { flex-direction: column; border-radius: var(--radius); }
+  .advisor-btn { border-radius: 0 0 var(--radius) var(--radius); padding: 12px; }
+  .scenario-chips { gap: 4px; }
+  .sc-chip { padding: 6px 12px; font-size: 12px; }
+  .shortcuts-hint { display: none; }
+
+  /* 나의 계약 */
+  .my-contracts { max-width: 100%; }
+  .add-contract-form { flex-wrap: wrap; }
+
+  /* 메인 콘텐츠 */
+  .main-wrap { padding: 8px 12px; }
+
+  /* 법령 뷰어 */
+  .viewer-head { padding: 12px 14px; flex-direction: column; gap: 8px; }
+  .viewer-actions { flex-wrap: wrap; }
+  .type-tabs { padding: 8px 14px; flex-wrap: wrap; }
+  .recent-tabs { padding: 4px 14px; }
+  .law-body { padding: 14px; }
+  .art-block { padding: 12px 14px; }
+  .toc-grid { grid-template-columns: 1fr 1fr; }
+
+  /* 검색 결과 */
+  .summary-dash { flex-wrap: wrap; }
+  .dash-item { min-width: 60px; }
+  .process-flow { overflow-x: auto; padding-bottom: 8px; }
+  .process-step { min-width: 90px; }
+  .risk-grid { grid-template-columns: 1fr; }
+  .clause-grid { grid-template-columns: 1fr; }
+  .docs-grid { grid-template-columns: 1fr; }
+  .calc-grid { grid-template-columns: 1fr; }
+  .template-fields { grid-template-columns: 1fr; }
+  .compare-row { grid-template-columns: 1fr; }
+  .compare-header { grid-template-columns: 1fr; }
+  .audit-detail { grid-template-columns: 1fr; }
+  .role-stage { grid-template-columns: 1fr; gap: 4px; }
+  .schedule-table { font-size: 10px; }
+  .schedule-table td { padding: 4px; }
+
+  /* 시뮬레이터 */
+  .sim-modal { width: 100%; padding: 16px; }
+  .sim-grid { grid-template-columns: 1fr; }
+
+  /* 위자드 */
+  .wizard-card { padding: 16px; }
+  .wizard-q { font-size: 15px; }
+
+  /* 비교 뷰 */
+  .diff-table { font-size: 10px; }
+  .method-compare .compare-table { font-size: 10px; }
+  .method-compare .compare-table td { padding: 4px 6px; }
+
+  /* 스크롤 히어로 */
+  .scroll-hero { height: 50vh; }
+  .hero-overlay-text h2 { font-size: 24px; }
+}
+
+@media (max-width: 480px) {
+  .brand-icon { width: 28px; height: 28px; font-size: 14px; }
+  .advisor-hero h2 { font-size: 18px; }
+  .summary-dash { gap: 4px; }
+  .dash-item { padding: 8px 4px; }
+  .dash-num { font-size: 18px; }
+  .smart-law-card { flex-direction: column; gap: 4px; }
+  .smart-law-num { align-self: flex-start; }
+  .adv-example { font-size: 11px; padding: 3px 10px; }
+  .btn { padding: 6px 12px; font-size: 12px; }
+  .viewer-title-area h2 { font-size: 15px; }
+}
+
+/* 모바일 터치 최적화 */
+@media (hover: none) {
+  .art-bookmark-btn, .btn-copy, .btn-summary, .btn-memo { opacity: 1 !important; }
+  .mc-del { opacity: 0.5; }
+}
+
 </style>
 </head>
 <body class="landing">
@@ -3857,6 +3966,7 @@ kbd {
     </div>
     <div style="margin-top:12px;text-align:center">
       <button class="btn btn-sm" onclick="exportDailyLog()">&#x1F4DD; 오늘의 업무일지</button>
+      <button class="btn btn-sm" onclick="showCacheStatus()" style="margin-left:8px">&#x1F4E5; 오프라인 저장 관리</button>
     </div>
   </div>
 </div>
@@ -3902,6 +4012,7 @@ kbd {
           <div class="viewer-meta" id="viewerMeta"></div>
         </div>
         <div class="viewer-actions">
+          <span id="offlineIndicator" class="offline-badge" style="display:none"></span>
           <button class="btn btn-sm" id="subscribeBtn" onclick="toggleSubscribe()">&#x1F514; 구독</button>
           <button class="btn-bookmark" id="lawBookmarkBtn" onclick="toggleLawBookmark()">
             <span class="bm-icon">&#9734;</span>
@@ -5845,6 +5956,51 @@ function structureBody(raw) {
   return html;
 }
 
+function cacheLawData(lawName, fileType, data) {
+  try {
+    const cache = JSON.parse(localStorage.getItem('lawCache') || '{}');
+    const key = `${lawName}|${fileType}`;
+    cache[key] = {
+      data: data,
+      cachedAt: new Date().toISOString(),
+    };
+    // 캐시 크기 제한 (최대 10개 법령)
+    const keys = Object.keys(cache);
+    if (keys.length > 10) {
+      const oldest = keys.sort((a,b) => cache[a].cachedAt.localeCompare(cache[b].cachedAt))[0];
+      delete cache[oldest];
+    }
+    localStorage.setItem('lawCache', JSON.stringify(cache));
+  } catch(e) { /* localStorage 용량 초과 시 무시 */ }
+}
+
+function getCachedLaw(lawName, fileType) {
+  try {
+    const cache = JSON.parse(localStorage.getItem('lawCache') || '{}');
+    const key = `${lawName}|${fileType}`;
+    return cache[key]?.data || null;
+  } catch(e) { return null; }
+}
+
+function clearLawCache() {
+  localStorage.removeItem('lawCache');
+  toast('법령 캐시가 삭제되었습니다', 'info');
+}
+
+function showCacheStatus() {
+  const cache = JSON.parse(localStorage.getItem('lawCache') || '{}');
+  const count = Object.keys(cache).length;
+  if (count === 0) { toast('저장된 법령이 없습니다', 'info'); return; }
+
+  let msg = `오프라인 저장 법령 (${count}건):\n`;
+  for (const [key, val] of Object.entries(cache)) {
+    const [law, type] = key.split('|');
+    msg += `  - ${law} (${type})\n`;
+  }
+  msg += '\n삭제하시겠습니까?';
+  if (confirm(msg)) clearLawCache();
+}
+
 async function openLaw(lawName, fileType, advInfo) {
   showView('viewer');
   $('#lawBody').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
@@ -5864,8 +6020,19 @@ async function openLaw(lawName, fileType, advInfo) {
 
   const lawParams = new URLSearchParams({name: lawName});
   if (fileType) lawParams.set('type', fileType);
-  const data = await api(`/api/law?${lawParams}`);
-  if (data.error) { $('#lawBody').innerHTML = `<div class="empty"><h3>${data.error}</h3></div>`; return; }
+  let data = await api(`/api/law?${lawParams}`);
+  if (data && !data.error) {
+    cacheLawData(lawName, data.file_type, data);
+  } else {
+    // 오프라인 시 캐시에서 로드
+    const cached = getCachedLaw(lawName, fileType || '법률');
+    if (cached) {
+      data = cached;
+      toast('오프라인 캐시에서 불러왔습니다', 'info');
+    } else {
+      $('#lawBody').innerHTML = `<div class="empty"><h3>${data?.error || '법령을 불러올 수 없습니다'}</h3></div>`; return;
+    }
+  }
 
   currentLaw = lawName;
   currentFileType = data.file_type;
@@ -5975,6 +6142,14 @@ async function openLaw(lawName, fileType, advInfo) {
   }
 
   updateSubscribeBtn();
+
+  // 오프라인 캐시 상태 표시
+  const cachedCheck = getCachedLaw(lawName, data.file_type);
+  const offlineIndicator = document.getElementById('offlineIndicator');
+  if (offlineIndicator) {
+    offlineIndicator.textContent = cachedCheck ? '\u{1F4E5} 오프라인 저장됨' : '';
+    offlineIndicator.style.display = cachedCheck ? '' : 'none';
+  }
 }
 
 async function toggleCompareView() {
