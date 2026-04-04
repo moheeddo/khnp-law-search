@@ -1707,7 +1707,7 @@ body.landing .landing-wrap { display: flex; }
 /* ===== Scroll Hero ===== */
 .scroll-hero {
   width: 100%;
-  height: 100vh;
+  height: 40vh;
   position: relative;
   display: flex;
   align-items: center;
@@ -4538,11 +4538,9 @@ kbd {
     <div class="hero-glow"></div>
     <h2>어떤 법령을 확인해야 할까요?</h2>
     <p class="hero-sub">상황을 입력하면 확인해야 할 법령을 안내합니다</p>
-    <div id="userStats"></div>
-    <div id="activityTimeline"></div>
     <div class="advisor-search autocomplete-wrap">
       <input type="text" id="advisorInput" class="advisor-input"
-             placeholder="예: 원전 기자재 구매, 공사 하도급, 용역 설계변경..."
+             placeholder="예: SW 개발 용역, 원전 기자재 구매, 공사 하도급..."
              aria-label="AI 어드바이저 검색어 입력" autocomplete="off"
              oninput="onAutocomplete('advisorInput','advisorAC')"
              onfocus="onAutocomplete('advisorInput','advisorAC')">
@@ -4550,9 +4548,7 @@ kbd {
       <button class="voice-btn" onclick="startVoiceSearch('advisorInput')" title="음성 검색" aria-label="음성으로 어드바이저 검색">&#x1F3A4;</button>
       <button class="advisor-btn" id="advisorBtn" aria-label="AI 어드바이저 검색 실행">검색</button>
     </div>
-    <div id="myContracts" class="my-contracts"></div>
     <div id="searchHistory" class="search-history"></div>
-    <div id="subscriptionList" class="subscription-list"></div>
     <div class="advisor-examples">
       <span class="adv-example" data-q="원전 기자재 구매">원전 기자재 구매</span>
       <span class="adv-example" data-q="공사 하도급 관리">공사 하도급</span>
@@ -4619,6 +4615,10 @@ kbd {
           <button class="btn btn-sm" onclick="exportWeeklyReport()" style="margin-left:4px">&#x1F4CA; 주간 리포트</button>
           <button class="btn btn-sm" onclick="showCacheStatus()" style="margin-left:8px">&#x1F4E5; 오프라인 저장 관리</button>
         </div>
+        <div id="myContracts" class="my-contracts" style="margin-top:12px"></div>
+        <div id="subscriptionList" class="subscription-list"></div>
+        <div id="userStats" style="margin-top:8px"></div>
+        <div id="activityTimeline"></div>
       </div>
     </div>
   </div>
