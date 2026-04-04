@@ -1989,6 +1989,71 @@ body.landing .landing-wrap { display: flex; }
 .ks-method { background: var(--accent-muted); color: var(--accent); border-color: var(--accent); }
 .ks-amount { background: var(--warn-muted); color: var(--warn); border-color: var(--warn); }
 
+/* Focus Guide */
+.focus-guide {
+  background: var(--bg-surface);
+  border: 2px solid var(--accent);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.fg-header {
+  background: var(--accent);
+  padding: 14px 20px;
+  color: white;
+}
+.fg-title { font-size: 17px; font-weight: 800; }
+.fg-subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+.fg-steps { padding: 12px 16px; }
+.fg-step {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.fg-step:last-child { border-bottom: none; }
+.fg-step-do {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.fg-step-detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.fg-step-law {
+  font-size: 11px;
+  color: var(--accent);
+  font-weight: 600;
+  margin-top: 4px;
+}
+.fg-check {
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-top: 1px solid var(--border);
+}
+.fg-check-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--danger);
+  margin-bottom: 8px;
+}
+.fg-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 4px 0;
+  cursor: pointer;
+  line-height: 1.5;
+}
+.fg-check-item input { margin-top: 3px; accent-color: var(--accent); }
+.fg-check-item:has(input:checked) span {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
 /* Scenario Section */
 .scenario-section {
   padding: 0 32px 28px;
@@ -6027,6 +6092,32 @@ function renderSmartResults(searchResults, advisorData, query) {
         ${rs.score !== undefined ? `<span class="ks-badge ks-risk" style="color:${rs.score<30?'var(--success)':rs.score<60?'var(--warn)':'var(--danger)'}">위험도 ${rs.score}점</span>` : ''}
         <span class="ks-badge">법령 ${advisorData.recommendations?.length || 0}건</span>
       </div>
+    </div>`;
+  }
+
+  // ── 1.6. 핵심 가이드 (이것만 보세요) ──
+  if (refData?.guide) {
+    const g = refData.guide;
+    html += `<div class="focus-guide">
+      <div class="fg-header">
+        <div class="fg-title">${escHtml(g.title)}</div>
+        <div class="fg-subtitle">이것만 순서대로 따라하세요</div>
+      </div>
+      <div class="fg-steps">
+        ${g.steps.map(s => `
+          <div class="fg-step">
+            <div class="fg-step-do">${escHtml(s.do)}</div>
+            <div class="fg-step-detail">${escHtml(s.detail)}</div>
+            ${s.law ? `<div class="fg-step-law">${escHtml(s.law)}</div>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ${g.must_check?.length ? `
+        <div class="fg-check">
+          <div class="fg-check-title">반드시 확인</div>
+          ${g.must_check.map(c => `<label class="fg-check-item"><input type="checkbox" onchange="var k='fg_'+this.parentElement.querySelector('span').textContent.substring(0,20);if(this.checked)localStorage.setItem(k,'1');else localStorage.removeItem(k)"><span>${escHtml(c)}</span></label>`).join('')}
+        </div>
+      ` : ''}
     </div>`;
   }
 
