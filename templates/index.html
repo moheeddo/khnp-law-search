@@ -2054,6 +2054,28 @@ body.landing .landing-wrap { display: flex; }
   color: var(--text-muted);
 }
 
+/* Detail toggle (상세 분석 접기/펼치기) */
+.detail-toggle-area { margin-bottom: 16px; }
+.detail-toggle-btn {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition);
+}
+.detail-toggle-btn:hover {
+  background: var(--accent-muted);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.detail-content { display: none; margin-top: 12px; }
+.detail-toggle-area.open .detail-content { display: block; }
+
 /* Scenario Section */
 .scenario-section {
   padding: 0 32px 28px;
@@ -6169,6 +6191,16 @@ function renderSmartResults(searchResults, advisorData, query) {
     `;
   }
 
+  // ── 가이드가 있으면 나머지 섹션을 "상세 분석" 토글로 묶음 ──
+  const hasGuide = !!refData?.guide;
+  if (hasGuide) {
+    html += `<div class="detail-toggle-area">
+      <button class="detail-toggle-btn" onclick="this.parentElement.classList.toggle('open');this.textContent=this.parentElement.classList.contains('open')?'▲ 상세 분석 접기':'▼ 상세 분석 펼치기 (추천 법령·프로세스·리스크·서류 등)'" id="detailToggleBtn">
+        &#x25BC; 상세 분석 펼치기 (추천 법령·프로세스·리스크·서류 등)
+      </button>
+      <div class="detail-content">`;
+  }
+
   // ── 4. 추천 법령 (우선순위별 그룹) ──
   if (hasAdvisor) {
     lastAdvisorData = advisorData;
@@ -6593,6 +6625,11 @@ function renderSmartResults(searchResults, advisorData, query) {
       html += `<span class="rq-item" onclick="doSearch('${escHtml(rq)}')">${escHtml(rq)}</span>`;
     }
     html += '</div>';
+  }
+
+  // 상세 분석 토글 닫기
+  if (hasGuide) {
+    html += '</div></div>'; // detail-content, detail-toggle-area 닫기
   }
 
   // ── 19. 버튼 (종합리포트, 검토요청서, 기안문요지, 체크리스트 출력) ──
