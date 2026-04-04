@@ -20,6 +20,7 @@ KHNP_CATEGORIES = {
     "construction_subcontract": {"name":"건설·하도급","icon":"hard-hat","description":"건설산업, 하도급 거래 공정화","laws":["건설산업기본법","하도급거래공정화에관한법률"]},
     "fair_trade": {"name":"공정거래·민상법","icon":"scale","description":"독점규제, 민법 등 일반 거래법","laws":["독점규제및공정거래에관한법률","민법"]},
     "safety_environment": {"name":"안전·환경","icon":"shield","description":"산업안전, 환경영향평가","laws":["산업안전보건법","환경영향평가법","산업안전보건기준에관한규칙"]},
+    "sw_it": {"name":"SW·IT","icon":"code","description":"소프트웨어, 정보통신, 전자정부, 클라우드","laws":["소프트웨어진흥법","전자정부법","정보통신공사업법","정보통신산업진흥법","지능정보화기본법","클라우드컴퓨팅발전및이용자보호에관한법률","정보통신망이용촉진및정보보호등에관한법률","공공데이터의제공및이용활성화에관한법률","전자문서및전자거래기본법"]},
 }
 
 # ===== Advisor Scenarios (imported from app.py) =====
@@ -51,6 +52,14 @@ ADVISOR_SCENARIOS = [
         {"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"계약해제·해지 시 정산 기준","priority":"필수","key_articles":"제76조, 제77조"},
         {"law":"민법","type":"법률","reason":"계약 해제·해지의 일반원칙, 손해배상","priority":"필수","key_articles":"제544조, 제546조, 제551조"},
         {"law":"공기업ㆍ준정부기관계약사무규칙","type":"기획재정부령","reason":"공기업 계약해지 시 특례","priority":"권장","key_articles":"제15조"},
+    ]},
+    {"keywords":["소프트웨어","SW","sw사업","IT","it사업","정보시스템","전산","시스템개발","앱","어플리케이션","홈페이지"],"category":"SW·IT사업","recommendations":[
+        {"law":"소프트웨어진흥법","type":"법률","reason":"SW사업 대가기준, 소프트웨어사업자 신고, 하자담보책임","priority":"필수","key_articles":"제20조, 제24조, 제30조, 제43조"},
+        {"law":"소프트웨어진흥법","type":"시행령","reason":"SW기술자 등급, 대가산정 기준, 하도급 금지","priority":"필수","key_articles":"제2조, 제16조, 제37조"},
+        {"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"SW용역 협상에 의한 계약 절차","priority":"필수","key_articles":"제43조"},
+        {"law":"전자정부법","type":"법률","reason":"전자정부 정보시스템 구축·운영 기준","priority":"권장","key_articles":"제2조, 제45조, 제64조"},
+        {"law":"지능정보화기본법","type":"법률","reason":"지능정보기술·서비스 관련 계약 기준","priority":"해당시","key_articles":"제2조, 제13조"},
+        {"law":"클라우드컴퓨팅발전및이용자보호에관한법률","type":"법률","reason":"클라우드 서비스 이용·보안 기준","priority":"해당시","key_articles":"제2조, 제20조"},
     ]},
     {"keywords":["계약변경","내용변경","기간연장","수량변경","사양변경"],"category":"계약내용변경","recommendations":[
         {"law":"국가를당사자로하는계약에관한법률","type":"시행령","reason":"계약내용 변경 절차·조건","priority":"필수","key_articles":"제64조, 제65조, 제66조"},
@@ -110,7 +119,7 @@ def get_index():
     if _index is not None:
         return _index
     _index = {}
-    for fname in ["khnp_laws_1.json", "khnp_laws_2.json", "rest_laws.json"]:
+    for fname in ["khnp_laws_1.json", "khnp_laws_2.json", "rest_laws_1.json", "rest_laws_2.json", "rest_laws_3.json", "rest_laws_4.json", "rest_laws_5.json", "rest_laws_6.json"]:
         p = BASE / "data" / fname
         if p.exists():
             with open(p, "r", encoding="utf-8") as f:
@@ -142,6 +151,14 @@ QUERY_SYNONYMS = {
     "하자": "하자보수 하자담보 하자보증",
     "준공": "준공검사 준공 검수",
     "기성": "기성금 기성검사 대가지급",
+    "시스템": "정보시스템 시스템개발 소프트웨어 IT",
+    "앱": "소프트웨어 어플리케이션 앱 모바일",
+    "웹": "소프트웨어 웹 홈페이지 시스템개발",
+    "정보화": "지능정보화 정보시스템 전자정부 IT",
+    "클라우드": "클라우드 클라우드컴퓨팅 IT 소프트웨어",
+    "보안": "정보보호 보안 정보통신망",
+    "데이터": "데이터 공공데이터 빅데이터",
+    "홈페이지": "소프트웨어 홈페이지 시스템개발 웹",
 }
 
 def expand_query(query):
