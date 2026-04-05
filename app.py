@@ -12,6 +12,7 @@ import sqlite3
 import secrets
 import urllib.request
 import urllib.error
+import urllib.parse
 import ssl
 from pathlib import Path
 from functools import wraps
@@ -24,6 +25,36 @@ app.secret_key = secrets.token_hex(32)
 SOLAR_API_KEY = os.environ.get("UPSTAGE_API_KEY", "") or "up_ppdAFGd03WVjGkZDihfdoqMByyKVV"
 SOLAR_API_URL = "https://api.upstage.ai/v1/chat/completions"
 SOLAR_MODEL = "solar-mini"
+
+# 공공데이터포털 API 설정
+DATA_GO_KR_KEY = os.environ.get("DATA_GO_KR_API_KEY", "")
+PROCUREMENT_BASE = "http://apis.data.go.kr/1230000"
+ALIO_BASE = "http://apis.data.go.kr/B552015"
+
+# API 응답 캐시 (key → (timestamp, data), 1시간 TTL)
+_api_cache = {}
+API_CACHE_TTL = 3600
+
+def cached_api_call(cache_key: str, url: str, timeout: int = 10) -> dict | None:
+    """공공데이터 API 호출 + 1시간 캐시"""
+    now = time.time()
+    if cache_key in _api_cache:
+        ts, data = _api_cache[cache_key]
+        if now - ts < API_CACHE_TTL:
+            return data
+    try:
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        req = urllib.request.Request(url)
+        with urllib.request.urlopen(req, timeout=timeout, context=ctx) as resp:
+            raw = resp.read().decode("utf-8")
+            data = json.loads(raw)
+            _api_cache[cache_key] = (now, data)
+            return data
+    except Exception as e:
+        print(f"공공데이터 API 오류: {type(e).__name__}: {e}")
+        return None
 
 LAW_DIR = Path(__file__).parent / "legalize-kr" / "kr"
 DB_PATH = Path(__file__).parent / "lawsearch.db"
@@ -1017,6 +1048,215 @@ def api_stats():
         "khnp_categories": len(KHNP_CATEGORIES),
         "khnp_law_count": sum(len(c["laws"]) for c in KHNP_CATEGORIES.values()),
     })
+
+
+# ===== 공공데이터포털 API 프록시 =====
+
+@app.route("/api/procurement/bids")
+def procurement_bids():
+    """나라장터 입찰공고 검색"""
+    keyword = request.args.get("keyword", "")
+    org = request.args.get("org", "한국수력원자력")
+    rows = int(request.args.get("rows", 10))
+    bid_type = request.args.get("type", "all")
+
+    if not DATA_GO_KR_KEY:
+        # API 키 없으면 mock 응답 반환
+        mock_items = [
+            {
+                "id": "mock-001",
+                "name": f"[샘플] {keyword or org} 관련 입찰공고",
+                "org": org,
+                "demand_org": org,
+                "date": "2026-04-01",
+                "close_date": "2026-04-15",
+                "price": "0",
+                "method": "일반경쟁",
+                "bid_method": "전자입찰",
+                "url": "https://www.g2b.go.kr",
+                "type": "service",
+            }
+        ]
+        return jsonify({"items": mock_items, "total": len(mock_items), "mock": True})
+
+    # 물품(01) / 공사(02) / 용역(03) 오퍼레이션 매핑
+    type_ops = {
+        "goods": [("01", "BidPublicInfoService", "getBidPblancListInfoThng")],
+        "construction": [("02", "BidPublicInfoService", "getBidPblancListInfoCnstwk")],
+        "service": [("03", "BidPublicInfoService", "getBidPblancListInfoServc")],
+        "all": [
+            ("01", "BidPublicInfoService", "getBidPblancListInfoThng"),
+            ("02", "BidPublicInfoService", "getBidPblancListInfoCnstwk"),
+            ("03", "BidPublicInfoService", "getBidPblancListInfoServc"),
+        ],
+    }
+    ops = type_ops.get(bid_type, type_ops["all"])
+
+    type_label = {"01": "goods", "02": "construction", "03": "service"}
+
+    items = []
+    for (type_code, svc, op) in ops:
+        params = urllib.parse.urlencode({
+            "serviceKey": DATA_GO_KR_KEY,
+            "numOfRows": rows,
+            "pageNo": 1,
+            "type": "json",
+            "dminsttNm": org,
+            **({"bidNtceNm": keyword} if keyword else {}),
+        })
+        url = f"{PROCUREMENT_BASE}/{svc}/{op}?{params}"
+        cache_key = f"bids:{type_code}:{org}:{keyword}:{rows}"
+        data = cached_api_call(cache_key, url)
+        if not data:
+            continue
+        try:
+            body = data.get("response", {}).get("body", {})
+            raw_items = body.get("items", [])
+            if isinstance(raw_items, dict):
+                raw_items = raw_items.get("item", [])
+            if isinstance(raw_items, dict):
+                raw_items = [raw_items]
+            for it in raw_items:
+                items.append({
+                    "id": it.get("bidNtceNo", ""),
+                    "name": it.get("bidNtceNm", ""),
+                    "org": it.get("ntceInsttNm", ""),
+                    "demand_org": it.get("dminsttNm", ""),
+                    "date": it.get("bidNtceDt", ""),
+                    "close_date": it.get("bidClseDt", ""),
+                    "price": it.get("asignBdgtAmt", "0"),
+                    "method": it.get("cntrctMthdNm", ""),
+                    "bid_method": it.get("bidMthdNm", ""),
+                    "url": f"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameBidPblanc/selectBidPblancListUser.do?bidNtceNo={it.get('bidNtceNo', '')}",
+                    "type": type_label.get(type_code, "service"),
+                })
+        except Exception as e:
+            print(f"입찰공고 파싱 오류: {e}")
+
+    return jsonify({"items": items, "total": len(items), "mock": False})
+
+
+@app.route("/api/procurement/contracts")
+def procurement_contracts():
+    """나라장터 계약정보"""
+    keyword = request.args.get("keyword", "")
+    org = request.args.get("org", "한국수력원자력")
+    rows = int(request.args.get("rows", 10))
+
+    if not DATA_GO_KR_KEY:
+        mock_items = [
+            {
+                "id": "mock-c-001",
+                "name": f"[샘플] {keyword or org} 계약",
+                "org": org,
+                "amount": "0",
+                "date": "2026-04-01",
+                "company": "샘플업체",
+                "url": "https://www.g2b.go.kr",
+            }
+        ]
+        return jsonify({"items": mock_items, "total": len(mock_items), "mock": True})
+
+    import datetime
+    today = datetime.date.today()
+    from_date = (today - datetime.timedelta(days=180)).strftime("%Y%m%d")
+    to_date = today.strftime("%Y%m%d")
+
+    params = urllib.parse.urlencode({
+        "serviceKey": DATA_GO_KR_KEY,
+        "numOfRows": rows,
+        "pageNo": 1,
+        "type": "json",
+        "cntrctInsttNm": org,
+        "cntrctBgnDt": from_date,
+        "cntrctEndDt": to_date,
+        **({"cntrctNm": keyword} if keyword else {}),
+    })
+    url = f"{PROCUREMENT_BASE}/ContractInfoService/getContractListInfoThng?{params}"
+    cache_key = f"contracts:{org}:{keyword}:{rows}:{from_date}"
+    data = cached_api_call(cache_key, url)
+
+    items = []
+    if data:
+        try:
+            body = data.get("response", {}).get("body", {})
+            raw_items = body.get("items", [])
+            if isinstance(raw_items, dict):
+                raw_items = raw_items.get("item", [])
+            if isinstance(raw_items, dict):
+                raw_items = [raw_items]
+            for it in raw_items:
+                items.append({
+                    "id": it.get("cntrctNo", ""),
+                    "name": it.get("cntrctNm", ""),
+                    "org": it.get("cntrctInsttNm", ""),
+                    "amount": it.get("cntrctAmt", "0"),
+                    "date": it.get("cntrctCnclsDt", ""),
+                    "company": it.get("cmpnyNm", ""),
+                    "url": f"https://www.g2b.go.kr",
+                })
+        except Exception as e:
+            print(f"계약정보 파싱 오류: {e}")
+
+    return jsonify({"items": items, "total": len(items), "mock": False})
+
+
+@app.route("/api/alio/contracts")
+def alio_contracts():
+    """알리오 계약현황"""
+    import datetime
+    org = request.args.get("org", "한국수력원자력")
+    year = request.args.get("year", str(datetime.date.today().year))
+
+    if not DATA_GO_KR_KEY:
+        mock_items = [
+            {
+                "org": org,
+                "year": year,
+                "name": f"[샘플] {org} 계약현황",
+                "amount": "0",
+                "method": "일반경쟁",
+                "company": "샘플업체",
+                "date": f"{year}-01-01",
+            }
+        ]
+        return jsonify({"items": mock_items, "total": len(mock_items), "mock": True})
+
+    params = urllib.parse.urlencode({
+        "serviceKey": DATA_GO_KR_KEY,
+        "numOfRows": 100,
+        "pageNo": 1,
+        "resultType": "json",
+        "institutionName": org,
+        "year": year,
+    })
+    url = f"{ALIO_BASE}/AlioService/getContractSttus?{params}"
+    cache_key = f"alio:{org}:{year}"
+    data = cached_api_call(cache_key, url)
+
+    items = []
+    if data:
+        try:
+            body = data.get("response", {}).get("body", {})
+            raw_items = body.get("items", [])
+            if isinstance(raw_items, dict):
+                raw_items = raw_items.get("item", [])
+            if isinstance(raw_items, dict):
+                raw_items = [raw_items]
+            for it in raw_items:
+                items.append({
+                    "org": it.get("institutionName", org),
+                    "year": it.get("year", year),
+                    "name": it.get("contractName", ""),
+                    "amount": it.get("contractAmt", "0"),
+                    "method": it.get("contractMthd", ""),
+                    "company": it.get("contractorName", ""),
+                    "date": it.get("contractDt", ""),
+                })
+        except Exception as e:
+            print(f"알리오 파싱 오류: {e}")
+
+    return jsonify({"items": items, "total": len(items), "mock": False})
 
 
 if __name__ == "__main__":
