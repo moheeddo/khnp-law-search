@@ -35,7 +35,7 @@ ALIO_BASE = "http://apis.data.go.kr/B552015"
 _api_cache = {}
 API_CACHE_TTL = 3600
 
-def cached_api_call(cache_key: str, url: str, timeout: int = 10) -> dict | None:
+def cached_api_call(cache_key: str, url: str, timeout: int = 30) -> dict | None:
     """공공데이터 API 호출 + 1시간 캐시"""
     now = time.time()
     if cache_key in _api_cache:
@@ -53,7 +53,7 @@ def cached_api_call(cache_key: str, url: str, timeout: int = 10) -> dict | None:
             _api_cache[cache_key] = (now, data)
             return data
     except Exception as e:
-        print(f"공공데이터 API 오류: {type(e).__name__}: {e}")
+        print(f"공공데이터 API 오류: {type(e).__name__}: {e} | URL: {url[:120]}")
         return None
 
 LAW_DIR = Path(__file__).parent / "legalize-kr" / "kr"
@@ -1056,7 +1056,7 @@ def api_stats():
 def procurement_bids():
     """나라장터 입찰공고 검색"""
     keyword = request.args.get("keyword", "")
-    org = request.args.get("org", "한국수력원자력")
+    org = request.args.get("org", "")
     rows = int(request.args.get("rows", 10))
     bid_type = request.args.get("type", "all")
 
@@ -1096,23 +1096,31 @@ def procurement_bids():
 
     items = []
     for (type_code, svc, op) in ops:
+        from datetime import datetime, timedelta
+        end_dt = datetime.now().strftime("%Y%m%d%H%M")
+        start_dt = (datetime.now() - timedelta(days=30)).strftime("%Y%m%d%H%M")
         params = urllib.parse.urlencode({
             "serviceKey": DATA_GO_KR_KEY,
             "numOfRows": rows,
             "pageNo": 1,
             "type": "json",
-            "dminsttNm": org,
+            "inqryDiv": 1,
+            "inqryBgnDt": start_dt,
+            "inqryEndDt": end_dt,
+            **({"dminsttNm": org} if org else {}),
             **({"bidNtceNm": keyword} if keyword else {}),
         })
         url = f"{PROCUREMENT_BASE}/{svc}/{op}?{params}"
         cache_key = f"bids:{type_code}:{org}:{keyword}:{rows}"
         data = cached_api_call(cache_key, url)
-        if not data:
+        if not data or "nkoneps.com.response.ResponseError" in data:
             continue
         try:
             body = data.get("response", {}).get("body", {})
             raw_items = body.get("items", [])
-            if isinstance(raw_items, dict):
+            if not raw_items:
+                raw_items = []
+            elif isinstance(raw_items, dict):
                 raw_items = raw_items.get("item", [])
             if isinstance(raw_items, dict):
                 raw_items = [raw_items]
@@ -1140,7 +1148,7 @@ def procurement_bids():
 def procurement_contracts():
     """나라장터 계약정보"""
     keyword = request.args.get("keyword", "")
-    org = request.args.get("org", "한국수력원자력")
+    org = request.args.get("org", "")
     rows = int(request.args.get("rows", 10))
 
     if not DATA_GO_KR_KEY:
@@ -1181,7 +1189,9 @@ def procurement_contracts():
         try:
             body = data.get("response", {}).get("body", {})
             raw_items = body.get("items", [])
-            if isinstance(raw_items, dict):
+            if not raw_items:
+                raw_items = []
+            elif isinstance(raw_items, dict):
                 raw_items = raw_items.get("item", [])
             if isinstance(raw_items, dict):
                 raw_items = [raw_items]
@@ -1205,7 +1215,7 @@ def procurement_contracts():
 def alio_contracts():
     """알리오 계약현황"""
     import datetime
-    org = request.args.get("org", "한국수력원자력")
+    org = request.args.get("org", "")
     year = request.args.get("year", str(datetime.date.today().year))
 
     if not DATA_GO_KR_KEY:
@@ -1239,7 +1249,9 @@ def alio_contracts():
         try:
             body = data.get("response", {}).get("body", {})
             raw_items = body.get("items", [])
-            if isinstance(raw_items, dict):
+            if not raw_items:
+                raw_items = []
+            elif isinstance(raw_items, dict):
                 raw_items = raw_items.get("item", [])
             if isinstance(raw_items, dict):
                 raw_items = [raw_items]
@@ -1262,4 +1274,4 @@ def alio_contracts():
 if __name__ == "__main__":
     init_db()
     build_index()
-    app.run(debug=True, port=5000)
+    app.run(debug=False, port=5000)
