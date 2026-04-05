@@ -6866,9 +6866,9 @@ async function openLaw(lawName, fileType, advInfo) {
     advisorContext = '';
   }
 
-  const lawParams = new URLSearchParams({name: lawName});
-  if (fileType) lawParams.set('type', fileType);
-  let data = await api(`/api/law?${lawParams}`);
+  let lawUrl = `/api/law/${encodeURIComponent(lawName)}`;
+  if (fileType) lawUrl += `?type=${encodeURIComponent(fileType)}`;
+  let data = await api(lawUrl);
   if (data && !data.error) {
     cacheLawData(lawName, data.file_type, data);
   } else {
