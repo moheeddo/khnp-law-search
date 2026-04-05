@@ -55,7 +55,6 @@
   --bg-kp: rgba(255,255,255,0.6);
   --switch-bg: rgba(0,0,0,0.12);
   --switch-knob: #ffffff;
-  --smart-banner-bg: linear-gradient(135deg, rgba(255,255,255,0.7) 0%, rgba(37,99,235,0.06) 100%);
   --option-bg: #ffffff;
   --bg-card: #ffffff;
 }
@@ -89,7 +88,6 @@
   --bg-kp: rgba(255,255,255,0.05);
   --switch-bg: rgba(255,255,255,0.15);
   --switch-knob: #e8eaed;
-  --smart-banner-bg: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(37,99,235,0.1) 100%);
   --option-bg: #22262f;
   --bg-card: #1a1d27;
 }
@@ -1858,36 +1856,6 @@ body.landing .landing-wrap { display: flex; }
   color: white;
 }
 
-/* ===== Method Comparison Table ===== */
-.method-compare {
-  margin-bottom: 16px;
-}
-.compare-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  margin-top: 8px;
-}
-.compare-table th {
-  text-align: left;
-  padding: 8px;
-  border-bottom: 2px solid var(--accent);
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 600;
-}
-.compare-table td {
-  padding: 8px;
-  border-bottom: 1px solid var(--border);
-  color: var(--text-secondary);
-  line-height: 1.4;
-  vertical-align: top;
-}
-.compare-table tr:hover { background: var(--bg-hover); }
-.ct-name { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
-.ct-pro { color: var(--success); }
-.ct-con { color: var(--danger); }
-.ct-law { font-size: 10px; color: var(--accent); white-space: nowrap; }
 
 .advisor-examples {
   display: flex;
@@ -1958,123 +1926,8 @@ body.landing .landing-wrap { display: flex; }
   font-weight: 600;
 }
 
-/* Key Summary Card */
-.key-summary {
-  padding: 14px 18px;
-  background: var(--bg-surface);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius);
-  margin-bottom: 14px;
-}
-.ks-main {
-  font-size: 14px;
-  color: var(--text-primary);
-  line-height: 1.6;
-  margin-bottom: 8px;
-}
-.ks-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-.ks-badge {
-  font-size: 11px;
-  padding: 2px 10px;
-  border-radius: 12px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-.ks-method { background: var(--accent-muted); color: var(--accent); border-color: var(--accent); }
-.ks-amount { background: var(--warn-muted); color: var(--warn); border-color: var(--warn); }
 
-/* Focus Guide */
-.focus-guide {
-  background: var(--bg-surface);
-  border: 2px solid var(--accent);
-  border-radius: var(--radius-lg);
-  margin-bottom: 16px;
-  overflow: hidden;
-}
-.fg-header {
-  background: var(--accent);
-  padding: 14px 20px;
-  color: white;
-}
-.fg-title { font-size: 17px; font-weight: 800; }
-.fg-subtitle { font-size: 12px; opacity: 0.85; margin-top: 2px; }
-.fg-steps { padding: 12px 16px; }
-.fg-step {
-  padding: 10px 0;
-  border-bottom: 1px solid var(--border);
-}
-.fg-step:last-child { border-bottom: none; }
-.fg-step-do {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 4px;
-}
-.fg-step-detail {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.7;
-}
-.fg-step-law {
-  font-size: 11px;
-  color: var(--accent);
-  font-weight: 600;
-  margin-top: 4px;
-}
-.fg-check {
-  padding: 12px 16px;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border);
-}
-.fg-check-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--danger);
-  margin-bottom: 8px;
-}
-.fg-check-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  padding: 4px 0;
-  cursor: pointer;
-  line-height: 1.5;
-}
-.fg-check-item input { margin-top: 3px; accent-color: var(--accent); }
-.fg-check-item:has(input:checked) span {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
 
-/* Detail toggle (상세 분석 접기/펼치기) */
-.detail-toggle-area { margin-bottom: 16px; }
-.detail-toggle-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--bg-elevated);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-size: 13px;
-  cursor: pointer;
-  text-align: center;
-  transition: all var(--transition);
-}
-.detail-toggle-btn:hover {
-  background: var(--accent-muted);
-  border-color: var(--accent);
-  color: var(--accent);
-}
-.detail-content { display: none; margin-top: 12px; }
-.detail-toggle-area.open .detail-content { display: block; }
 
 /* Scenario Section */
 .scenario-section {
@@ -2243,114 +2096,6 @@ kbd {
   .sidebar { flex-wrap: wrap; }
 }
 
-/* ===== Smart Search Results ===== */
-.smart-results { display: flex; flex-direction: column; gap: 0; }
-
-.smart-banner {
-  background: var(--smart-banner-bg);
-
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-lg);
-  padding: 24px 28px;
-  margin-bottom: 20px;
-  position: relative;
-  overflow: hidden;
-}
-.smart-banner::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--cyan), var(--purple));
-}
-.smart-banner-icon {
-  font-size: 28px;
-  margin-bottom: 8px;
-}
-.smart-banner-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-.smart-banner-sub {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-.smart-banner-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 12px;
-}
-.smart-tag {
-  font-size: 11px;
-  padding: 3px 10px;
-  border-radius: 20px;
-  background: var(--accent-muted);
-  color: var(--accent);
-  font-weight: 600;
-}
-
-.smart-section {
-  margin-bottom: 16px;
-}
-.smart-section.collapsible .smart-section-head {
-  cursor: pointer;
-  user-select: none;
-}
-.smart-section.collapsible .smart-section-head:hover {
-  background: var(--bg-hover);
-  border-radius: var(--radius-sm);
-}
-.smart-section-toggle {
-  margin-left: auto;
-  font-size: 12px;
-  color: var(--text-muted);
-  transition: transform var(--transition);
-  flex-shrink: 0;
-}
-.smart-section.collapsed .smart-section-toggle {
-  transform: rotate(-90deg);
-}
-.smart-section.collapsed .smart-section-body {
-  display: none;
-}
-.smart-section-head {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 0;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-}
-.smart-section-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.smart-section-icon.essential { background: var(--danger-muted); }
-.smart-section-icon.recommended { background: var(--accent-muted); }
-.smart-section-icon.conditional { background: var(--warn-muted); }
-.smart-section-icon.reference { background: var(--purple-muted); }
-.smart-section-icon.articles { background: var(--cyan-muted); }
-.smart-section-title {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.smart-section-count {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-left: auto;
-}
 
 .smart-law-card {
   background: var(--glass);
@@ -2498,27 +2243,6 @@ kbd {
   padding: 0 2px;
 }
 
-/* Solar AI analysis box in smart results */
-.smart-ai-box {
-  background: var(--cyan-muted);
-  border: 1px solid rgba(8,145,178,0.15);
-  border-radius: var(--radius);
-  padding: 14px 16px;
-  margin-bottom: 16px;
-}
-.smart-ai-label {
-  font-size: 11px;
-  color: var(--cyan);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
-}
-.smart-ai-text {
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.6;
-}
 
 /* Divider between advisor and search sections */
 .smart-divider {
@@ -2537,66 +2261,6 @@ kbd {
   background: var(--border);
 }
 
-/* Process flow */
-.process-flow {
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  overflow-x: auto;
-  padding: 16px 0;
-  margin: 8px 0;
-}
-.process-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  min-width: 110px;
-  max-width: 130px;
-  text-align: center;
-  position: relative;
-  flex-shrink: 0;
-}
-.process-step-num {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: white;
-  font-size: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 6px;
-  position: relative;
-  z-index: 1;
-}
-.process-step-name {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 2px;
-}
-.process-step-desc {
-  font-size: 10px;
-  color: var(--text-muted);
-  line-height: 1.3;
-}
-.process-step-law {
-  font-size: 9px;
-  color: var(--accent);
-  margin-top: 3px;
-  cursor: pointer;
-}
-.process-step-law:hover { text-decoration: underline; }
-.process-arrow {
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-  font-size: 16px;
-  margin-top: 4px;
-  flex-shrink: 0;
-}
 
 /* Reference: Case cards */
 .ref-case-card {
@@ -2843,87 +2507,7 @@ kbd {
   border-radius: 3px;
   padding: 0 2px;
 }
-/* ===== Contract Method Card ===== */
-.contract-method-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--warn);
-  border-radius: var(--radius);
-  padding: 14px 18px;
-  margin-bottom: 8px;
-}
-.cm-method {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-.cm-details { margin-bottom: 8px; }
-.cm-detail-item {
-  font-size: 13px;
-  color: var(--text-secondary);
-  padding: 2px 0;
-  line-height: 1.5;
-}
-.cm-warnings {
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-}
-.cm-warn-item {
-  font-size: 12px;
-  color: var(--warn);
-  padding: 2px 0;
-  line-height: 1.5;
-}
 
-/* ===== Law Summary Cards ===== */
-.law-cards-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.law-summary-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px 14px;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-.law-summary-card:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow);
-}
-.lsc-badge {
-  font-size: 10px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.lsc-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-  line-height: 1.3;
-}
-.lsc-short {
-  font-size: 12px;
-  color: var(--accent);
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.lsc-scope {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 2px;
-}
-.lsc-key {
-  font-size: 11px;
-  color: var(--text-secondary);
-  font-style: italic;
-}
 
 /* ===== Calculator ===== */
 .calc-card {
@@ -3175,43 +2759,17 @@ kbd {
   font-weight: 600;
 }
 
-/* ===== Summary Dashboard ===== */
-.summary-dash {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.dash-item {
-  flex: 1;
-  text-align: center;
-  padding: 12px 8px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-.dash-num {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--accent);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-.dash-label {
-  font-size: 11px;
-  color: var(--text-muted);
-}
 
 /* ===== Print Styles ===== */
 @media print {
   .header, .sidebar, .search-section, .landing-wrap,
-  .results-head .btn, .smart-banner-tags, .ref-links,
-  .process-arrow, .related-queries, #searchHistory,
+  .results-head .btn, .ref-links,
+  .related-queries, #searchHistory,
   .adv-item-action, .smart-law-arrow, .ref-expand-btn { display: none !important; }
   body { background: white !important; color: black !important; }
   .main-wrap { display: block !important; padding: 0 !important; }
   .card { border: 1px solid #ddd !important; box-shadow: none !important; }
   .results-head { border-bottom: 2px solid #333 !important; }
-  .smart-banner { border: 1px solid #ddd !important; background: #f9f9f9 !important; }
   .smart-law-card, .ref-article-card, .ref-case-card { break-inside: avoid; }
 }
 
@@ -4140,10 +3698,6 @@ kbd {
   .toc-grid { grid-template-columns: 1fr 1fr; }
 
   /* 검색 결과 */
-  .summary-dash { flex-wrap: wrap; }
-  .dash-item { min-width: 60px; }
-  .process-flow { overflow-x: auto; padding-bottom: 8px; }
-  .process-step { min-width: 90px; }
   .risk-grid { grid-template-columns: 1fr; }
   .clause-grid { grid-template-columns: 1fr; }
   .docs-grid { grid-template-columns: 1fr; }
@@ -4166,8 +3720,6 @@ kbd {
 
   /* 비교 뷰 */
   .diff-table { font-size: 10px; }
-  .method-compare .compare-table { font-size: 10px; }
-  .method-compare .compare-table td { padding: 4px 6px; }
 
   /* 스크롤 히어로 */
   .scroll-hero { height: 50vh; }
@@ -4177,9 +3729,6 @@ kbd {
 @media (max-width: 480px) {
   .brand-icon { width: 28px; height: 28px; font-size: 14px; }
   .advisor-hero h2 { font-size: 18px; }
-  .summary-dash { gap: 4px; }
-  .dash-item { padding: 8px 4px; }
-  .dash-num { font-size: 18px; }
   .smart-law-card { flex-direction: column; gap: 4px; }
   .smart-law-num { align-self: flex-start; }
   .adv-example { font-size: 11px; padding: 3px 10px; }
@@ -4271,39 +3820,6 @@ kbd {
   padding: 4px;
 }
 
-/* ===== Risk Score Card ===== */
-.risk-score-card {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 16px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 16px;
-}
-.rs-gauge {
-  position: relative;
-  width: 100px;
-  flex-shrink: 0;
-  text-align: center;
-}
-.rs-svg { width: 100px; height: 50px; }
-.rs-number {
-  font-size: 28px;
-  font-weight: 800;
-  margin-top: -8px;
-}
-.rs-grade {
-  font-size: 12px;
-  font-weight: 700;
-}
-.rs-factors { flex: 1; }
-.rs-factor {
-  font-size: 12px;
-  padding: 2px 0;
-  line-height: 1.4;
-}
 
 /* ===== Law Note ===== */
 .law-note-area {
@@ -4382,6 +3898,410 @@ kbd {
 .cc-only1 { background: var(--warn-muted); color: var(--warn); }
 .cc-only2 { background: var(--purple-muted); color: var(--purple); }
 
+/* ===== v4 즉답 카드 ===== */
+.instant-answer {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+.ia-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ia-laws {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.ia-law-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.ia-law-item:hover {
+  background: var(--accent-muted);
+}
+.ia-law-check {
+  color: var(--success);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.ia-law-name {
+  font-weight: 600;
+  color: var(--accent);
+}
+.ia-law-reason {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.ia-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ia-badge {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.ia-badge.method { background: var(--accent-muted); color: var(--accent); }
+.ia-badge.amount { background: var(--success-muted); color: var(--success); }
+
+/* ===== v4 탭 대시보드 ===== */
+.tab-dashboard {
+  margin-bottom: 20px;
+}
+.tab-nav {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-btn {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+.tab-btn.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+.tab-btn .tab-count {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--bg-active);
+  color: var(--text-muted);
+}
+.tab-btn.active .tab-count {
+  background: var(--accent-muted);
+  color: var(--accent);
+}
+.tab-panel {
+  display: none;
+}
+.tab-panel.active {
+  display: block;
+  animation: tabFadeIn 0.2s ease;
+}
+@keyframes tabFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== 법령 탭 ===== */
+.law-priority-group {
+  margin-bottom: 20px;
+}
+.law-priority-label {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-bottom: 10px;
+}
+.law-priority-label.must { background: var(--danger-muted); color: var(--danger); }
+.law-priority-label.recommend { background: var(--accent-muted); color: var(--accent); }
+.law-priority-label.reference { background: var(--bg-active); color: var(--text-muted); }
+.law-card-v4 {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.law-card-v4:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+  transform: translateX(4px);
+}
+.law-card-v4 .lc-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.law-card-v4 .lc-article {
+  font-size: 12px;
+  color: var(--accent);
+  margin-top: 2px;
+}
+.law-card-v4 .lc-reason {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.law-card-v4 .lc-arrow {
+  margin-left: auto;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ===== 절차 탭 ===== */
+.process-timeline-v4 {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+  padding-left: 24px;
+}
+.process-timeline-v4::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: var(--border);
+}
+.pt-step {
+  position: relative;
+  padding: 12px 0 12px 20px;
+}
+.pt-step::before {
+  content: '';
+  position: absolute;
+  left: -17px;
+  top: 18px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 2px solid var(--bg-surface);
+}
+.pt-step-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+.pt-step-detail {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+.checklist-v4 {
+  margin-top: 20px;
+}
+.checklist-v4 h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.cl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+.cl-item input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+/* ===== 조달 탭 ===== */
+.procurement-section {
+  margin-bottom: 24px;
+}
+.procurement-section h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.bid-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  transition: var(--transition);
+}
+.bid-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow);
+}
+.bid-card .bc-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.bid-card .bc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.bid-card .bc-meta span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.bid-card a {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+}
+.bid-card a:hover {
+  text-decoration: underline;
+}
+.procurement-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+.procurement-empty .pe-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+.procurement-loading {
+  text-align: center;
+  padding: 30px;
+  color: var(--text-muted);
+}
+
+/* ===== 계산기 탭 ===== */
+.calc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.calc-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.calc-box h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.calc-box label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 4px;
+}
+.calc-box input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.calc-box .calc-result {
+  padding: 10px 14px;
+  background: var(--accent-muted);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
+/* ===== 접힌 상세 ===== */
+.detail-accordion {
+  margin-top: 20px;
+}
+.acc-trigger {
+  width: 100%;
+  padding: 14px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: var(--transition);
+  margin-bottom: 4px;
+}
+.acc-trigger:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.acc-trigger .acc-chevron {
+  transition: transform 0.2s;
+}
+.acc-trigger.open .acc-chevron {
+  transform: rotate(180deg);
+}
+.acc-body {
+  display: none;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: var(--bg-surface);
+  margin-bottom: 8px;
+}
+.acc-body.open {
+  display: block;
+  animation: tabFadeIn 0.2s ease;
+}
+
 </style>
 </head>
 <body class="landing">
@@ -4426,19 +4346,11 @@ kbd {
       <button class="search-btn" id="searchBtn" aria-label="법령 검색 실행">검색</button>
     </div>
     <div class="quick-tags" id="quickTags">
-      <span class="quick-tag" data-q="입찰">입찰</span>
-      <span class="quick-tag" data-q="계약보증금">계약보증금</span>
-      <span class="quick-tag" data-q="하자보수">하자보수</span>
+      <span class="quick-tag" data-q="공사계약">공사계약</span>
       <span class="quick-tag" data-q="수의계약">수의계약</span>
-      <span class="quick-tag" data-q="단가계약">단가계약</span>
-      <span class="quick-tag" data-q="하도급">하도급</span>
-      <span class="quick-tag" data-q="청렴계약">청렴계약</span>
-      <span class="quick-tag" data-q="지체상금">지체상금</span>
-      <span class="quick-tag" data-q="물가변동">물가변동</span>
-      <span class="quick-tag" data-q="설계변경">설계변경</span>
-      <span class="quick-tag" data-q="원자력 안전">원자력 안전</span>
-      <span class="quick-tag" data-q="수산물 단가계약">수산물 단가계약</span>
-      <span class="quick-tag" data-q="환경영향평가">환경영향평가</span>
+      <span class="quick-tag" data-q="입찰">입찰</span>
+      <span class="quick-tag" data-q="하자보수">하자보수</span>
+      <span class="quick-tag" data-q="보증금">보증금</span>
     </div>
   </div>
 </header>
@@ -6058,7 +5970,8 @@ async function doSearch(q) {
 function renderSmartResults(searchResults, advisorData, query) {
   const hasAdvisor = advisorData && advisorData.recommendations && advisorData.recommendations.length > 0;
   const hasSearch = searchResults && searchResults.length > 0;
-  const totalCount = (hasAdvisor ? advisorData.recommendations.length : 0) + (hasSearch ? searchResults.length : 0);
+  const recs = hasAdvisor ? advisorData.recommendations : [];
+  const totalCount = recs.length + (hasSearch ? searchResults.length : 0);
 
   $('#resultsTitle').textContent = `"${query}" 검색 결과`;
   $('#resultsCount').textContent = `${totalCount}건`;
@@ -6067,675 +5980,496 @@ function renderSmartResults(searchResults, advisorData, query) {
     $('#resultsList').innerHTML = `<div class="error-card">
       <div class="error-icon">&#x1F50D;</div>
       <h3>"${escHtml(query)}" 검색 결과가 없습니다</h3>
-      <p>찾으시는 법령이나 조문이 없습니다. 아래 방법을 시도해보세요.</p>
-      <div class="error-hint">
-        &#x2022; 검색어를 줄여보세요 (예: "입찰 보증금" → "보증금")<br>
-        &#x2022; 카테고리에서 직접 법령을 찾아보세요<br>
-        &#x2022; 한글 맞춤법을 확인해주세요
-      </div>
+      <p>검색어를 줄이거나 다른 키워드를 시도해보세요.</p>
     </div>`;
     return;
   }
 
-  let html = '<div class="smart-results">';
-  const refData0 = advisorData?.ref_data;
-  const refData = refData0; // alias for compatibility
+  // 전역 상태 저장
+  if (hasAdvisor) lastAdvisorData = advisorData;
 
-  // ── 1. 추론 배너 ──
-  const inferredTitle = inferContext(query);
-  const inferredSub = hasAdvisor ? inferSubtitle(query, advisorData.categories) : '키워드 매칭으로 관련 법령을 검색했습니다';
-  const isSolar = advisorData?.source === 'solar';
+  let html = '';
+  // 1층: 즉답 카드
+  html += renderInstantAnswer(recs, advisorData, query);
+  // 2층: 탭 대시보드
+  html += renderTabDashboard(recs, searchResults, advisorData, query);
+  // 3층: 접힌 상세
+  html += renderDetailAccordion(advisorData, query);
 
-  html += `
-    <div class="smart-banner">
-      <div class="smart-banner-icon">&#x1F4CB;</div>
-      <div class="smart-banner-title">${escHtml(inferredTitle)}</div>
-      <div class="smart-banner-sub">${escHtml(inferredSub)}</div>
-      ${hasAdvisor && advisorData.categories?.length ? `
-        <div class="smart-banner-tags">
-          ${advisorData.categories.filter(c=>c!=='일반검색').map(c => `<span class="smart-tag">${escHtml(c)}</span>`).join('')}
-          ${isSolar ? '<span class="smart-tag" style="background:var(--cyan-muted);color:var(--cyan)">&#9889; AI 분석</span>' : ''}
-        </div>
-      ` : ''}
-    </div>
-  `;
-
-  // ── 1.5. 핵심 한줄 요약 ──
-  if (hasAdvisor) {
-    const oneLineSummary = advisorData.analysis || inferredTitle;
-    const cm = refData?.contract_method || {};
-    const rs = refData?.risk_score || {};
-
-    html += `<div class="key-summary">
-      <div class="ks-main">${escHtml(oneLineSummary)}</div>
-      <div class="ks-badges">
-        ${cm.method ? `<span class="ks-badge ks-method">${escHtml(cm.method)}</span>` : ''}
-        ${cm.amount_display ? `<span class="ks-badge ks-amount">${escHtml(cm.amount_display)}</span>` : ''}
-        ${rs.score !== undefined ? `<span class="ks-badge ks-risk" style="color:${rs.score<30?'var(--success)':rs.score<60?'var(--warn)':'var(--danger)'}">위험도 ${rs.score}점</span>` : ''}
-        <span class="ks-badge">법령 ${advisorData.recommendations?.length || 0}건</span>
-      </div>
-    </div>`;
-  }
-
-  // ── 1.6. 핵심 가이드 (이것만 보세요) ──
-  if (refData?.guide) {
-    const g = refData.guide;
-    html += `<div class="focus-guide">
-      <div class="fg-header">
-        <div class="fg-title">${escHtml(g.title)}</div>
-        <div class="fg-subtitle">이것만 순서대로 따라하세요</div>
-      </div>
-      <div class="fg-steps">
-        ${g.steps.map(s => `
-          <div class="fg-step">
-            <div class="fg-step-do">${escHtml(s.do)}</div>
-            <div class="fg-step-detail">${escHtml(s.detail)}</div>
-            ${s.law ? `<div class="fg-step-law">${escHtml(s.law)}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>
-      ${g.must_check?.length ? `
-        <div class="fg-check">
-          <div class="fg-check-title">반드시 확인</div>
-          ${g.must_check.map(c => `<label class="fg-check-item"><input type="checkbox" onchange="var k='fg_'+this.parentElement.querySelector('span').textContent.substring(0,20);if(this.checked)localStorage.setItem(k,'1');else localStorage.removeItem(k)"><span>${escHtml(c)}</span></label>`).join('')}
-        </div>
-      ` : ''}
-    </div>`;
-  }
-
-  // ── 2. 요약 대시보드 + 위험도 점수 ──
-  const summaryStats = {
-    laws: hasAdvisor ? advisorData.recommendations.length : 0,
-    articles: refData0?.articles?.length || 0,
-    cases: refData0?.cases?.length || 0,
-    process: refData0?.process?.length || 0,
-    qa: refData0?.qa?.length || 0,
-  };
-  if (summaryStats.laws > 0) {
-    html += `<div class="summary-dash">
-      <div class="dash-item"><div class="dash-num">${summaryStats.laws}</div><div class="dash-label">추천 법령</div></div>
-      <div class="dash-item"><div class="dash-num">${summaryStats.articles}</div><div class="dash-label">참고 조문</div></div>
-      <div class="dash-item"><div class="dash-num">${summaryStats.cases}</div><div class="dash-label">계약 사례</div></div>
-      <div class="dash-item"><div class="dash-num">${summaryStats.process}</div><div class="dash-label">프로세스</div></div>
-      ${summaryStats.qa ? `<div class="dash-item"><div class="dash-num">${summaryStats.qa}</div><div class="dash-label">Q&A</div></div>` : ''}
-    </div>`;
-  }
-
-  if (refData0?.risk_score) {
-    const rs = refData0.risk_score;
-    const color = rs.score < 30 ? 'var(--success)' : rs.score < 60 ? 'var(--warn)' : 'var(--danger)';
-
-    html += `<div class="risk-score-card">
-      <div class="rs-gauge">
-        <svg viewBox="0 0 120 60" class="rs-svg">
-          <path d="M 10 55 A 50 50 0 0 1 110 55" fill="none" stroke="var(--border)" stroke-width="8" stroke-linecap="round"/>
-          <path d="M 10 55 A 50 50 0 0 1 110 55" fill="none" stroke="${color}" stroke-width="8" stroke-linecap="round"
-                stroke-dasharray="${rs.score * 1.57} 157" style="transition:stroke-dasharray 1s ease"/>
-        </svg>
-        <div class="rs-number" style="color:${color}">${rs.score}</div>
-        <div class="rs-grade" style="color:${color}">${rs.grade}</div>
-      </div>
-      <div class="rs-factors">
-        ${rs.factors.map(f => `<div class="rs-factor" style="color:${color}">&#x2022; ${escHtml(f)}</div>`).join('')}
-      </div>
-    </div>`;
-  }
-
-  // ── 3. AI 분석 (Solar) ──
-  if (advisorData?.analysis) {
-    html += `
-      <div class="smart-ai-box">
-        <div class="smart-ai-label">&#9889; AI 분석</div>
-        <div class="smart-ai-text">${escHtml(advisorData.analysis)}</div>
-      </div>
-    `;
-  }
-
-  // ── 가이드가 있으면 나머지 섹션을 "상세 분석" 토글로 묶음 ──
-  const hasGuide = !!refData?.guide;
-  if (hasGuide) {
-    html += `<div class="detail-toggle-area">
-      <button class="detail-toggle-btn" onclick="this.parentElement.classList.toggle('open');this.textContent=this.parentElement.classList.contains('open')?'▲ 상세 분석 접기':'▼ 상세 분석 펼치기 (추천 법령·프로세스·리스크·서류 등)'" id="detailToggleBtn">
-        &#x25BC; 상세 분석 펼치기 (추천 법령·프로세스·리스크·서류 등)
-      </button>
-      <div class="detail-content">`;
-  }
-
-  // ── 4. 추천 법령 (우선순위별 그룹) ──
-  if (hasAdvisor) {
-    lastAdvisorData = advisorData;
-
-    const priorityGroups = {
-      '필수': { icon: '&#x1F534;', label: '필수 확인 법령', css: 'essential', items: [] },
-      '권장': { icon: '&#x1F535;', label: '권장 확인 법령', css: 'recommended', items: [] },
-      '해당시': { icon: '&#x1F7E1;', label: '해당 시 확인 법령', css: 'conditional', items: [] },
-      '참고': { icon: '&#x1F7E3;', label: '참고 법령', css: 'reference', items: [] },
-    };
-
-    advisorData.recommendations.forEach((r, idx) => {
-      const group = priorityGroups[r.priority] || priorityGroups['참고'];
-      group.items.push({ ...r, idx });
-    });
-
-    let globalNum = 1;
-    for (const [priority, group] of Object.entries(priorityGroups)) {
-      if (group.items.length === 0) continue;
-      html += `
-        <div class="smart-section">
-          <div class="smart-section-head">
-            <div class="smart-section-icon ${group.css}">${group.icon}</div>
-            <div class="smart-section-title">${group.label}</div>
-            <div class="smart-section-count">${group.items.length}건</div>
-          </div>
-      `;
-      for (const r of group.items) {
-        html += `
-          <div class="smart-law-card" onclick="openFromSmartAdvisor(${r.idx})">
-            <div class="smart-law-num">${globalNum}</div>
-            <div class="smart-law-body">
-              <div class="smart-law-name">
-                ${escHtml(r.law)}
-                <span class="smart-law-type">${escHtml(r.type)}</span>
-                <span class="smart-priority-badge p-${r.priority}">${r.priority}</span>
-              </div>
-              <div class="smart-law-reason">${escHtml(r.reason)}</div>
-              ${r.key_articles ? `<div class="smart-law-articles">&#x1F4CC; ${escHtml(r.key_articles)}</div>` : ''}
-            </div>
-            <div class="smart-law-arrow">&#8594;</div>
-          </div>
-        `;
-        globalNum++;
-      }
-      html += '</div>';
-    }
-  }
-
-  // ── 4.5. 주요 법령 요약 카드 ──
-  if (refData0?.law_cards?.length) {
-    html += '<div class="law-cards-grid">';
-    refData0.law_cards.forEach(lc => {
-      const pColor = lc.priority === '필수' ? 'var(--danger)' : lc.priority === '권장' ? 'var(--accent)' : 'var(--text-muted)';
-      html += `<div class="law-summary-card" onclick="openLaw('${escHtml(lc.law)}','${escHtml(lc.type)}')">
-        <div class="lsc-badge" style="color:${pColor}">${escHtml(lc.priority)}</div>
-        <div class="lsc-name">${escHtml(lc.law.length > 16 ? lc.law.substring(0,16)+'\u2026' : lc.law)}</div>
-        <div class="lsc-short">${escHtml(lc.short)}</div>
-        <div class="lsc-scope">${escHtml(lc.scope)}</div>
-        <div class="lsc-key">${escHtml(lc.key)}</div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // ── 5. 금액별 계약방식 + 계산기 (금액 있을 때) ──
-  if (refData0?.contract_method) {
-    const cm = refData0.contract_method;
-    html += `
-      <div class="smart-section">
-        <div class="smart-section-head">
-          <div class="smart-section-icon" style="background:var(--warn-muted)">&#x1F4B0;</div>
-          <div class="smart-section-title">금액별 계약방식 (${escHtml(cm.amount_display)})</div>
-        </div>
-        <div class="contract-method-card">
-          <div class="cm-method">${escHtml(cm.method)}</div>
-          <div class="cm-details">
-            ${cm.details.map(d => `<div class="cm-detail-item">&#x2022; ${escHtml(d)}</div>`).join('')}
-          </div>
-          ${cm.warnings?.length ? `<div class="cm-warnings">${cm.warnings.map(w => `<div class="cm-warn-item">&#x26A0; ${escHtml(w)}</div>`).join('')}</div>` : ''}
-        </div>
-      </div>`;
-    if (cm.amount) {
-      const amt = cm.amount;
-      const calcItems = [
-        {label: '계약보증금 (10%)', value: Math.round(amt * 0.1), note: '국가계약법 제12조'},
-        {label: '계약보증금 (15%)', value: Math.round(amt * 0.15), note: '공사계약 기준'},
-        {label: '하자보수보증금 (2~5%)', value: Math.round(amt * 0.03), note: '시행령 제62조 (3% 기준)'},
-        {label: '선급금 한도 (70%)', value: Math.round(amt * 0.7), note: '시행령 제58조'},
-        {label: '지체상금/일 (공사 1/1000)', value: Math.round(amt * 0.001), note: '시행령 제74조'},
-        {label: '지체상금/일 (물품 0.75/1000)', value: Math.round(amt * 0.00075), note: '시행령 제74조'},
-      ];
-      html += `<div class="calc-card">
-        <div class="calc-title">&#x1F9EE; 간이 계산기 (${escHtml(cm.amount_display)} 기준)</div>
-        <div class="calc-grid">
-          ${calcItems.map(c => `
-            <div class="calc-item">
-              <div class="calc-label">${escHtml(c.label)}</div>
-              <div class="calc-value">${c.value.toLocaleString()}원</div>
-              <div class="calc-note">${escHtml(c.note)}</div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="calc-custom">
-          <input type="number" id="calcCustomAmt" placeholder="직접 금액 입력 (원)"
-                 onchange="updateCalc(this.value)" style="flex:1">
-          <button class="btn btn-sm" onclick="updateCalc(document.getElementById('calcCustomAmt').value)">계산</button>
-        </div>
-      </div>`;
-    }
-  }
-
-  // ── 6. 계약방식 비교표 ──
-  if (refData0?.method_comparison) {
-    const mc = refData0.method_comparison;
-    html += `<div class="method-compare">
-      <div class="smart-section-head">
-        <div class="smart-section-icon" style="background:var(--purple-muted)">&#x2696;</div>
-        <div class="smart-section-title">${escHtml(mc.type)} 계약방식 비교</div>
-      </div>
-      <table class="compare-table">
-        <thead><tr>
-          <th>방식</th><th>적용 조건</th><th>장점</th><th>단점</th><th>소요기간</th><th>근거</th>
-        </tr></thead>
-        <tbody>
-          ${mc.methods.map(m => `<tr>
-            <td class="ct-name">${escHtml(m.name)}</td>
-            <td>${escHtml(m.condition)}</td>
-            <td class="ct-pro">${escHtml(m.pros)}</td>
-            <td class="ct-con">${escHtml(m.cons)}</td>
-            <td>${escHtml(m.duration)}</td>
-            <td class="ct-law">${escHtml(m.law)}</td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-  }
-
-  // ── 7. 프로세스 플로우 + 타임라인 + 일정 계산기 ──
-  if (refData0?.process?.length) {
-    html += '<div class="smart-divider">계약 프로세스</div>';
-    html += '<div class="process-flow">';
-    refData0.process.forEach((s, i) => {
-      if (i > 0) html += '<div class="process-arrow">&#8594;</div>';
-      html += `<div class="process-step">
-        <div class="process-step-num">${i+1}</div>
-        <div class="process-step-name">${escHtml(s.step)}</div>
-        <div class="process-step-desc">${escHtml(s.desc)}</div>
-        ${s.law ? `<div class="process-step-law">${escHtml(s.law)}</div>` : ''}
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  if (refData0?.timeline) {
-    const tl = refData0.timeline;
-    _currentTimeline = tl;
-    html += `<div class="timeline-summary">예상 소요기간: <strong>${tl.total_days}일</strong> (약 ${Math.ceil(tl.total_days/30)}개월)</div>`;
-    html += '<div class="timeline-bar">';
-    for (const s of tl.steps) {
-      const pct = Math.max(2, (s.duration / tl.total_days) * 100);
-      html += `<div class="tl-segment" style="flex:${pct}" title="${escHtml(s.step)}: ${s.duration}일">
-        <div class="tl-seg-label">${escHtml(s.step)}</div>
-        <div class="tl-seg-days">${s.duration}일</div>
-      </div>`;
-    }
-    html += '</div>';
-    html += `<div class="date-calc">
-      <div class="date-calc-head">
-        <span>&#x1F4C5; 시작일 기준 일정 계산</span>
-        <input type="date" id="scheduleStartDate" value="${new Date().toISOString().split('T')[0]}" onchange="calcSchedule()">
-      </div>
-      <div id="scheduleResult" class="schedule-result"></div>
-    </div>`;
-  } else {
-    _currentTimeline = null;
-  }
-
-  // ── 8. Q&A (바로 답을 원하는 질문) ──
-  if (refData?.qa?.length) {
-    html += '<div class="smart-divider">자주 묻는 질문</div>';
-    for (const qa of refData.qa) {
-      html += `<div class="qa-card">
-        <div class="qa-q">Q. ${escHtml(qa.q)}</div>
-        <div class="qa-a">${escHtml(qa.a)}</div>
-        <div class="qa-law">${escHtml(qa.law)}</div>
-      </div>`;
-    }
-  }
-
-  // ── 9. 리스크 체커 + 감사 지적 (접기/펼치기) ──
-  if (refData?.risks?.length) {
-    html += '<div class="smart-divider">계약 리스크 체크</div>';
-    html += '<div class="risk-grid">';
-    const levelIcons = {high:'&#x1F534;', medium:'&#x1F7E1;', low:'&#x1F7E2;'};
-    const levelLabels = {high:'높음', medium:'중간', low:'낮음'};
-    for (const r of refData.risks) {
-      html += `<div class="risk-card risk-${r.level}">
-        <div class="risk-header">
-          <span class="risk-level">${levelIcons[r.level]||''} ${levelLabels[r.level]||''}</span>
-          <span class="risk-title">${escHtml(r.title)}</span>
-        </div>
-        <div class="risk-desc">${escHtml(r.desc)}</div>
-        <div class="risk-law">${escHtml(r.law)}</div>
-      </div>`;
-    }
-    html += '</div>';
-  }
-
-  if (refData?.audit_cases?.length) {
-    html += `<div class="smart-section collapsible collapsed">
-      <div class="smart-section-head" onclick="toggleSmartSection(this)">
-        <div class="smart-section-icon" style="background:var(--danger-muted)">&#x26D4;</div>
-        <div class="smart-section-title">감사 지적 사례</div>
-        <div class="smart-section-count">${refData.audit_cases.length}건</div>
-        <span class="smart-section-toggle">&#x25BC;</span>
-      </div>
-      <div class="smart-section-body">
-      <div class="audit-list">`;
-    for (const ac of refData.audit_cases) {
-      html += `<div class="audit-card">
-        <div class="audit-title">&#x26D4; ${escHtml(ac.title)}</div>
-        <div class="audit-desc">${escHtml(ac.desc)}</div>
-        <div class="audit-detail">
-          <div class="audit-impact"><strong>결과:</strong> ${escHtml(ac.impact)}</div>
-          <div class="audit-prevent"><strong>예방:</strong> ${escHtml(ac.prevention)}</div>
-        </div>
-      </div>`;
-    }
-    html += '</div></div></div>';
-  }
-
-  // ── 10. 필수 서류 ──
-  if (refData0?.required_docs?.length) {
-    html += `<div class="smart-section">
-      <div class="smart-section-head">
-        <div class="smart-section-icon" style="background:var(--danger-muted)">&#x1F4C3;</div>
-        <div class="smart-section-title">필수 제출 서류</div>
-        <div class="smart-section-count">${refData0.required_docs.length}건</div>
-      </div>
-      <div class="docs-grid">
-        ${refData0.required_docs.map(d => `
-          <div class="doc-item ${d.required ? 'doc-required' : 'doc-optional'}">
-            <div class="doc-check">${d.required ? '&#x2757;' : '&#x25CB;'}</div>
-            <div class="doc-info">
-              <div class="doc-name">${escHtml(d.name)}</div>
-              <div class="doc-when">${escHtml(d.when)}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>`;
-  }
-
-  // ── 11. 부서 역할 (접기/펼치기) ──
-  if (refData0?.role_map?.length) {
-    html += `<div class="smart-section collapsible collapsed">
-      <div class="smart-section-head" onclick="toggleSmartSection(this)">
-        <div class="smart-section-icon" style="background:var(--accent-muted)">&#x1F465;</div>
-        <div class="smart-section-title">단계별 담당 부서·역할</div>
-        <div class="smart-section-count">${refData0.role_map.length}단계</div>
-        <span class="smart-section-toggle">&#x25BC;</span>
-      </div>
-      <div class="smart-section-body">
-    <div class="role-timeline">`;
-    refData0.role_map.forEach(stage => {
-      html += `<div class="role-stage">
-        <div class="role-stage-name">${escHtml(stage.stage)}</div>
-        <div class="role-list">
-          ${stage.roles.map(r => `
-            <div class="role-item">
-              <span class="role-dept">${escHtml(r.dept)}</span>
-              <span class="role-action">${escHtml(r.action)}</span>
-              ${r.note ? `<span class="role-note">${escHtml(r.note)}</span>` : ''}
-            </div>
-          `).join('')}
-        </div>
-      </div>`;
-    });
-    html += '</div></div></div>';
-  }
-
-  // ── 12. 참고 조문 (하이라이트) ──
-  if (refData) {
-    const qkws = refData.query_keywords || query.toLowerCase().split(/\s+/);
-    function hlContent(text) {
-      let h = escHtml(text);
-      for (const kw of qkws) {
-        if (kw.length < 1) continue;
-        const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
-        h = h.replace(re, '<mark>$1</mark>');
-      }
-      return h;
-    }
-
-    if (refData.articles?.length) {
-      html += `<div class="smart-divider">관련 조문 원문</div>
-        <div class="smart-section">
-          <div class="smart-section-head">
-            <div class="smart-section-icon articles">&#x1F4D6;</div>
-            <div class="smart-section-title">검색어 관련 조문 (키워드 하이라이트)</div>
-            <div class="smart-section-count">${refData.articles.length}건</div>
-          </div>`;
-      refData.articles.forEach((a, ai) => {
-        const fullContent = a.content || '';
-        const lines = fullContent.split('\n').filter(l=>l.trim());
-        const preview = lines.slice(0, 5).join('\n');
-        const hasMore = lines.length > 5;
-        html += `
-          <div class="ref-article-card">
-            <div class="ref-article-head">
-              <span class="ref-article-law">${escHtml(a.law)}</span>
-              <span class="ref-article-type">${escHtml(a.type)}</span>
-              <span class="smart-priority-badge p-${a.priority}">${a.priority}</span>
-              <button class="btn btn-sm" style="margin-left:auto" onclick="event.stopPropagation();openLawArticle('${escHtml(a.law)}','${escHtml(a.type)}','${escHtml(a.number)}')">법령 열기 &#8594;</button>
-            </div>
-            <div class="ref-article-num">${escHtml(a.number)} ${a.title ? '('+escHtml(a.title)+')' : ''}</div>
-            <div class="ref-article-body" id="refArt${ai}">${hlContent(preview)}</div>
-            ${hasMore ? `
-              <button class="ref-expand-btn" id="refExpBtn${ai}" onclick="event.stopPropagation();toggleRefArticle(${ai}, ${JSON.stringify(fullContent).replace(/</g,'\\x3c')})">
-                &#x25BC; 전문 보기 (${lines.length}줄)
-              </button>` : ''}
-            <div class="ref-article-reason">${escHtml(a.reason)}</div>
-          </div>`;
-      });
-      html += '</div>';
-    }
-
-    // ── 13. 계약 사례 + 체크리스트 ──
-    if (refData.cases?.length) {
-      html += '<div class="smart-divider">계약 사례 · 실무 가이드</div>';
-      for (const c of refData.cases) {
-        html += `
-          <div class="ref-case-card">
-            <div class="ref-case-head">
-              <span class="ref-case-icon">&#x1F4BC;</span>
-              <span class="ref-case-title">${escHtml(c.title)}</span>
-            </div>
-            <div class="ref-case-desc">${hlContent(c.desc)}</div>
-            ${c.laws?.length ? `<div class="ref-case-laws">${c.laws.map(l=>`<span class="ref-case-law">${escHtml(l)}</span>`).join('')}</div>` : ''}
-            ${c.checklist?.length ? `
-              <div class="ref-checklist">
-                <div class="ref-checklist-title">&#x2705; 실무 체크리스트</div>
-                ${c.checklist.map(item=>{const checked=localStorage.getItem('checklist_'+item.substring(0,30))==='1'?'checked':'';return `<label class="ref-check-item"><input type="checkbox" ${checked}><span>${escHtml(item)}</span></label>`;}).join('')}
-              </div>` : ''}
-          </div>`;
-      }
-    }
-
-    // ── 14. 특약 조항 (접기/펼치기) ──
-    if (refData.special_clauses?.length) {
-      html += `<div class="smart-section collapsible collapsed">
-        <div class="smart-section-head" onclick="toggleSmartSection(this)">
-          <div class="smart-section-icon" style="background:var(--purple-muted)">&#x1F4DD;</div>
-          <div class="smart-section-title">계약서 특약 조항 예시</div>
-          <div class="smart-section-count">${refData.special_clauses.length}건</div>
-          <span class="smart-section-toggle">&#x25BC;</span>
-        </div>
-        <div class="smart-section-body">
-        <div class="clause-examples">`;
-      for (const sc of refData.special_clauses) {
-        html += `<div class="spec-clause-card">
-          <div class="spec-clause-head">
-            <span class="spec-clause-title">${escHtml(sc.title)}</span>
-            <button class="btn btn-sm" onclick="event.stopPropagation();copyClause(this)" data-text="${escHtml(sc.text)}" title="복사">&#x1F4CB; 복사</button>
-          </div>
-          <div class="spec-clause-text">${escHtml(sc.text)}</div>
-          ${sc.law ? `<div class="spec-clause-law">${escHtml(sc.law)}</div>` : ''}
-        </div>`;
-      }
-      html += '</div></div></div>';
-    }
-
-    // ── 15. 서식 템플릿 (접기/펼치기) ──
-    if (refData.templates?.length) {
-      html += `<div class="smart-section collapsible collapsed">
-        <div class="smart-section-head" onclick="toggleSmartSection(this)">
-          <div class="smart-section-icon" style="background:var(--accent-muted)">&#x1F4C4;</div>
-          <div class="smart-section-title">계약 서식 템플릿</div>
-          <div class="smart-section-count">${refData.templates.length}건</div>
-          <span class="smart-section-toggle">&#x25BC;</span>
-        </div>
-        <div class="smart-section-body">`;
-      refData.templates.forEach(t => {
-        html += `<div class="template-card">
-          <div class="template-head">
-            <span class="template-name">${escHtml(t.name)}</span>
-            <button class="btn btn-sm" onclick="event.stopPropagation();copyTemplate('${escHtml(t.name)}', ${JSON.stringify(t.fields).replace(/'/g,"\\'")})">&#x1F4CB; 복사</button>
-          </div>
-          <div class="template-fields">
-            ${t.fields.map((f,i) => `<div class="template-field"><span class="tf-num">${i+1}</span>${escHtml(f)}</div>`).join('')}
-          </div>
-          <div class="template-footer">
-            <span class="template-law">${escHtml(t.law)}</span>
-            ${t.note ? `<span class="template-note">${escHtml(t.note)}</span>` : ''}
-          </div>
-        </div>`;
-      });
-      html += '</div></div>';
-    }
-
-    // ── 16. 계약서 조항 매핑 (비동기 로드) ──
-    html += '<div id="clauseArea"></div>';
-
-    // ── 17. 나라장터 입찰공고 (비동기 로드) ──
-    html += '<div id="bidResults"></div>';
-
-    // ── 18. 외부 링크 ──
-    if (refData.links?.length) {
-      html += '<div class="ref-links">';
-      for (const l of refData.links) {
-        html += `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" class="ref-link">&#x1F517; ${escHtml(l.title)}</a>`;
-      }
-      html += '</div>';
-    }
-  }
-
-  // 유사 검색어 추천
-  if (advisorData?.related_queries?.length) {
-    html += '<div class="related-queries"><span class="rq-label">관련 검색어</span>';
-    for (const rq of advisorData.related_queries) {
-      html += `<span class="rq-item" onclick="doSearch('${escHtml(rq)}')">${escHtml(rq)}</span>`;
-    }
-    html += '</div>';
-  }
-
-  // 상세 분석 토글 닫기
-  if (hasGuide) {
-    html += '</div></div>'; // detail-content, detail-toggle-area 닫기
-  }
-
-  // ── 19. 버튼 (종합리포트, 검토요청서, 기안문요지, 체크리스트 출력) ──
-  if (refData) {
-    html += `<div style="text-align:center;padding:16px 0;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="btn btn-accent" onclick="generateFullReport()" style="padding:10px 24px;font-size:14px">
-        &#x1F4CA; 종합 리포트
-      </button>
-      <button class="btn btn-accent" onclick="generateReviewRequest()" style="padding:10px 24px;font-size:14px">
-        &#x1F4C4; 계약 검토 요청서 생성
-      </button>
-      <button class="btn" onclick="generateLawSummary()" style="padding:10px 24px;font-size:14px">
-        &#x1F4DD; 기안문 법령 요지
-      </button>
-      <button class="btn" onclick="printChecklist()" style="padding:10px 24px;font-size:14px">
-        &#x2705; 체크리스트 출력
-      </button>
-    </div>`;
-  }
-
-  // 조문 검색 결과 (키워드 매칭) - 하단 보충 정보
-  if (hasSearch) {
-    const advisorLaws = new Set();
-    if (hasAdvisor) {
-      advisorData.recommendations.forEach(r => advisorLaws.add(r.law));
-    }
-    const filteredSearch = searchResults.filter(r => !advisorLaws.has(r.law_name));
-    const articlesFromSearch = [];
-    searchResults.forEach(r => {
-      (r.matching_articles || []).slice(0, 3).forEach(a => {
-        articlesFromSearch.push({ ...a, law_name: r.law_name, file_type: r.file_type, title: r.title || r.law_name });
-      });
-    });
-
-    if (articlesFromSearch.length > 0) {
-      html += `
-        <div class="smart-divider">조문 검색 결과</div>
-        <div class="smart-section">
-          <div class="smart-section-head">
-            <div class="smart-section-icon articles">&#x1F50D;</div>
-            <div class="smart-section-title">키워드 매칭 조문</div>
-            <div class="smart-section-count">${articlesFromSearch.length}건</div>
-          </div>
-      `;
-      const kw = query.toLowerCase().split(/\s+/);
-      for (const a of articlesFromSearch.slice(0, 15)) {
-        html += `
-          <div class="smart-article-card" onclick="openLawArticle('${escHtml(a.law_name)}','${escHtml(a.file_type)}','${escHtml(a.number)}')">
-            <div class="smart-article-head">
-              <span class="smart-article-law">${escHtml(a.law_name)}</span>
-              <span class="smart-article-type">${escHtml(a.file_type)}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span class="smart-article-num">${escHtml(a.number)}</span>
-              <span class="smart-article-title">${a.title ? '(' + escHtml(a.title) + ')' : ''}</span>
-            </div>
-            <div class="smart-article-snip">${highlight(escHtml(a.snippet), kw)}</div>
-          </div>
-        `;
-      }
-      html += '</div>';
-    }
-
-    if (filteredSearch.length > 0) {
-      html += `
-        <div class="smart-divider">추가 관련 법령</div>
-        <div class="smart-section">
-          <div class="smart-section-head">
-            <div class="smart-section-icon reference">&#x1F4DA;</div>
-            <div class="smart-section-title">추가 관련 법령</div>
-            <div class="smart-section-count">${filteredSearch.length}건</div>
-          </div>
-      `;
-      for (const r of filteredSearch.slice(0, 10)) {
-        html += `
-          <div class="smart-law-card" onclick="openLaw('${escHtml(r.law_name)}','${escHtml(r.file_type)}')">
-            <div class="smart-law-num" style="background:var(--purple-muted);color:var(--purple)">+</div>
-            <div class="smart-law-body">
-              <div class="smart-law-name">
-                ${escHtml(r.title || r.law_name)}
-                <span class="smart-law-type">${escHtml(r.file_type)}</span>
-              </div>
-              ${r.matching_articles?.length ? `<div class="smart-law-reason">매칭 조문: ${r.matching_articles.slice(0,3).map(a=>a.number+' '+(a.title||'')).join(', ')}</div>` : ''}
-            </div>
-            <div class="smart-law-arrow">&#8594;</div>
-          </div>
-        `;
-      }
-      html += '</div>';
-    }
-  }
-
-  html += '</div>';
   $('#resultsList').innerHTML = html;
-
-  // 전역 키워드 설정 (펼치기/접기에서 사용)
-  _refQueryKws = refData?.query_keywords || query.toLowerCase().split(/\s+/);
-
-  // 나라장터 입찰공고 비동기 로드
-  if (refData) loadBidResults(query);
+  bindTabEvents();
+  loadProcurementData(query);
 
   // 계약서 조항 매핑 비동기 로드
   loadClauses(query);
+}
 
-  // 날짜 기반 일정 계산기 자동 실행
-  if (_currentTimeline) setTimeout(calcSchedule, 100);
+// ── 1층: 즉답 카드 ──
+function renderInstantAnswer(recs, advisorData, query) {
+  if (!recs.length) return '';
+  const mustLaws = recs.filter(r => r.priority === '필수').slice(0, 3);
+  const topLaws = mustLaws.length ? mustLaws : recs.slice(0, 2);
+  const inferredTitle = inferContext(query);
+  const subtitle = advisorData?.analysis || inferredTitle;
+  const refData = advisorData?.ref_data;
+  const cm = refData?.contract_method || {};
+  const cats = advisorData?.categories || [];
+  const isSolar = advisorData?.source === 'solar';
+
+  let html = `<div class="instant-answer">
+    <div class="ia-title">&#x1F4CB; ${escHtml(inferredTitle)}</div>
+    <div style="font-size:13px;color:var(--text-secondary);margin-bottom:14px">${escHtml(subtitle)}</div>
+    <div class="ia-laws">`;
+
+  for (const r of topLaws) {
+    const advInfo = JSON.stringify({priority:r.priority,reason:r.reason||'',key_articles:r.key_articles||''}).replace(/'/g,"&#39;").replace(/"/g,"&quot;");
+    html += `<div class="ia-law-item" onclick="openLaw('${escHtml(r.law)}','${escHtml(r.type)}',JSON.parse(this.dataset.adv))" data-adv='${JSON.stringify({priority:r.priority,reason:r.reason||'',key_articles:r.key_articles||''}).replace(/'/g,"\\u0027")}'>
+      <div class="ia-law-check">&#x2705;</div>
+      <div>
+        <div class="ia-law-name">${escHtml(r.law)} <span style="font-size:12px;color:var(--text-muted);font-weight:400">${escHtml(r.type)}</span></div>
+        <div class="ia-law-reason">${escHtml(r.reason || '')}${r.key_articles ? ' &#x1F4CC; ' + escHtml(r.key_articles) : ''}</div>
+      </div>
+    </div>`;
+  }
+
+  html += `</div><div class="ia-badges">`;
+  if (cats.length) {
+    cats.filter(c => c !== '일반검색').forEach(c => {
+      html += `<span class="ia-badge">${escHtml(c)}</span>`;
+    });
+  }
+  if (cm.method) html += `<span class="ia-badge method">${escHtml(cm.method)}</span>`;
+  if (cm.amount_display) html += `<span class="ia-badge amount">${escHtml(cm.amount_display)}</span>`;
+  if (isSolar) html += `<span class="ia-badge" style="background:var(--cyan-muted);color:var(--cyan)">&#9889; AI 분석</span>`;
+  html += `</div></div>`;
+  return html;
+}
+
+// ── 2층: 탭 대시보드 ──
+function renderTabDashboard(recs, searchResults, advisorData, query) {
+  const refData = advisorData?.ref_data;
+  const must = recs.filter(r => r.priority === '필수');
+  const recommend = recs.filter(r => r.priority === '권장' || r.priority === '해당시');
+  const ref = recs.filter(r => r.priority === '참고' || (!['필수','권장','해당시'].includes(r.priority)));
+  const lawCount = recs.length + (searchResults?.length || 0);
+
+  let html = `<div class="tab-dashboard">
+    <div class="tab-nav">
+      <button class="tab-btn active" data-tab="tab-laws">&#x1F4CB; 법령 <span class="tab-count">${lawCount}</span></button>
+      <button class="tab-btn" data-tab="tab-process">&#x1F4D0; 절차·서류</button>
+      <button class="tab-btn" data-tab="tab-procurement">&#x1F3DB; 조달·알리오</button>
+      <button class="tab-btn" data-tab="tab-calc">&#x1F9EE; 계산기</button>
+    </div>`;
+
+  // 탭 1: 법령
+  html += `<div class="tab-panel active" id="tab-laws">`;
+  html += buildLawsTab(must, recommend, ref);
+  // 키워드 매칭 조문 (searchResults)
+  if (searchResults?.length) {
+    const advisorLaws = new Set(recs.map(r => r.law));
+    const filtered = searchResults.filter(r => !advisorLaws.has(r.law_name));
+    if (filtered.length > 0) {
+      html += `<div class="law-priority-group"><div class="law-priority-label reference">&#x1F50D; 추가 관련 법령 (${filtered.length}건)</div>`;
+      for (const r of filtered.slice(0, 10)) {
+        html += `<div class="law-card-v4" onclick="openLaw('${escHtml(r.law_name)}','${escHtml(r.file_type)}')">
+          <div style="flex:1">
+            <div class="lc-name">${escHtml(r.title || r.law_name)} <span style="font-size:12px;color:var(--text-muted)">${escHtml(r.file_type)}</span></div>
+            ${r.matching_articles?.length ? `<div class="lc-reason">매칭 조문: ${r.matching_articles.slice(0,3).map(a=>a.number+' '+(a.title||'')).join(', ')}</div>` : ''}
+          </div>
+          <div class="lc-arrow">&#8594;</div>
+        </div>`;
+      }
+      html += `</div>`;
+    }
+  }
+  html += `</div>`;
+
+  // 탭 2: 절차·서류
+  html += `<div class="tab-panel" id="tab-process">${buildProcessTab(refData, query)}</div>`;
+
+  // 탭 3: 조달·알리오 (placeholder)
+  html += `<div class="tab-panel" id="tab-procurement">
+    <div id="procurementContent">
+      <div class="procurement-loading"><div class="spinner"></div> 조달·알리오 데이터 로드 중...</div>
+    </div>
+  </div>`;
+
+  // 탭 4: 계산기
+  html += `<div class="tab-panel" id="tab-calc">${buildCalcTab()}</div>`;
+
+  html += `</div>`;
+  return html;
+}
+
+// ── 법령 리스트 탭 ──
+function buildLawsTab(must, recommend, ref) {
+  let html = '';
+  if (must.length) {
+    html += `<div class="law-priority-group">
+      <div class="law-priority-label must">&#x1F534; 필수 확인 법령 (${must.length}건)</div>`;
+    must.forEach(r => { html += lawCardV4(r); });
+    html += `</div>`;
+  }
+  if (recommend.length) {
+    html += `<div class="law-priority-group">
+      <div class="law-priority-label recommend">&#x1F535; 권장 확인 법령 (${recommend.length}건)</div>`;
+    recommend.forEach(r => { html += lawCardV4(r); });
+    html += `</div>`;
+  }
+  if (ref.length) {
+    html += `<div class="law-priority-group">
+      <div class="law-priority-label reference">&#x1F7E3; 참고 법령 (${ref.length}건)</div>`;
+    ref.forEach(r => { html += lawCardV4(r); });
+    html += `</div>`;
+  }
+  return html;
+}
+
+// ── 개별 법령 카드 ──
+function lawCardV4(r) {
+  const advJson = JSON.stringify({priority:r.priority||'참고',reason:r.reason||'',key_articles:r.key_articles||''}).replace(/'/g,"\\u0027");
+  return `<div class="law-card-v4" onclick="openLaw('${escHtml(r.law)}','${escHtml(r.type)}',JSON.parse(this.dataset.adv))" data-adv='${advJson}'>
+    <div style="flex:1">
+      <div class="lc-name">${escHtml(r.law)} <span style="font-size:12px;color:var(--text-muted)">${escHtml(r.type)}</span></div>
+      ${r.key_articles ? `<div class="lc-article">&#x1F4CC; ${escHtml(r.key_articles)}</div>` : ''}
+      <div class="lc-reason">${escHtml(r.reason || '')}</div>
+    </div>
+    <div class="lc-arrow">&#8594;</div>
+  </div>`;
+}
+
+// ── 절차·서류 탭 ──
+function buildProcessTab(refData, query) {
+  let html = '';
+  // 절차 타임라인
+  const process = refData?.process;
+  if (process?.length) {
+    html += `<h4 style="margin-bottom:12px">&#x1F4CB; 계약 프로세스 (${process.length}단계)</h4>`;
+    html += `<div class="process-timeline-v4">`;
+    process.forEach(s => {
+      html += `<div class="pt-step">
+        <div class="pt-step-title">${escHtml(s.step)}</div>
+        <div class="pt-step-detail">${escHtml(s.desc || '')}${s.law ? ' (' + escHtml(s.law) + ')' : ''}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  } else {
+    // 기본 프로세스 6단계
+    const defaultSteps = [
+      {step: '입찰공고', desc: '발주기관이 조달 건을 공고'},
+      {step: '입찰참가', desc: '적격 업체가 입찰서 제출'},
+      {step: '개찰·낙찰', desc: '입찰서 개봉 및 낙찰자 결정'},
+      {step: '계약체결', desc: '낙찰자와 계약서 작성·서명'},
+      {step: '이행·검사', desc: '계약 이행 및 검수'},
+      {step: '대금지급', desc: '검수 완료 후 대금 지급'},
+    ];
+    html += `<h4 style="margin-bottom:12px">&#x1F4CB; 일반 조달 프로세스</h4>`;
+    html += `<div class="process-timeline-v4">`;
+    defaultSteps.forEach(s => {
+      html += `<div class="pt-step">
+        <div class="pt-step-title">${escHtml(s.step)}</div>
+        <div class="pt-step-detail">${escHtml(s.desc)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 필요서류 체크리스트
+  const docs = refData?.required_docs || refData?.documents;
+  if (docs?.length) {
+    html += `<div class="checklist-v4"><h4>&#x1F4C4; 필요 서류 (${docs.length}건)</h4>`;
+    docs.forEach(d => {
+      const name = typeof d === 'string' ? d : d.name;
+      const note = typeof d === 'string' ? '' : (d.when || '');
+      const required = typeof d === 'string' ? true : !!d.required;
+      html += `<div class="cl-item">
+        <input type="checkbox" onchange="var k='doc_'+this.nextElementSibling.textContent.substring(0,30);if(this.checked)localStorage.setItem(k,'1');else localStorage.removeItem(k)">
+        <span>${required ? '&#x2757; ' : ''}${escHtml(name)}${note ? ' <span style="color:var(--text-muted);font-size:11px">(' + escHtml(note) + ')</span>' : ''}</span>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 리스크 주의사항
+  const risks = refData?.risks;
+  if (risks?.length) {
+    html += `<div style="margin-top:20px"><h4>&#x26A0;&#xFE0F; 리스크 주의사항 (${risks.length}건)</h4>`;
+    const levelIcons = {high:'&#x1F534;', medium:'&#x1F7E1;', low:'&#x1F7E2;'};
+    const levelLabels = {high:'높음', medium:'중간', low:'낮음'};
+    risks.forEach(r => {
+      html += `<div style="padding:10px 14px;background:var(--bg-elevated);border-radius:var(--radius-sm);margin-bottom:6px;border-left:3px solid ${r.level==='high'?'var(--danger)':r.level==='medium'?'var(--warn)':'var(--success)'}">
+        <div style="font-weight:600;font-size:13px">${levelIcons[r.level]||''} ${levelLabels[r.level]||''}: ${escHtml(r.title)}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${escHtml(r.desc)}</div>
+        ${r.law ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${escHtml(r.law)}</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  return html;
+}
+
+// ── 계산기 탭 ──
+function buildCalcTab() {
+  return `<div class="calc-grid">
+    <div class="calc-box">
+      <h4>&#x1F4B0; 계약보증금 계산</h4>
+      <label>계약금액 (원)</label>
+      <input type="number" id="calcBondAmt" placeholder="예: 100000000" oninput="updateBondCalc()">
+      <label>보증금 비율 (%)</label>
+      <input type="number" id="calcBondRate" value="10" step="0.1" oninput="updateBondCalc()">
+      <div class="calc-result" id="calcBondResult">금액을 입력하세요</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">근거: 국가계약법 시행령 제50조</div>
+    </div>
+    <div class="calc-box">
+      <h4>&#x23F1; 지체상금 계산</h4>
+      <label>계약금액 (원)</label>
+      <input type="number" id="calcDelayAmt" placeholder="예: 100000000" oninput="updateDelayCalc()">
+      <label>지체일수</label>
+      <input type="number" id="calcDelayDays" value="1" min="1" oninput="updateDelayCalc()">
+      <label>비율 (1/1000)</label>
+      <input type="number" id="calcDelayRate" value="1" step="0.1" oninput="updateDelayCalc()">
+      <div class="calc-result" id="calcDelayResult">금액을 입력하세요</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">근거: 시행령 제74조 (공사 1/1000, 물품 0.75/1000)</div>
+    </div>
+    <div class="calc-box">
+      <h4>&#x1F4B5; 선급금 계산</h4>
+      <label>계약금액 (원)</label>
+      <input type="number" id="calcPrepayAmt" placeholder="예: 100000000" oninput="updatePrepayCalc()">
+      <label>선급금 비율 (%)</label>
+      <input type="number" id="calcPrepayRate" value="70" step="1" oninput="updatePrepayCalc()">
+      <div class="calc-result" id="calcPrepayResult">금액을 입력하세요</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:6px">근거: 시행령 제58조 (한도 70%)</div>
+    </div>
+  </div>`;
+}
+
+// ── 계산기 업데이트 함수들 ──
+function updateBondCalc() {
+  const amt = parseFloat(document.getElementById('calcBondAmt')?.value) || 0;
+  const rate = parseFloat(document.getElementById('calcBondRate')?.value) || 0;
+  const el = document.getElementById('calcBondResult');
+  if (!el) return;
+  if (!amt) { el.textContent = '금액을 입력하세요'; return; }
+  const result = Math.round(amt * rate / 100);
+  el.textContent = `계약보증금: ${result.toLocaleString()}원`;
+}
+
+function updateDelayCalc() {
+  const amt = parseFloat(document.getElementById('calcDelayAmt')?.value) || 0;
+  const days = parseInt(document.getElementById('calcDelayDays')?.value) || 0;
+  const rate = parseFloat(document.getElementById('calcDelayRate')?.value) || 0;
+  const el = document.getElementById('calcDelayResult');
+  if (!el) return;
+  if (!amt) { el.textContent = '금액을 입력하세요'; return; }
+  const result = Math.round(amt * days * rate / 1000);
+  el.textContent = `지체상금: ${result.toLocaleString()}원 (${days}일)`;
+}
+
+function updatePrepayCalc() {
+  const amt = parseFloat(document.getElementById('calcPrepayAmt')?.value) || 0;
+  const rate = parseFloat(document.getElementById('calcPrepayRate')?.value) || 0;
+  const el = document.getElementById('calcPrepayResult');
+  if (!el) return;
+  if (!amt) { el.textContent = '금액을 입력하세요'; return; }
+  const result = Math.round(amt * rate / 100);
+  el.textContent = `선급금: ${result.toLocaleString()}원`;
+}
+
+// ── 3층: 접힌 상세 아코디언 ──
+function renderDetailAccordion(advisorData, query) {
+  if (!advisorData) return '';
+  const refData = advisorData.ref_data;
+  let html = '<div class="detail-accordion">';
+  let hasContent = false;
+
+  // AI 분석
+  if (advisorData.analysis) {
+    hasContent = true;
+    html += `<button class="acc-trigger" onclick="toggleAccordion(this)">
+      <span>&#9889; AI 분석</span><span class="acc-chevron">&#x25BC;</span>
+    </button>
+    <div class="acc-body">
+      <div style="line-height:1.7;color:var(--text-secondary)">${escHtml(advisorData.analysis)}</div>
+    </div>`;
+  }
+
+  // 판례·사례
+  if (refData?.cases?.length) {
+    hasContent = true;
+    html += `<button class="acc-trigger" onclick="toggleAccordion(this)">
+      <span>&#x1F4BC; 계약 사례 (${refData.cases.length}건)</span><span class="acc-chevron">&#x25BC;</span>
+    </button>
+    <div class="acc-body">`;
+    refData.cases.forEach(c => {
+      html += `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;margin-bottom:4px">${escHtml(c.title)}</div>
+        <div style="font-size:13px;color:var(--text-secondary)">${escHtml(c.desc)}</div>
+        ${c.laws?.length ? `<div style="margin-top:4px">${c.laws.map(l=>`<span style="font-size:11px;color:var(--accent);margin-right:8px">${escHtml(l)}</span>`).join('')}</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Q&A
+  if (refData?.qa?.length) {
+    hasContent = true;
+    html += `<button class="acc-trigger" onclick="toggleAccordion(this)">
+      <span>&#x2753; 자주 묻는 질문 (${refData.qa.length}건)</span><span class="acc-chevron">&#x25BC;</span>
+    </button>
+    <div class="acc-body">`;
+    refData.qa.forEach(qa => {
+      html += `<div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="font-weight:600;color:var(--accent)">Q. ${escHtml(qa.q)}</div>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">A. ${escHtml(qa.a)}</div>
+        ${qa.law ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px">${escHtml(qa.law)}</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 외부 링크
+  if (refData?.links?.length) {
+    hasContent = true;
+    html += `<button class="acc-trigger" onclick="toggleAccordion(this)">
+      <span>&#x1F517; 외부 참고 링크 (${refData.links.length}건)</span><span class="acc-chevron">&#x25BC;</span>
+    </button>
+    <div class="acc-body">
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${refData.links.map(l => `<a href="${escHtml(l.url)}" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:13px">&#x1F517; ${escHtml(l.title)}</a>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // 관련 검색어
+  if (advisorData.related_queries?.length) {
+    hasContent = true;
+    html += `<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <span style="font-size:12px;color:var(--text-muted)">관련 검색어:</span>
+      ${advisorData.related_queries.map(rq => `<span style="padding:4px 12px;border-radius:16px;background:var(--bg-elevated);border:1px solid var(--border);font-size:12px;cursor:pointer;color:var(--text-secondary)" onclick="doSearch('${escHtml(rq)}')">${escHtml(rq)}</span>`).join('')}
+    </div>`;
+  }
+
+  html += '</div>';
+  return hasContent ? html : '';
+}
+
+// ── 아코디언 토글 ──
+function toggleAccordion(btn) {
+  btn.classList.toggle('open');
+  const body = btn.nextElementSibling;
+  if (body) body.classList.toggle('open');
+}
+
+// ── 탭 이벤트 바인딩 ──
+function bindTabEvents() {
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // 버튼 활성화
+      btn.closest('.tab-nav').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // 패널 전환
+      const dashboard = btn.closest('.tab-dashboard');
+      dashboard.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      const target = dashboard.querySelector('#' + btn.dataset.tab);
+      if (target) target.classList.add('active');
+    });
+  });
+}
+
+// ── 비동기 조달 데이터 로드 ──
+async function loadProcurementData(query) {
+  const container = document.getElementById('procurementContent');
+  if (!container) return;
+
+  try {
+    const [bidsRes, contractsRes, alioRes] = await Promise.allSettled([
+      api('/api/procurement/bids?q=' + encodeURIComponent(query)),
+      api('/api/procurement/contracts?q=' + encodeURIComponent(query)),
+      api('/api/alio/contracts?q=' + encodeURIComponent(query)),
+    ]);
+
+    const bids = bidsRes.status === 'fulfilled' ? bidsRes.value : null;
+    const contracts = contractsRes.status === 'fulfilled' ? contractsRes.value : null;
+    const alio = alioRes.status === 'fulfilled' ? alioRes.value : null;
+
+    const isMock = (bids?.mock) || (contracts?.mock) || (alio?.mock);
+
+    if (isMock) {
+      container.innerHTML = `<div class="procurement-empty">
+        <div class="pe-icon">&#x1F3DB;</div>
+        <p>조달·알리오 API 연동 준비 중입니다</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:8px">나라장터(g2b) 및 알리오(ALIO) API 키가 설정되면<br>실시간 입찰공고·계약정보가 표시됩니다.</p>
+      </div>`;
+      return;
+    }
+
+    let html = '';
+    const bidItems = bids?.items || bids || [];
+    const contractItems = contracts?.items || contracts || [];
+    const alioItems = alio?.items || alio || [];
+
+    if (Array.isArray(bidItems) && bidItems.length > 0) {
+      html += `<div class="procurement-section"><h4>&#x1F4CB; 입찰공고 (${bidItems.length}건)</h4>`;
+      bidItems.slice(0, 10).forEach(b => {
+        html += `<div class="bid-card">
+          <div class="bc-name">${escHtml(b.title || b.bidNm || '')}</div>
+          <div class="bc-meta">
+            ${b.org || b.dminsttNm ? `<span>&#x1F3E2; ${escHtml(b.org || b.dminsttNm)}</span>` : ''}
+            ${b.date || b.bidNtceDt ? `<span>&#x1F4C5; ${escHtml(b.date || b.bidNtceDt)}</span>` : ''}
+            ${b.deadline || b.bidClseDt ? `<span>&#x23F0; 마감: ${escHtml(b.deadline || b.bidClseDt)}</span>` : ''}
+            ${b.amount || b.presmptPrce ? `<span>&#x1F4B0; ${Number(b.amount || b.presmptPrce).toLocaleString()}원</span>` : ''}
+          </div>
+          ${b.url || b.bidNtceUrl ? `<a href="${escHtml(b.url || b.bidNtceUrl)}" target="_blank" rel="noopener">상세보기 &#8594;</a>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (Array.isArray(contractItems) && contractItems.length > 0) {
+      html += `<div class="procurement-section"><h4>&#x1F4DD; 계약 정보 (${contractItems.length}건)</h4>`;
+      contractItems.slice(0, 10).forEach(c => {
+        html += `<div class="bid-card">
+          <div class="bc-name">${escHtml(c.title || c.cntrtNm || '')}</div>
+          <div class="bc-meta">
+            ${c.org || c.dminsttNm ? `<span>&#x1F3E2; ${escHtml(c.org || c.dminsttNm)}</span>` : ''}
+            ${c.date || c.cntrtDt ? `<span>&#x1F4C5; ${escHtml(c.date || c.cntrtDt)}</span>` : ''}
+            ${c.amount || c.cntrtAmt ? `<span>&#x1F4B0; ${Number(c.amount || c.cntrtAmt).toLocaleString()}원</span>` : ''}
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (Array.isArray(alioItems) && alioItems.length > 0) {
+      html += `<div class="procurement-section"><h4>&#x1F3DB; 알리오 공시 (${alioItems.length}건)</h4>`;
+      alioItems.slice(0, 10).forEach(a => {
+        html += `<div class="bid-card">
+          <div class="bc-name">${escHtml(a.title || a.instNm || '')}</div>
+          <div class="bc-meta">
+            ${a.org || a.instNm ? `<span>&#x1F3E2; ${escHtml(a.org || a.instNm)}</span>` : ''}
+            ${a.amount || a.cntrtAmt ? `<span>&#x1F4B0; ${Number(a.amount || a.cntrtAmt).toLocaleString()}원</span>` : ''}
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (!html) {
+      html = `<div class="procurement-empty">
+        <div class="pe-icon">&#x1F4ED;</div>
+        <p>"${escHtml(query)}" 관련 조달 정보가 없습니다</p>
+      </div>`;
+    }
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<div class="procurement-empty">
+      <div class="pe-icon">&#x26A0;</div>
+      <p>조달 데이터를 불러오는 중 오류가 발생했습니다</p>
+      <p style="font-size:12px;color:var(--text-muted)">${escHtml(e.message || '')}</p>
+    </div>`;
+  }
 }
 
 // 계약서 조항 매핑 비동기 로드
@@ -6758,89 +6492,6 @@ async function loadClauses(query) {
     h += '</div>';
     el.innerHTML = h;
   } catch(e) { el.innerHTML = ''; }
-}
-
-// 스마트 검색 결과 섹션 접기/펼치기
-function toggleSmartSection(el) {
-  const section = el.closest('.smart-section');
-  if (!section) return;
-  section.classList.toggle('collapsed');
-}
-
-// 조문 펼치기/접기
-function toggleRefArticle(ai, fullContent) {
-  const body = document.getElementById('refArt' + ai);
-  const btn = document.getElementById('refExpBtn' + ai);
-  if (!body || !btn) return;
-  const isExpanded = btn.dataset.expanded === '1';
-  if (isExpanded) {
-    const lines = fullContent.split('\n').filter(l=>l.trim());
-    body.innerHTML = hlContentGlobal(lines.slice(0,5).join('\n'));
-    btn.innerHTML = '&#x25BC; 전문 보기 (' + fullContent.split('\n').filter(l=>l.trim()).length + '줄)';
-    btn.dataset.expanded = '0';
-  } else {
-    body.innerHTML = hlContentGlobal(fullContent);
-    btn.innerHTML = '&#x25B2; 접기';
-    btn.dataset.expanded = '1';
-  }
-}
-
-// 전역 하이라이트 (toggleRefArticle에서 사용)
-let _refQueryKws = [];
-function hlContentGlobal(text) {
-  let h = escHtml(text);
-  for (const kw of _refQueryKws) {
-    if (kw.length < 1) continue;
-    const re = new RegExp('(' + kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi');
-    h = h.replace(re, '<mark>$1</mark>');
-  }
-  return h;
-}
-
-// ===== 날짜 기반 계약일정 계산기 =====
-function calcSchedule() {
-  const startInput = document.getElementById('scheduleStartDate');
-  const resultEl = document.getElementById('scheduleResult');
-  if (!startInput || !resultEl || !_currentTimeline) return;
-
-  const start = new Date(startInput.value);
-  if (isNaN(start.getTime())) return;
-
-  const formatDate = (d) => {
-    const days = ['일','월','화','수','목','금','토'];
-    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${days[d.getDay()]})`;
-  };
-
-  let html = '<table class="schedule-table"><thead><tr><th>단계</th><th>시작일</th><th>종료일</th><th>소요</th><th>근거</th></tr></thead><tbody>';
-  let current = new Date(start);
-
-  for (const step of _currentTimeline.steps) {
-    const stepStart = new Date(current);
-    const stepEnd = new Date(current);
-    stepEnd.setDate(stepEnd.getDate() + step.duration);
-
-    const isWeekend = stepStart.getDay() === 0 || stepStart.getDay() === 6;
-
-    html += `<tr${isWeekend ? ' class="weekend-row"' : ''}>
-      <td class="sched-step">${escHtml(step.step)}</td>
-      <td>${formatDate(stepStart)}</td>
-      <td>${formatDate(stepEnd)}</td>
-      <td class="sched-days">${step.duration}일</td>
-      <td class="sched-law">${escHtml(step.law || '')}</td>
-    </tr>`;
-
-    current = stepEnd;
-  }
-
-  const totalEnd = new Date(current);
-  html += `</tbody><tfoot><tr>
-    <td><strong>완료 예정</strong></td>
-    <td colspan="2"><strong>${formatDate(totalEnd)}</strong></td>
-    <td><strong>${_currentTimeline.total_days}일</strong></td>
-    <td></td>
-  </tr></tfoot></table>`;
-
-  resultEl.innerHTML = html;
 }
 
 // ===== 업무 검색 일지 내보내기 =====
@@ -7082,65 +6733,6 @@ function exportWeeklyReport() {
   a.download = `\uC8FC\uAC04\uB9AC\uD3EC\uD2B8_${today.toISOString().split('T')[0]}.txt`;
   a.click();
   URL.revokeObjectURL(a.href);
-}
-
-// 나라장터 입찰공고 비동기 로드
-async function loadBidResults(query) {
-  const el = document.getElementById('bidResults');
-  if (!el) return;
-  el.innerHTML = '<div class="loading-inline"><div class="spinner"></div> 나라장터 입찰공고 검색 중...</div>';
-  try {
-    const bids = await api('/api/bids?q=' + encodeURIComponent(query));
-    if (!bids || !bids.length) {
-      el.innerHTML = '';
-      return;
-    }
-    let h = '<div class="smart-divider">나라장터 최신 입찰공고</div><div class="smart-section"><div class="smart-section-head"><div class="smart-section-icon" style="background:var(--success-muted)">&#x1F4CB;</div><div class="smart-section-title">관련 입찰공고</div><div class="smart-section-count">' + bids.length + '건</div></div>';
-    for (const b of bids) {
-      h += '<a href="' + escHtml(b.url || '#') + '" target="_blank" rel="noopener" class="ref-bid-card">';
-      h += '<div class="ref-bid-title">' + escHtml(b.title) + '</div>';
-      h += '<div class="ref-bid-meta">';
-      if (b.org) h += '<span>' + escHtml(b.org) + '</span>';
-      if (b.date) h += '<span>공고: ' + escHtml(b.date) + '</span>';
-      if (b.deadline) h += '<span>마감: ' + escHtml(b.deadline) + '</span>';
-      if (b.method) h += '<span>' + escHtml(b.method) + '</span>';
-      h += '</div>';
-      if (b.amount) h += '<div class="ref-bid-amount">' + Number(b.amount).toLocaleString() + '원</div>';
-      h += '</a>';
-    }
-    h += '</div>';
-    el.innerHTML = h;
-  } catch(e) { el.innerHTML = ''; }
-}
-
-function openFromSmartAdvisor(idx) {
-  if (!lastAdvisorData) return;
-  const r = lastAdvisorData.recommendations[idx];
-  openLaw(r.law, r.type, {
-    key_articles: r.key_articles || '',
-    reason: r.reason || '',
-    context: lastAdvisorData.query || '',
-  });
-}
-
-function updateCalc(val) {
-  const amt = parseInt(val);
-  if (!amt || amt <= 0) return;
-  const display = amt >= 100000000 ? (amt/100000000).toFixed(1)+'억원' : amt >= 10000 ? (amt/10000).toFixed(0)+'만원' : amt.toLocaleString()+'원';
-  const items = [
-    {label:'계약보증금 (10%)', value:Math.round(amt*0.1), note:'국가계약법 제12조'},
-    {label:'계약보증금 (15%)', value:Math.round(amt*0.15), note:'공사계약 기준'},
-    {label:'하자보수보증금 (3%)', value:Math.round(amt*0.03), note:'시행령 제62조'},
-    {label:'선급금 한도 (70%)', value:Math.round(amt*0.7), note:'시행령 제58조'},
-    {label:'지체상금/일 (공사)', value:Math.round(amt*0.001), note:'1/1000'},
-    {label:'지체상금/일 (물품)', value:Math.round(amt*0.00075), note:'0.75/1000'},
-  ];
-  const card = document.querySelector('.calc-card');
-  if (!card) return;
-  card.querySelector('.calc-title').innerHTML = '&#x1F9EE; 간이 계산기 (' + escHtml(display) + ' 기준)';
-  card.querySelector('.calc-grid').innerHTML = items.map(c =>
-    `<div class="calc-item"><div class="calc-label">${escHtml(c.label)}</div><div class="calc-value">${c.value.toLocaleString()}원</div><div class="calc-note">${escHtml(c.note)}</div></div>`
-  ).join('');
 }
 
 // ===== Law Viewer (Enhanced) =====
