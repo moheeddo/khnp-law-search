@@ -27,8 +27,8 @@ SOLAR_API_URL = "https://api.upstage.ai/v1/chat/completions"
 SOLAR_MODEL = "solar-mini"
 
 # 공공데이터포털 API 설정
-DATA_GO_KR_KEY = os.environ.get("DATA_GO_KR_API_KEY", "")
-PROCUREMENT_BASE = "http://apis.data.go.kr/1230000"
+DATA_GO_KR_KEY = os.environ.get("DATA_GO_KR_API_KEY", "22bf70353dbe75978aeb6ccbd606dcab8e13e843a8cd8aeba999bdd1453830f9")
+PROCUREMENT_BASE = "https://apis.data.go.kr/1230000/ad"
 ALIO_BASE = "http://apis.data.go.kr/B552015"
 
 # API 응답 캐시 (key → (timestamp, data), 1시간 TTL)
