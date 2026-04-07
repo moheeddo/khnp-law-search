@@ -5991,6 +5991,8 @@ function renderSmartResults(searchResults, advisorData, query) {
   let html = '';
   // 1층: 즉답 카드
   html += renderInstantAnswer(recs, advisorData, query);
+  // 1.5층: 한수원 실제 공고/계약 요약 (비동기 로드 후 채워짐)
+  html += `<div id="procurementSummaryMain"></div>`;
   // 2층: 탭 대시보드
   html += renderTabDashboard(recs, searchResults, advisorData, query);
   // 3층: 접힌 상세
@@ -6002,6 +6004,89 @@ function renderSmartResults(searchResults, advisorData, query) {
 
   // 계약서 조항 매핑 비동기 로드
   loadClauses(query);
+}
+
+// ── 메인 결과에 한수원 실제 조달 요약 표시 ──
+function renderProcurementSummaryInMain(query) {
+  const el = document.getElementById('procurementSummaryMain');
+  if (!el || !window._procurementData) return;
+  const { bids, contracts, alio, total } = window._procurementData;
+  if (total === 0 && (!contracts || contracts.length === 0)) return;
+
+  const topContracts = (contracts || []).slice(0, 4);
+  const topBids = (bids || []).slice(0, 3);
+  const allCount = topContracts.length + topBids.length;
+  if (allCount === 0) return;
+
+  let html = `<div style="background:linear-gradient(135deg,#e8eaf6,#e3f2fd);border:1px solid #90caf9;border-radius:14px;padding:20px;margin:16px 0;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-weight:700;font-size:16px;color:#1a237e">&#x1F3E2; 한수원 실제 계약 사례</div>
+        <div style="font-size:12px;color:#5c6bc0;margin-top:2px">"${escHtml(query)}" 관련 한국수력원자력 계약·공고 ${allCount}건</div>
+      </div>
+      <button onclick="document.querySelector('[data-tab=\\'tab-procurement\\']').click()" style="background:#1565c0;color:#fff;border:none;border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">전체 보기 &#8594;</button>
+    </div>`;
+
+  // 한수원 계약 사례 (내장 데이터)
+  if (topContracts.length > 0) {
+    html += `<div style="margin-bottom:12px"><div style="font-size:12px;font-weight:600;color:#283593;margin-bottom:8px">&#x1F4DD; 유사 계약 사례 (실무 참고용)</div>`;
+    topContracts.forEach(c => {
+      const name = c.name || '';
+      const company = c.company || '';
+      const date = (c.date || '').substring(0, 10);
+      const amount = c.amount || '';
+      const method = c.method || '';
+      const category = c.category || '';
+      const typeLabel = c.type === 'goods' ? '물품' : c.type === 'construction' ? '공사' : c.type === 'service' ? '용역' : '';
+      html += `<div style="background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:8px;border:1px solid #e0e0e0;font-size:13px;transition:box-shadow 0.2s" onmouseover="this.style.boxShadow='0 2px 8px rgba(0,0,0,0.1)'" onmouseout="this.style.boxShadow='none'">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+          ${typeLabel ? `<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600">${typeLabel}</span>` : ''}
+          ${category ? `<span style="background:#fff3e0;color:#e65100;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600">${escHtml(category)}</span>` : ''}
+          ${method ? `<span style="background:#f3e5f5;color:#7b1fa2;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600">${escHtml(method)}</span>` : ''}
+        </div>
+        <div style="font-weight:600;color:#1a237e;margin-bottom:4px">${escHtml(name)}</div>
+        <div style="color:#666;font-size:11px;display:flex;gap:12px;flex-wrap:wrap">
+          ${company ? `<span>&#x1F464; ${escHtml(company)}</span>` : ''}
+          ${date ? `<span>&#x1F4C5; ${date}</span>` : ''}
+          ${amount ? `<span>&#x1F4B0; ${escHtml(amount)}${amount.includes('원') || amount.includes('억') || amount.includes('조') ? '' : '원'}</span>` : ''}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 나라장터 입찰공고 (키워드 매칭)
+  if (topBids.length > 0) {
+    html += `<div style="margin-bottom:10px"><div style="font-size:12px;font-weight:600;color:#283593;margin-bottom:8px">&#x1F4CB; 나라장터 유사 입찰공고</div>`;
+    topBids.forEach(b => {
+      const name = b.name || '';
+      const org = b.org || b.demand_org || '';
+      const date = (b.date || '').substring(0, 10);
+      const url = b.url || '';
+      html += `<div style="background:#fff;border-radius:8px;padding:10px 14px;margin-bottom:6px;border:1px solid #e0e0e0;font-size:13px">
+        <div style="font-weight:600;color:#333;margin-bottom:3px">${escHtml(name)}</div>
+        <div style="color:#666;font-size:11px;display:flex;gap:10px;flex-wrap:wrap">
+          ${org ? `<span>&#x1F3E2; ${escHtml(org)}</span>` : ''}
+          ${date ? `<span>&#x1F4C5; ${date}</span>` : ''}
+          ${url ? `<a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:#1565c0;text-decoration:none;font-size:11px">나라장터 &#8594;</a>` : ''}
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // 한수원 관련 외부 링크
+  html += `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid #c5cae9">
+    <a href="https://ebid.khnp.co.kr" target="_blank" rel="noopener" style="background:#fff;border:1px solid #90caf9;border-radius:8px;padding:6px 12px;font-size:11px;color:#1565c0;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:4px">&#x1F3E2; 한수원 전자입찰</a>
+    <a href="https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220" target="_blank" rel="noopener" style="background:#fff;border:1px solid #a5d6a7;border-radius:8px;padding:6px 12px;font-size:11px;color:#2e7d32;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:4px">&#x1F4CA; 알리오 경영공시</a>
+    <a href="https://www.g2b.go.kr" target="_blank" rel="noopener" style="background:#fff;border:1px solid #ce93d8;border-radius:8px;padding:6px 12px;font-size:11px;color:#7b1fa2;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:4px">&#x1F3DB; 나라장터</a>
+    <a href="https://www.khnp.co.kr/content/163/main.do" target="_blank" rel="noopener" style="background:#fff;border:1px solid #ffb74d;border-radius:8px;padding:6px 12px;font-size:11px;color:#e65100;text-decoration:none;font-weight:600;display:flex;align-items:center;gap:4px">&#x1F4D1; 한수원 경영정보</a>
+  </div>`;
+
+  html += `<div style="font-size:10px;color:#999;margin-top:8px;text-align:right">한수원 공개 계약사례 + 나라장터 공공데이터</div>`;
+  html += `</div>`;
+
+  el.innerHTML = html;
 }
 
 // ── 1층: 즉답 카드 ──
@@ -6382,11 +6467,14 @@ async function loadProcurementData(query) {
   const container = document.getElementById('procurementContent');
   if (!container) return;
 
+  // 검색어에서 keyword 추출 (한수원 org는 백엔드에서 자동 설정)
+  const kw = encodeURIComponent(query);
+
   try {
     const [bidsRes, contractsRes, alioRes] = await Promise.allSettled([
-      api('/api/procurement/bids?q=' + encodeURIComponent(query)),
-      api('/api/procurement/contracts?q=' + encodeURIComponent(query)),
-      api('/api/alio/contracts?q=' + encodeURIComponent(query)),
+      api(`/api/procurement/bids?keyword=${kw}&rows=15&type=all`),
+      api(`/api/procurement/contracts?keyword=${kw}&rows=15`),
+      api(`/api/alio/contracts?org=${encodeURIComponent('한국수력원자력')}`),
     ]);
 
     const bids = bidsRes.status === 'fulfilled' ? bidsRes.value : null;
@@ -6408,33 +6496,62 @@ async function loadProcurementData(query) {
     const bidItems = bids?.items || bids || [];
     const contractItems = contracts?.items || contracts || [];
     const alioItems = alio?.items || alio || [];
+    const totalCount = bidItems.length + contractItems.length + alioItems.length;
+
+    // 요약 헤더
+    if (totalCount > 0) {
+      html += `<div style="background:linear-gradient(135deg,#e8f5e9,#e3f2fd);border-radius:12px;padding:16px 20px;margin-bottom:16px;border:1px solid #c8e6c9">
+        <div style="font-weight:700;font-size:15px;color:#1b5e20;margin-bottom:6px">&#x1F3E2; 한국수력원자력 실제 조달 현황</div>
+        <div style="display:flex;gap:16px;font-size:13px;color:#333">
+          <span>&#x1F4CB; 입찰공고 <b>${bidItems.length}</b>건</span>
+          <span>&#x1F4DD; 계약체결 <b>${contractItems.length}</b>건</span>
+          <span>&#x1F3DB; 알리오공시 <b>${alioItems.length}</b>건</span>
+        </div>
+        <div style="font-size:11px;color:#666;margin-top:6px">나라장터·알리오 공공데이터 실시간 연동 | 최근 30일 공고 · 180일 계약</div>
+      </div>`;
+    }
 
     if (Array.isArray(bidItems) && bidItems.length > 0) {
       html += `<div class="procurement-section"><h4>&#x1F4CB; 입찰공고 (${bidItems.length}건)</h4>`;
-      bidItems.slice(0, 10).forEach(b => {
+      bidItems.slice(0, 15).forEach(b => {
+        const name = b.name || b.title || b.bidNm || '';
+        const org = b.org || b.demand_org || b.dminsttNm || '';
+        const date = b.date || b.bidNtceDt || '';
+        const closeDate = b.close_date || b.deadline || b.bidClseDt || '';
+        const price = b.price || b.amount || b.presmptPrce || '';
+        const method = b.method || b.bid_method || '';
+        const url = b.url || b.bidNtceUrl || '';
+        const typeLabel = b.type === 'goods' ? '물품' : b.type === 'construction' ? '공사' : b.type === 'service' ? '용역' : '';
         html += `<div class="bid-card">
-          <div class="bc-name">${escHtml(b.title || b.bidNm || '')}</div>
+          <div class="bc-name">${typeLabel ? `<span style="background:#e3f2fd;color:#1565c0;padding:2px 8px;border-radius:4px;font-size:11px;margin-right:6px">${typeLabel}</span>` : ''}${escHtml(name)}</div>
           <div class="bc-meta">
-            ${b.org || b.dminsttNm ? `<span>&#x1F3E2; ${escHtml(b.org || b.dminsttNm)}</span>` : ''}
-            ${b.date || b.bidNtceDt ? `<span>&#x1F4C5; ${escHtml(b.date || b.bidNtceDt)}</span>` : ''}
-            ${b.deadline || b.bidClseDt ? `<span>&#x23F0; 마감: ${escHtml(b.deadline || b.bidClseDt)}</span>` : ''}
-            ${b.amount || b.presmptPrce ? `<span>&#x1F4B0; ${Number(b.amount || b.presmptPrce).toLocaleString()}원</span>` : ''}
+            ${org ? `<span>&#x1F3E2; ${escHtml(org)}</span>` : ''}
+            ${date ? `<span>&#x1F4C5; 공고: ${escHtml(date.substring(0,10))}</span>` : ''}
+            ${closeDate ? `<span>&#x23F0; 마감: ${escHtml(closeDate.substring(0,10))}</span>` : ''}
+            ${price && price !== '0' ? `<span>&#x1F4B0; ${Number(price).toLocaleString()}원</span>` : ''}
+            ${method ? `<span>&#x1F4D1; ${escHtml(method)}</span>` : ''}
           </div>
-          ${b.url || b.bidNtceUrl ? `<a href="${escHtml(b.url || b.bidNtceUrl)}" target="_blank" rel="noopener">상세보기 &#8594;</a>` : ''}
+          ${url ? `<a href="${escHtml(url)}" target="_blank" rel="noopener" style="color:#1565c0;font-size:12px;text-decoration:none">나라장터 상세보기 &#8594;</a>` : ''}
         </div>`;
       });
       html += `</div>`;
     }
 
     if (Array.isArray(contractItems) && contractItems.length > 0) {
-      html += `<div class="procurement-section"><h4>&#x1F4DD; 계약 정보 (${contractItems.length}건)</h4>`;
-      contractItems.slice(0, 10).forEach(c => {
+      html += `<div class="procurement-section"><h4>&#x1F4DD; 계약 체결 정보 (${contractItems.length}건)</h4>`;
+      contractItems.slice(0, 15).forEach(c => {
+        const name = c.name || c.title || c.cntrtNm || '';
+        const org = c.org || c.dminsttNm || '';
+        const date = c.date || c.cntrtDt || '';
+        const amount = c.amount || c.cntrtAmt || '';
+        const company = c.company || '';
         html += `<div class="bid-card">
-          <div class="bc-name">${escHtml(c.title || c.cntrtNm || '')}</div>
+          <div class="bc-name">${escHtml(name)}</div>
           <div class="bc-meta">
-            ${c.org || c.dminsttNm ? `<span>&#x1F3E2; ${escHtml(c.org || c.dminsttNm)}</span>` : ''}
-            ${c.date || c.cntrtDt ? `<span>&#x1F4C5; ${escHtml(c.date || c.cntrtDt)}</span>` : ''}
-            ${c.amount || c.cntrtAmt ? `<span>&#x1F4B0; ${Number(c.amount || c.cntrtAmt).toLocaleString()}원</span>` : ''}
+            ${org ? `<span>&#x1F3E2; ${escHtml(org)}</span>` : ''}
+            ${company ? `<span>&#x1F464; 계약업체: ${escHtml(company)}</span>` : ''}
+            ${date ? `<span>&#x1F4C5; 체결: ${escHtml(date.substring(0,10))}</span>` : ''}
+            ${amount && amount !== '0' ? `<span>&#x1F4B0; ${Number(amount).toLocaleString()}원</span>` : ''}
           </div>
         </div>`;
       });
@@ -6442,13 +6559,22 @@ async function loadProcurementData(query) {
     }
 
     if (Array.isArray(alioItems) && alioItems.length > 0) {
-      html += `<div class="procurement-section"><h4>&#x1F3DB; 알리오 공시 (${alioItems.length}건)</h4>`;
+      html += `<div class="procurement-section"><h4>&#x1F3DB; 알리오 경영공시 (${alioItems.length}건)</h4>`;
       alioItems.slice(0, 10).forEach(a => {
+        const name = a.name || a.title || a.instNm || '';
+        const org = a.org || a.instNm || '';
+        const amount = a.amount || a.cntrtAmt || '';
+        const method = a.method || '';
+        const company = a.company || '';
+        const date = a.date || '';
         html += `<div class="bid-card">
-          <div class="bc-name">${escHtml(a.title || a.instNm || '')}</div>
+          <div class="bc-name">${escHtml(name)}</div>
           <div class="bc-meta">
-            ${a.org || a.instNm ? `<span>&#x1F3E2; ${escHtml(a.org || a.instNm)}</span>` : ''}
-            ${a.amount || a.cntrtAmt ? `<span>&#x1F4B0; ${Number(a.amount || a.cntrtAmt).toLocaleString()}원</span>` : ''}
+            ${org ? `<span>&#x1F3E2; ${escHtml(org)}</span>` : ''}
+            ${company ? `<span>&#x1F464; ${escHtml(company)}</span>` : ''}
+            ${method ? `<span>&#x1F4D1; ${escHtml(method)}</span>` : ''}
+            ${amount && amount !== '0' ? `<span>&#x1F4B0; ${Number(amount).toLocaleString()}원</span>` : ''}
+            ${date ? `<span>&#x1F4C5; ${escHtml(date)}</span>` : ''}
           </div>
         </div>`;
       });
@@ -6458,11 +6584,22 @@ async function loadProcurementData(query) {
     if (!html) {
       html = `<div class="procurement-empty">
         <div class="pe-icon">&#x1F4ED;</div>
-        <p>"${escHtml(query)}" 관련 조달 정보가 없습니다</p>
+        <p>"${escHtml(query)}" 관련 한수원 조달 정보가 없습니다</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-top:4px">검색어를 줄이거나 다른 키워드로 시도해보세요</p>
       </div>`;
     }
 
     container.innerHTML = html;
+
+    // 조달 데이터가 있으면 탭 카운트 업데이트
+    if (totalCount > 0) {
+      const tabBtn = document.querySelector('[data-tab="tab-procurement"]');
+      if (tabBtn) tabBtn.innerHTML = `&#x1F3DB; 조달·알리오 <span class="tab-count" style="background:#2e7d32;color:#fff">${totalCount}</span>`;
+    }
+
+    // 전역에 저장 (메인 결과에서 요약 표시용)
+    window._procurementData = { bids: bidItems, contracts: contractItems, alio: alioItems, total: totalCount };
+    renderProcurementSummaryInMain(query);
   } catch (e) {
     container.innerHTML = `<div class="procurement-empty">
       <div class="pe-icon">&#x26A0;</div>

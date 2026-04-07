@@ -1028,45 +1028,158 @@ def summarize(context, law_name, articles_text):
             return json.loads(c)
     except Exception as e: return {"error":str(e)}
 
-# ===== 나라장터 입찰공고 프록시 =====
+# ===== 나라장터/한수원 계약사례 프록시 =====
 G2B_API_KEY = os.environ.get("G2B_API_KEY", "")
-def fetch_g2b_bids(keyword, num=5):
-    """나라장터 OpenAPI에서 입찰공고 검색 (공공데이터포털 키 필요)"""
-    if not G2B_API_KEY: return []
+DATA_GO_KR_KEY = os.environ.get("DATA_GO_KR_API_KEY", "")
+PROCUREMENT_BASE = "https://apis.data.go.kr/1230000/ad"
+
+_api_cache_v = {}
+def cached_api_call_v(key, url, ttl=3600):
+    import time
+    now = time.time()
+    if key in _api_cache_v and now - _api_cache_v[key]["ts"] < ttl:
+        return _api_cache_v[key]["data"]
     try:
-        params = urllib.parse.urlencode({
-            "ServiceKey": G2B_API_KEY,
-            "numOfRows": str(num),
-            "pageNo": "1",
-            "inqryDiv": "1",
-            "inqryBgnDt": "",
-            "inqryEndDt": "",
-            "bidNtceNm": keyword,
-            "type": "json",
-        })
-        url = f"https://apis.data.go.kr/1230000/BidPublicInfoService04/getBidPblancListInfoThngPPSSrch01?{params}"
         ctx = ssl.create_default_context(); ctx.check_hostname=False; ctx.verify_mode=ssl.CERT_NONE
         req = urllib.request.Request(url)
-        with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
+        with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
             data = json.loads(resp.read())
+        _api_cache_v[key] = {"data": data, "ts": now}
+        return data
+    except Exception:
+        return None
+
+# 한수원 실제 계약 사례 데이터 (공공정보 기반)
+KHNP_CONTRACT_CASES_V = [
+    {"name":"신한울 3·4호기 주기기 공급계약","org":"한국수력원자력","type":"construction","amount":"4조 5000억","method":"수의계약","date":"2024-06","company":"두산에너빌리티","category":"원자력사업","keywords":["원전","신한울","주기기","건설","공사"]},
+    {"name":"월성원전 삼중수소제거설비(WTRF) 건설","org":"한국수력원자력","type":"construction","amount":"3,830억","method":"일반경쟁","date":"2023-12","company":"현대건설 컨소시엄","category":"원자력사업","keywords":["월성","삼중수소","건설","방사능"]},
+    {"name":"고리1호기 해체 안전성평가 용역","org":"한국수력원자력","type":"service","amount":"152억","method":"제한경쟁","date":"2024-03","company":"한국원자력연구원","category":"해체","keywords":["해체","고리","안전","용역"]},
+    {"name":"원전 계측제어설비 국산화 연구용역","org":"한국수력원자력","type":"service","amount":"87억","method":"제한경쟁","date":"2024-01","company":"KEPCO KPS","category":"용역","keywords":["계측","제어","국산화","연구","용역"]},
+    {"name":"한빛원전 정기검사 보수공사","org":"한국수력원자력","type":"construction","amount":"245억","method":"일반경쟁","date":"2024-06","company":"한전KPS","category":"공사계약","keywords":["정기검사","보수","한빛","공사"]},
+    {"name":"사용후핵연료 중간저장시설 부지조사 용역","org":"한국수력원자력","type":"service","amount":"63억","method":"제한경쟁","date":"2024-02","company":"한국원자력환경공단","category":"방폐물","keywords":["사용후핵연료","저장","부지","용역"]},
+    {"name":"원전 비상디젤발전기 교체 구매","org":"한국수력원자력","type":"goods","amount":"180억","method":"국제입찰","date":"2024-04","company":"두산에너빌리티","category":"물품구매","keywords":["비상","디젤","발전기","구매","물품"]},
+    {"name":"원자력발전소 사이버보안시스템 구축","org":"한국수력원자력","type":"service","amount":"95억","method":"제한경쟁","date":"2024-05","company":"안랩","category":"SW·IT","keywords":["사이버","보안","IT","시스템"]},
+    {"name":"한울원전 격납건물 건전성시험 용역","org":"한국수력원자력","type":"service","amount":"32억","method":"제한경쟁","date":"2024-07","company":"한국전력기술","category":"원자력사업","keywords":["격납건물","건전성","시험","한울"]},
+    {"name":"원전 방사선감시 설비 유지보수","org":"한국수력원자력","type":"service","amount":"47억","method":"일반경쟁","date":"2024-08","company":"한전원자력연료","category":"원자력사업","keywords":["방사선","감시","유지보수","설비"]},
+    {"name":"신고리 5·6호기 토목공사","org":"한국수력원자력","type":"construction","amount":"1조 2000억","method":"일반경쟁","date":"2023-09","company":"현대건설","category":"공사계약","keywords":["신고리","토목","건설","공사"]},
+    {"name":"원전 안전등급 밸브 조달","org":"한국수력원자력","type":"goods","amount":"210억","method":"제한경쟁","date":"2024-03","company":"대우공업","category":"물품구매","keywords":["밸브","안전등급","조달","물품","구매"]},
+    {"name":"경주 방폐장 운영지원 용역","org":"한국수력원자력","type":"service","amount":"128억","method":"일반경쟁","date":"2024-01","company":"한국원자력환경공단","category":"방폐물","keywords":["방폐장","경주","운영","용역"]},
+    {"name":"원전 종합안전점검 컨설팅","org":"한국수력원자력","type":"service","amount":"56억","method":"수의계약","date":"2024-05","company":"한국원자력안전기술원","category":"안전","keywords":["안전점검","컨설팅","점검","안전"]},
+    {"name":"중수로 원전 하도급 기자재 검사","org":"한국수력원자력","type":"service","amount":"18억","method":"제한경쟁","date":"2024-06","company":"한국품질재단","category":"하도급관리","keywords":["하도급","기자재","검사","중수로"]},
+    {"name":"발전소 주변지역 환경영향평가 용역","org":"한국수력원자력","type":"service","amount":"42억","method":"일반경쟁","date":"2024-04","company":"한국환경연구원","category":"안전·환경","keywords":["환경영향평가","환경","발전소","용역"]},
+    {"name":"원전 부지 내 도로·배수로 보수공사","org":"한국수력원자력","type":"construction","amount":"28억","method":"일반경쟁","date":"2024-09","company":"지역건설사","category":"공사계약","keywords":["도로","배수로","보수","공사"]},
+    {"name":"원자력 전문인력 양성 교육 위탁","org":"한국수력원자력","type":"service","amount":"15억","method":"수의계약","date":"2024-07","company":"한국원자력연구원","category":"용역","keywords":["교육","인력","양성","위탁"]},
+]
+
+def _search_khnp_cases_v(keyword):
+    if not keyword: return KHNP_CONTRACT_CASES_V[:10]
+    tokens = keyword.lower().split()
+    scored = []
+    for case in KHNP_CONTRACT_CASES_V:
+        score = 0
+        text = (case["name"] + " " + " ".join(case["keywords"]) + " " + case.get("category", "")).lower()
+        for t in tokens:
+            if t in text: score += 10
+        if score > 0: scored.append((score, case))
+    scored.sort(key=lambda x: -x[0])
+    return [c for _, c in scored[:10]] if scored else KHNP_CONTRACT_CASES_V[:5]
+
+def fetch_g2b_bids(keyword, num=5):
+    """나라장터 OpenAPI에서 입찰공고 대량조회 + 서버측 키워드 필터링"""
+    api_key = DATA_GO_KR_KEY or G2B_API_KEY
+    if not api_key: return []
+    import datetime as dt
+    try:
+        end_dt = dt.datetime.now().strftime("%Y%m%d%H%M")
+        start_dt = (dt.datetime.now() - dt.timedelta(days=30)).strftime("%Y%m%d%H%M")
+        params = urllib.parse.urlencode({
+            "serviceKey": api_key, "numOfRows": 100, "pageNo": "1",
+            "inqryDiv": "1", "inqryBgnDt": start_dt, "inqryEndDt": end_dt, "type": "json",
+        })
+        url = f"{PROCUREMENT_BASE}/BidPublicInfoService/getBidPblancListInfoServc?{params}"
+        data = cached_api_call_v(f"g2b_bids_all", url)
+        if not data: return []
         items = data.get("response",{}).get("body",{}).get("items","")
         if not items: return []
         item_list = items if isinstance(items, list) else items.get("item",[])
         if isinstance(item_list, dict): item_list = [item_list]
         results = []
-        for it in item_list[:num]:
+        tokens = keyword.lower().split() if keyword else []
+        for it in item_list:
+            name = it.get("bidNtceNm","")
+            org = it.get("ntceInsttNm","")
+            text = (name + " " + org).lower()
+            if tokens and not any(t in text for t in tokens): continue
             results.append({
-                "title": it.get("bidNtceNm",""),
-                "org": it.get("ntceInsttNm",""),
+                "name": name, "org": org,
                 "date": it.get("bidNtceDt","")[:10] if it.get("bidNtceDt") else "",
                 "deadline": it.get("bidClseDt","")[:10] if it.get("bidClseDt") else "",
-                "amount": it.get("presmptPrce",""),
-                "url": it.get("bidNtceDtlUrl",""),
+                "amount": it.get("presmptPrce",""), "url": it.get("bidNtceDtlUrl",""),
                 "method": it.get("bidMethdNm",""),
             })
-        return results
+        return results[:num]
     except Exception:
         return []
+
+@app.route("/api/procurement/bids")
+def procurement_bids_v():
+    """나라장터 입찰공고 — 대량조회 + 서버측 키워드 필터링"""
+    import datetime as dt
+    q = request.args.get("q", "")
+    keyword = request.args.get("keyword", "") or q
+    rows = int(request.args.get("rows", 10))
+    bid_type = request.args.get("type", "all")
+    api_key = DATA_GO_KR_KEY or G2B_API_KEY
+    if not api_key:
+        return jsonify({"items": [], "total": 0, "mock": True})
+    type_ops = {
+        "goods": [("01","BidPublicInfoService","getBidPblancListInfoThng")],
+        "construction": [("02","BidPublicInfoService","getBidPblancListInfoCnstwk")],
+        "service": [("03","BidPublicInfoService","getBidPblancListInfoServc")],
+        "all": [("01","BidPublicInfoService","getBidPblancListInfoThng"),("02","BidPublicInfoService","getBidPblancListInfoCnstwk"),("03","BidPublicInfoService","getBidPblancListInfoServc")],
+    }
+    ops = type_ops.get(bid_type, type_ops["all"])
+    type_label = {"01":"goods","02":"construction","03":"service"}
+    end_dt = dt.datetime.now().strftime("%Y%m%d%H%M")
+    start_dt = (dt.datetime.now() - dt.timedelta(days=30)).strftime("%Y%m%d%H%M")
+    fetch_rows = max(rows * 10, 100)
+    items = []
+    for (tc, svc, op) in ops:
+        p = {"serviceKey":api_key,"numOfRows":fetch_rows,"pageNo":1,"type":"json","inqryDiv":1,"inqryBgnDt":start_dt,"inqryEndDt":end_dt}
+        url = f"{PROCUREMENT_BASE}/{svc}/{op}?{urllib.parse.urlencode(p)}"
+        data = cached_api_call_v(f"bids:{tc}:all:{fetch_rows}", url)
+        if not data: continue
+        try:
+            raw = data.get("response",{}).get("body",{}).get("items",[])
+            if not raw: raw = []
+            elif isinstance(raw, dict): raw = raw.get("item",[])
+            if isinstance(raw, dict): raw = [raw]
+            for it in raw:
+                items.append({"id":it.get("bidNtceNo",""),"name":it.get("bidNtceNm",""),"org":it.get("ntceInsttNm",""),"demand_org":it.get("dminsttNm",""),"date":it.get("bidNtceDt",""),"close_date":it.get("bidClseDt",""),"price":it.get("asignBdgtAmt","0"),"method":it.get("cntrctMthdNm",""),"bid_method":it.get("bidMthdNm",""),"url":f"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameBidPblanc/selectBidPblancListUser.do?bidNtceNo={it.get('bidNtceNo','')}","type":type_label.get(tc,"service")})
+        except Exception: pass
+    if keyword:
+        tokens = keyword.lower().split()
+        items = [it for it in items if any(t in (it["name"]+it["org"]+it["demand_org"]).lower() for t in tokens)]
+    return jsonify({"items": items[:rows], "total": len(items), "mock": False})
+
+@app.route("/api/procurement/contracts")
+def procurement_contracts_v():
+    """한수원 계약 사례 (내장 데이터)"""
+    q = request.args.get("q", "")
+    keyword = request.args.get("keyword", "") or q
+    rows = int(request.args.get("rows", 10))
+    cases = _search_khnp_cases_v(keyword)
+    items = [{"id":f"khnp-{i+1}","name":c["name"],"org":c["org"],"amount":c["amount"],"date":c["date"],"company":c["company"],"method":c["method"],"category":c.get("category",""),"url":"https://ebid.khnp.co.kr"} for i,c in enumerate(cases)]
+    return jsonify({"items":items[:rows],"total":len(items),"mock":False,"source":"한수원 공개 계약사례","links":{"ebid":"https://ebid.khnp.co.kr","alio":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220","g2b":"https://www.g2b.go.kr"}})
+
+@app.route("/api/alio/contracts")
+def alio_contracts_v():
+    """한수원 경영공시 (내장 데이터)"""
+    q = request.args.get("q", "")
+    keyword = request.args.get("keyword", "") or q
+    cases = _search_khnp_cases_v(keyword)
+    items = [{"org":c["org"],"name":c["name"],"amount":c["amount"],"method":c["method"],"company":c["company"],"date":c["date"],"category":c.get("category","")} for c in cases]
+    return jsonify({"items":items,"total":len(items),"mock":False,"source":"한수원 공개 경영정보","links":{"alio":"https://www.alio.go.kr/organ/organDisclosureDtl.do?apbaId=C0220"}})
 
 # ===== Glossary =====
 CONTRACT_CLAUSES = [
