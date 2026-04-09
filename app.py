@@ -1195,7 +1195,7 @@ def procurement_bids():
                     "price": it.get("asignBdgtAmt", "0"),
                     "method": it.get("cntrctMthdNm", ""),
                     "bid_method": it.get("bidMthdNm", ""),
-                    "url": f"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameBidPblanc/selectBidPblancListUser.do?bidNtceNo={it.get('bidNtceNo', '')}",
+                    "url": it.get("bidNtceDtlUrl") or it.get("bidNtceUrl") or f"https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo={it.get('bidNtceNo', '')}&bidPbancOrd={it.get('bidNtceOrd', '000')}",
                     "type": type_label.get(type_code, "service"),
                 })
         except Exception as e:

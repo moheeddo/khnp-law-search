@@ -1179,7 +1179,7 @@ def procurement_bids_v():
             elif isinstance(raw, dict): raw = raw.get("item",[])
             if isinstance(raw, dict): raw = [raw]
             for it in raw:
-                items.append({"id":it.get("bidNtceNo",""),"name":it.get("bidNtceNm",""),"org":it.get("ntceInsttNm",""),"demand_org":it.get("dminsttNm",""),"date":it.get("bidNtceDt",""),"close_date":it.get("bidClseDt",""),"price":it.get("asignBdgtAmt","0"),"method":it.get("cntrctMthdNm",""),"bid_method":it.get("bidMthdNm",""),"url":f"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameBidPblanc/selectBidPblancListUser.do?bidNtceNo={it.get('bidNtceNo','')}","type":type_label.get(tc,"service")})
+                items.append({"id":it.get("bidNtceNo",""),"name":it.get("bidNtceNm",""),"org":it.get("ntceInsttNm",""),"demand_org":it.get("dminsttNm",""),"date":it.get("bidNtceDt",""),"close_date":it.get("bidClseDt",""),"price":it.get("asignBdgtAmt","0"),"method":it.get("cntrctMthdNm",""),"bid_method":it.get("bidMthdNm",""),"url":it.get("bidNtceDtlUrl") or it.get("bidNtceUrl") or f"https://www.g2b.go.kr/link/PNPE027_01/single/?bidPbancNo={it.get('bidNtceNo','')}&bidPbancOrd={it.get('bidNtceOrd','000')}","type":type_label.get(tc,"service")})
         except Exception: pass
     if keyword:
         tokens = [t.lower() for t in _extract_keywords_v(keyword)]
