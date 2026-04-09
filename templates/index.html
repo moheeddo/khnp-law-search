@@ -6463,12 +6463,30 @@ function bindTabEvents() {
 }
 
 // ── 비동기 조달 데이터 로드 ──
+// 자연어에서 핵심 키워드만 추출 (프론트엔드용)
+function extractKeywords(text) {
+  const stops = new Set(['확인해야하는','확인해야','확인할','참고해야','참고할','적용되는','관련된',
+    '필요한','해야하는','해야할','알아야할','알아야하는','검토해야',
+    '어떤','무엇','어떻게','왜','언제','어디',
+    '은','는','이','가','을','를','의','에','에서','으로','로','와','과',
+    '도','만','까지','부터','에게','한테','께',
+    '시','때','경우','관련','관한','대한','위한','따른',
+    '법령','법률','법','규정','규칙','조항','조문',
+    '계약','계약시','입찰','체결','절차','방법',
+    '하는','하면','하고','해야','합니다','입니다','있는','없는',
+    '것','수','중','등','및','또는']);
+  const words = text.match(/[가-힣]{2,}/g) || [];
+  const filtered = words.filter(w => !stops.has(w));
+  return filtered.length ? filtered.join(' ') : text;
+}
+
 async function loadProcurementData(query) {
   const container = document.getElementById('procurementContent');
   if (!container) return;
 
-  // 검색어에서 keyword 추출 (한수원 org는 백엔드에서 자동 설정)
-  const kw = encodeURIComponent(query);
+  // 자연어에서 핵심 키워드 추출 후 API에 전달
+  const cleanQuery = extractKeywords(query);
+  const kw = encodeURIComponent(cleanQuery);
 
   try {
     const [bidsRes, contractsRes, alioRes] = await Promise.allSettled([

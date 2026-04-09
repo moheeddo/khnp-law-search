@@ -1071,18 +1071,42 @@ KHNP_CONTRACT_CASES_V = [
     {"name":"원자력 전문인력 양성 교육 위탁","org":"한국수력원자력","type":"service","amount":"15억","method":"수의계약","date":"2024-07","company":"한국원자력연구원","category":"용역","keywords":["교육","인력","양성","위탁"]},
 ]
 
+def _extract_keywords_v(text):
+    """자연어 문장에서 핵심 키워드 추출"""
+    STOPWORDS = {
+        "확인해야하는","확인해야","확인할","참고해야","참고할","적용되는","관련된",
+        "필요한","해야하는","해야할","알아야할","알아야하는","검토해야",
+        "어떤","무엇","무엇인가요","어떻게","왜","언제","어디",
+        "은","는","이","가","을","를","의","에","에서","으로","로","와","과",
+        "도","만","까지","부터","에게","한테","께",
+        "시","때","경우","관련","관한","대한","위한","따른",
+        "법령","법률","법","규정","규칙","조항","조문",
+        "계약","계약시","입찰","체결","절차","방법",
+        "하는","하면","하고","해야","합니다","입니다","있는","없는",
+        "것","수","중","등","및","또는",
+    }
+    words = re.findall(r'[가-힣]{2,}', text)
+    cleaned = []
+    for w in words:
+        base = re.sub(r'(은|는|이|가|을|를|의|에|로|도|과|와|시|요|까)$', '', w)
+        if base in STOPWORDS or w in STOPWORDS: continue
+        if len(base) >= 2: cleaned.append(base)
+        elif len(w) >= 2: cleaned.append(w)
+    return cleaned if cleaned else words[:3]
+
 def _search_khnp_cases_v(keyword):
     if not keyword: return KHNP_CONTRACT_CASES_V[:10]
-    tokens = keyword.lower().split()
+    tokens = _extract_keywords_v(keyword)
+    if not tokens: return []
     scored = []
     for case in KHNP_CONTRACT_CASES_V:
         score = 0
-        text = (case["name"] + " " + " ".join(case["keywords"]) + " " + case.get("category", "")).lower()
+        text = (case["name"] + " " + " ".join(case["keywords"]) + " " + case.get("category", "") + " " + case.get("method", "")).lower()
         for t in tokens:
-            if t in text: score += 10
+            if t.lower() in text: score += 10
         if score > 0: scored.append((score, case))
     scored.sort(key=lambda x: -x[0])
-    return [c for _, c in scored[:10]] if scored else KHNP_CONTRACT_CASES_V[:5]
+    return [c for _, c in scored[:10]]
 
 def fetch_g2b_bids(keyword, num=5):
     """나라장터 OpenAPI에서 입찰공고 대량조회 + 서버측 키워드 필터링"""
@@ -1104,7 +1128,7 @@ def fetch_g2b_bids(keyword, num=5):
         item_list = items if isinstance(items, list) else items.get("item",[])
         if isinstance(item_list, dict): item_list = [item_list]
         results = []
-        tokens = keyword.lower().split() if keyword else []
+        tokens = [t.lower() for t in _extract_keywords_v(keyword)] if keyword else []
         for it in item_list:
             name = it.get("bidNtceNm","")
             org = it.get("ntceInsttNm","")
@@ -1158,8 +1182,9 @@ def procurement_bids_v():
                 items.append({"id":it.get("bidNtceNo",""),"name":it.get("bidNtceNm",""),"org":it.get("ntceInsttNm",""),"demand_org":it.get("dminsttNm",""),"date":it.get("bidNtceDt",""),"close_date":it.get("bidClseDt",""),"price":it.get("asignBdgtAmt","0"),"method":it.get("cntrctMthdNm",""),"bid_method":it.get("bidMthdNm",""),"url":f"https://www.g2b.go.kr/pt/menu/selectSubFrame.do?framesrc=/pt/menu/frameBidPblanc/selectBidPblancListUser.do?bidNtceNo={it.get('bidNtceNo','')}","type":type_label.get(tc,"service")})
         except Exception: pass
     if keyword:
-        tokens = keyword.lower().split()
-        items = [it for it in items if any(t in (it["name"]+it["org"]+it["demand_org"]).lower() for t in tokens)]
+        tokens = [t.lower() for t in _extract_keywords_v(keyword)]
+        if tokens:
+            items = [it for it in items if any(t in (it["name"]+it["org"]+it["demand_org"]).lower() for t in tokens)]
     return jsonify({"items": items[:rows], "total": len(items), "mock": False})
 
 @app.route("/api/procurement/contracts")

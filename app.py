@@ -1074,22 +1074,60 @@ KHNP_CONTRACT_CASES = [
     {"name":"원자력 전문인력 양성 교육 위탁","org":"한국수력원자력","type":"service","amount":"15억","method":"수의계약","date":"2024-07","company":"한국원자력연구원","category":"용역","keywords":["교육","인력","양성","위탁"]},
 ]
 
+def _extract_keywords(text):
+    """자연어 문장에서 핵심 키워드 추출 — 불용어/조사/어미 제거"""
+    import re
+    # 불용어: 질문 패턴, 조사, 어미, 일반 동사 등
+    STOPWORDS = {
+        # 질문 패턴
+        "확인해야하는", "확인해야", "확인할", "참고해야", "참고할", "적용되는", "관련된",
+        "필요한", "해야하는", "해야할", "알아야할", "알아야하는", "검토해야",
+        "어떤", "무엇", "무엇인가요", "어떻게", "왜", "언제", "어디",
+        # 조사/어미
+        "은", "는", "이", "가", "을", "를", "의", "에", "에서", "으로", "로", "와", "과",
+        "도", "만", "까지", "부터", "에게", "한테", "께",
+        "시", "때", "경우", "관련", "관한", "대한", "위한", "따른",
+        # 일반 동사/명사
+        "법령", "법률", "법", "규정", "규칙", "조항", "조문",
+        "계약", "계약시", "입찰", "체결", "절차", "방법",  # 계약법 시스템에서 너무 범용적
+        "하는", "하면", "하고", "해야", "합니다", "입니다", "있는", "없는",
+        "것", "수", "중", "등", "및", "또는",
+    }
+    # 한글 단어만 추출
+    words = re.findall(r'[가-힣]{2,}', text)
+    # 조사 붙은 변형 제거: "법령은" → "법령" → 불용어 매치
+    cleaned = []
+    for w in words:
+        # 끝에 조사(은,는,이,가,을,를,의,에,로,도,과,와,시) 제거 후 불용어 체크
+        base = re.sub(r'(은|는|이|가|을|를|의|에|로|도|과|와|시|요|까)$', '', w)
+        if base in STOPWORDS or w in STOPWORDS:
+            continue
+        if len(base) >= 2:
+            cleaned.append(base)
+        elif len(w) >= 2:
+            cleaned.append(w)
+    return cleaned if cleaned else words[:3]
+
+
 def _search_khnp_cases(keyword):
-    """검색어로 한수원 계약 사례 필터링"""
+    """검색어로 한수원 계약 사례 필터링 — 매칭 없으면 빈 리스트"""
     if not keyword:
         return KHNP_CONTRACT_CASES[:10]
-    tokens = keyword.lower().split()
+    tokens = _extract_keywords(keyword)
+    if not tokens:
+        return []
     scored = []
     for case in KHNP_CONTRACT_CASES:
         score = 0
-        text = (case["name"] + " " + " ".join(case["keywords"]) + " " + case.get("category", "")).lower()
+        text = (case["name"] + " " + " ".join(case["keywords"]) + " " + case.get("category", "") + " " + case.get("method", "")).lower()
         for t in tokens:
-            if t in text:
+            if t.lower() in text:
                 score += 10
         if score > 0:
             scored.append((score, case))
     scored.sort(key=lambda x: -x[0])
-    return [c for _, c in scored[:10]] if scored else KHNP_CONTRACT_CASES[:5]
+    # 매칭 없으면 빈 리스트 (관련 없는 사례를 보여주지 않음)
+    return [c for _, c in scored[:10]]
 
 
 @app.route("/api/procurement/bids")
@@ -1163,15 +1201,16 @@ def procurement_bids():
         except Exception as e:
             print(f"입찰공고 파싱 오류: {e}")
 
-    # 서버측 키워드 필터링
+    # 서버측 키워드 필터링 (자연어에서 핵심어 추출)
     if keyword:
-        tokens = keyword.lower().split()
-        filtered = []
-        for it in items:
-            text = (it["name"] + " " + it["org"] + " " + it["demand_org"]).lower()
-            if any(t in text for t in tokens):
-                filtered.append(it)
-        items = filtered
+        tokens = _extract_keywords(keyword)
+        if tokens:
+            filtered = []
+            for it in items:
+                text = (it["name"] + " " + it["org"] + " " + it["demand_org"]).lower()
+                if any(t.lower() in text for t in tokens):
+                    filtered.append(it)
+            items = filtered
 
     return jsonify({"items": items[:rows], "total": len(items), "mock": False})
 
